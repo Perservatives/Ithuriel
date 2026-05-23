@@ -158,6 +158,7 @@ final class SpotlightCoordinator {
     private func dismissLaunch() {
         launchWindow?.orderOut(nil)
         launchWindow = nil
+        ChatWindowController.shared.toggle()
     }
 
     private func buildSpotlightWindow(container: ModelContainer, agentLoop: AgentLoop) {

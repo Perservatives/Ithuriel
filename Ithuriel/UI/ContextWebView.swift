@@ -171,6 +171,7 @@ struct WebNode: Identifiable, Equatable {
     let radius: CGFloat
     let tint: Color
     var pinned: Bool = false
+    var userFixed: Bool = false  // locked at drop position — no spring forces
     var position: CGPoint = .zero
     var velocity: CGSize = .zero
 }
@@ -211,7 +212,13 @@ final class WebSimulation: ObservableObject {
         nodes[i].velocity = .zero
     }
 
-    func endDrag() { draggedID = nil }
+    func endDrag() {
+        if let id = draggedID, let i = nodes.firstIndex(where: { $0.id == id }) {
+            nodes[i].userFixed = true
+            nodes[i].velocity = .zero
+        }
+        draggedID = nil
+    }
 
     func replace(nodes: [WebNode], edges: [WebEdge]) {
         let existingPositions = Dictionary(uniqueKeysWithValues: self.nodes.map { ($0.id, $0.position) })
@@ -239,8 +246,8 @@ final class WebSimulation: ObservableObject {
                 nodes[i].velocity = .zero
                 continue
             }
-            // Skip physics for the node being dragged.
-            if nodes[i].id == draggedID {
+            // Skip physics for dragged or user-dropped nodes.
+            if nodes[i].id == draggedID || nodes[i].userFixed {
                 nodes[i].velocity = .zero
                 continue
             }

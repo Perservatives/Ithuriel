@@ -49,6 +49,7 @@ final class PermissionsManager: ObservableObject {
         let opts: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         _ = AXIsProcessTrustedWithOptions(opts as CFDictionary)
         Task { await refresh() }
+        startPermissionPolling()
     }
 
     func openAccessibilitySettings() {
@@ -64,6 +65,7 @@ final class PermissionsManager: ObservableObject {
             _ = CGRequestScreenCaptureAccess()
         }
         Task { await refresh() }
+        startPermissionPolling()
     }
 
     func openScreenRecordingSettings() {
@@ -112,6 +114,18 @@ final class PermissionsManager: ObservableObject {
         }
     }
 
+    /// Polls every 2 s for up to 30 s after a permission request so TCC
+    /// propagation delays don't leave the UI stale.
+    private func startPermissionPolling() {
+        Task {
+            for _ in 0..<15 {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await measureAndPublish(retryIfMissing: false)
+                if !needsRequired { break }
+            }
+        }
+    }
+
     private func apply(accessibility: Bool, screen: Bool, notifications: Bool) {
         let changed = accessibilityGranted != accessibility
             || screenRecordingGranted != screen
@@ -123,6 +137,7 @@ final class PermissionsManager: ObservableObject {
         ud.set(accessibility,   forKey: CacheKey.accessibility)
         ud.set(screen,          forKey: CacheKey.screenRecording)
         ud.set(notifications,   forKey: CacheKey.notifications)
+        ud.synchronize()
         if changed {
             NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
         }
