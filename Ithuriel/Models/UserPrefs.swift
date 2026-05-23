@@ -47,7 +47,7 @@ final class UserPrefs {
          capturingEnabled: Bool = true,
          excludePathsRaw: String = ".env,secrets/,private/,.ssh/",
          targetToolsRaw: String = "claude-code,cursor,chatgpt,claude-desktop",
-         apiBaseURL: String = "https://api.ithuriel.dev",
+         apiBaseURL: String = FirebaseConfig.defaultAPIBaseURL,
          apiToken: String = "",
          firebaseWebAPIKey: String = "",
          agentEnabled: Bool = true,

@@ -39,12 +39,13 @@ struct ChatView: View {
                     sidebar
                         .frame(width: min(max(w * 0.22, 200), 280))
                         .transition(.move(edge: .leading).combined(with: .opacity))
-                    Divider().opacity(0.4)
+                    Divider().opacity(0.25)
                 }
                 conversation
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay(alignment: .topTrailing) { conversationOverlayControls }
                 if showInspectorAuto {
-                    Divider().opacity(0.4)
+                    Divider().opacity(0.25)
                     ContextWebView()
                         .frame(width: min(max(w * 0.25, isFullScreen ? 240 : 200), 360))
                         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
@@ -54,10 +55,8 @@ struct ChatView: View {
             .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showSidebar)
             .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showInspectorAuto)
         }
-        .navigationTitle("Ithuriel")
-        .toolbar { toolbarContent }
-        .toolbarBackground(.regularMaterial, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+        .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 520, minHeight: 420)
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
             isFullScreen = true
@@ -65,6 +64,29 @@ struct ChatView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willExitFullScreenNotification)) { _ in
             isFullScreen = false
         }
+    }
+
+    /// Single floating control in the top-right of the conversation pane —
+    /// replaces the previous opaque toolbar so the traffic lights sit flush
+    /// against the sidebar vibrancy.
+    private var conversationOverlayControls: some View {
+        HStack(spacing: 6) {
+            Button {
+                withAnimation(Motion.easeOut) { showInspector.toggle() }
+            } label: {
+                Image(systemName: showInspector ? "circle.grid.hex.fill" : "circle.grid.hex")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        Circle().fill(Color.primary.opacity(0.06))
+                    )
+            }
+            .buttonStyle(.plain)
+            .help("Toggle context graph")
+        }
+        .padding(.top, 16)
+        .padding(.trailing, 16)
     }
 
     // MARK: - Sidebar
@@ -151,7 +173,7 @@ struct ChatView: View {
             .keyboardShortcut("n", modifiers: .command)
         }
         .padding(.horizontal, 14)
-        .padding(.top, 14)
+        .padding(.top, 38)   // clear macOS traffic lights
         .padding(.bottom, 10)
     }
 
@@ -208,7 +230,7 @@ struct ChatView: View {
                         Color.clear.frame(height: 60).id("bottom")
                     }
                     .padding(.horizontal, 32)
-                    .padding(.top, 32)
+                    .padding(.top, 56)   // clear traffic lights
                 }
                 .onChange(of: agent.transcript.count) { _, _ in
                     withAnimation(Motion.easeOut) { proxy.scrollTo("bottom", anchor: .bottom) }
@@ -374,24 +396,6 @@ struct ChatView: View {
 
     private var canSubmit: Bool {
         !prompt.trimmingCharacters(in: .whitespaces).isEmpty && !agent.isRunning && !keyMissing
-    }
-
-    // MARK: - Toolbar
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigation) {
-            Button { newConversation() } label: { Label("New", systemImage: "square.and.pencil") }
-                .help("New conversation (⌘N)")
-        }
-        ToolbarItem(placement: .primaryAction) {
-            Button {
-                withAnimation(Motion.easeOut) { showInspector.toggle() }
-            } label: {
-                Label("Context Web", systemImage: showInspector ? "circle.grid.hex.fill" : "circle.grid.hex")
-            }
-            .help("Toggle context graph")
-        }
     }
 
     // MARK: - Actions

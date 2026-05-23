@@ -11,7 +11,7 @@
 "spotlight.headline.running"   = "Working on it…";
 "spotlight.subhead.needsKey"   = "Add your Gemini API key in Settings to begin";
 "spotlight.newChat"            = "New Chat";
-"spotlight.hotkey"             = "⌥Space to summon · hold to talk · ⎋ dismiss · ⌃⌥⌘. kill";
+"spotlight.hotkey"             = "⇧⌘Space to summon · hold to talk · ⎋ dismiss · ⌃⌥⌘. kill";
 
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";
@@ -51,7 +51,7 @@
 "settings.voice.cloud"         = "Google Cloud";
 "settings.voice.key"           = "Google Cloud API key (Speech-to-Text + Text-to-Speech)";
 "settings.voice.help"          = "Enable the Cloud Speech-to-Text and Text-to-Speech APIs on the project tied to this key. Leave blank to reuse your Gemini API key.";
-"settings.voice.shortcut"      = "Hold ⌥Space to talk. Release to send.";
+"settings.voice.shortcut"      = "Hold ⇧⌘Space to talk. Release to send.";
 
 /* Workspace picker */
 "settings.agent.workspacePick" = "Choose…";
@@ -60,10 +60,10 @@
 "settings.tab.howto"     = "How To";
 "howto.title"            = "How to use Ithuriel";
 "howto.subtitle"         = "A one-page reference. Most of the app is keyboard-driven.";
-"howto.summon.title"     = "⌥Space to summon";
-"howto.summon.body"      = "Tap Option-Space anywhere on your Mac to bring up the prompt. Type a task; press Return to send. ⎋ closes the prompt.";
-"howto.voice.title"      = "Hold ⌥Space to talk";
-"howto.voice.body"       = "Keep Option-Space held to speak. A 'Listening…' pill appears at the top of the screen. Release to send the transcribed message to the agent.";
+"howto.summon.title"     = "⇧⌘Space to summon";
+"howto.summon.body"      = "Tap Shift-Command-Space anywhere on your Mac to bring up the prompt. Type a task; press Return to send. ⎋ closes the prompt.";
+"howto.voice.title"      = "Hold ⇧⌘Space to talk";
+"howto.voice.body"       = "Keep Shift-Command-Space held to speak. A 'Listening…' pill appears at the top of the screen. Release to send the transcribed message to the agent.";
 "howto.chat.title"       = "Open the full chat window";
 "howto.chat.body"        = "Left-click the menu bar icon, or pick 'Open Chat…' from its menu. You get full conversation history, the composer, and the Context Web inspector.";
 "howto.kill.title"       = "Kill switch — ⌃⌥⌘.";

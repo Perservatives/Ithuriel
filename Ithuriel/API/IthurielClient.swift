@@ -29,7 +29,17 @@ final class IthurielClient {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         try await attachAuth(&req)
         req.httpBody = try JSONEncoder.ithuriel.encode(run)
-        _ = try await sendWithRetry(req)
+        do {
+            _ = try await sendWithRetry(req)
+        } catch {
+            // Fallback: write the run straight to Firestore so it still lands
+            // in the Firebase project even when the Cloud Run API isn't up.
+            if let uid = await currentFirebaseUID() {
+                try await DirectFirestoreClient.shared.writeAgentRun(run, userId: uid)
+                return
+            }
+            throw error
+        }
     }
 
     func postSnapshot(_ snapshot: ContextSnapshot) async throws {
@@ -39,7 +49,31 @@ final class IthurielClient {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         try await attachAuth(&req)
         req.httpBody = try JSONEncoder.ithuriel.encode(snapshot)
-        _ = try await sendWithRetry(req)
+        do {
+            _ = try await sendWithRetry(req)
+        } catch {
+            if let uid = await currentFirebaseUID() {
+                try await DirectFirestoreClient.shared.writeSnapshot(snapshot, userId: uid)
+                return
+            }
+            throw error
+        }
+    }
+
+    /// Decodes the `sub` claim from the current Firebase ID token without
+    /// pulling in a JWT library. Returns nil if not signed in or malformed.
+    private func currentFirebaseUID() async -> String? {
+        guard AuthService.shared.isSignedIn,
+              let token = try? await AuthService.shared.refreshIfNeeded() else { return nil }
+        let parts = token.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+        var payload = String(parts[1])
+        while payload.count % 4 != 0 { payload.append("=") }
+        payload = payload.replacingOccurrences(of: "-", with: "+")
+                         .replacingOccurrences(of: "_", with: "/")
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return (json["user_id"] as? String) ?? (json["sub"] as? String)
     }
 
     func fetchCurrent(format tool: AITool) async throws -> ContextSnapshot {

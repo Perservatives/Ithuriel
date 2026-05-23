@@ -12,7 +12,7 @@ End-to-end bootstrap for a fresh Google Cloud project. Run from the repo root.
 ## 1. Enable foundations
 
 ```bash
-export PROJECT_ID=ithuriel-prod-001
+export PROJECT_ID=synthesis-hack26svl-121   # Synthesis Hackathon-121
 export REGION=us-central1
 gcloud config set project "$PROJECT_ID"
 

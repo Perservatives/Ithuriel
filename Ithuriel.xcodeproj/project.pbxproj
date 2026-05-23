@@ -32,6 +32,7 @@
 		6A1C471A1484B83750B34683 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798888136F3708A12FED1754 /* ChatView.swift */; };
 		6BCF97A573F34542C6C3E33E /* AgentTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62F0DAD4ED5681A6BF676DE9 /* AgentTranscript.swift */; };
 		730CDD59A3C26E52C6330BAD /* AccessibilityTrust.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB2028565B930F9D21DB217 /* AccessibilityTrust.swift */; };
+		77225D3D643253F097D2DEDB /* DirectFirestoreClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75228747667389CA05EBB789 /* DirectFirestoreClient.swift */; };
 		7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7110B9703A844A2A9959E461 /* AsteriskBurst.swift */; };
 		7FE425BB03C9EE26996B9A0D /* HotkeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A558D5AC0692A4E0401F03 /* HotkeyMonitor.swift */; };
 		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
@@ -39,9 +40,9 @@
 		9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5C15C17AE947AC0627405D /* Persistence.swift */; };
 		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
 		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
+		9DCF63850075B045D0AB0BD7 /* FirebaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
 		A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */; };
-		B1BORDER001AGENTOVERLAY01 /* AgentControlBorderOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */; };
 		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
 		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
 		B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */; };
@@ -52,6 +53,7 @@
 		C271D9DEF081B17832502493 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 213FC4849EF6E0119C1C147D /* Localizable.strings */; };
 		CB29A29CEB8BCFF86588FA31 /* ContextWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5579BBE16D251774BB910528 /* ContextWebView.swift */; };
 		CD6F7F71367B04A8F2EE3062 /* AgentSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92021DBC0B300E353647494B /* AgentSpeaker.swift */; };
+		CDF2969D2885D49B6965CFDC /* AgentControlBorderOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */; };
 		D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */; };
 		D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */; };
 		D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7605591CD999D43F7A2A8EDB /* GeminiClient.swift */; };
@@ -81,6 +83,7 @@
 		2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielClient.swift; sourceTree = "<group>"; };
 		2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshot.swift; sourceTree = "<group>"; };
 		2D44D95499CACE7017FC62EF /* ChatWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatWindowController.swift; sourceTree = "<group>"; };
+		3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConfig.swift; sourceTree = "<group>"; };
 		3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchOrb.swift; sourceTree = "<group>"; };
 		3EBEE8650545308064AC12A2 /* GoogleSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSpeech.swift; sourceTree = "<group>"; };
 		4427B751EB29646F6406CC73 /* AppDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetector.swift; sourceTree = "<group>"; };
@@ -99,6 +102,7 @@
 		74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapture.swift; sourceTree = "<group>"; };
 		74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchBackdrop.swift; sourceTree = "<group>"; };
 		74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCapture.swift; sourceTree = "<group>"; };
+		75228747667389CA05EBB789 /* DirectFirestoreClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectFirestoreClient.swift; sourceTree = "<group>"; };
 		7605591CD999D43F7A2A8EDB /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
 		798888136F3708A12FED1754 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		87214B17B39813C77E861A0E /* HowToView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToView.swift; sourceTree = "<group>"; };
@@ -116,11 +120,11 @@
 		BA4F50A5F9CAF8EB220F61B3 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		BC5C15C17AE947AC0627405D /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		C2249AA5388624D12B6B6EF8 /* DoneBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneBanner.swift; sourceTree = "<group>"; };
+		C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentControlBorderOverlay.swift; sourceTree = "<group>"; };
 		CA5EE10DEB42E034DC91B4A2 /* EdgeGlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeGlow.swift; sourceTree = "<group>"; };
 		CE83920959D844A29A8407BB /* InjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionEngine.swift; sourceTree = "<group>"; };
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
-		B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentControlBorderOverlay.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
 		EA63356B176A586DBB19722B /* AgentStatusBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusBus.swift; sourceTree = "<group>"; };
 		EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
@@ -163,6 +167,7 @@
 		312BF67C24D7F4D2C7937B68 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */,
 				EA63356B176A586DBB19722B /* AgentStatusBus.swift */,
 				F82F492D381182E0EE2A44BA /* AppChromeBar.swift */,
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
@@ -180,7 +185,6 @@
 				14408B6A22B80B8942E8FC62 /* Motion.swift */,
 				5CEBCABAF164410E96E13023 /* SoundPlayer.swift */,
 				D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */,
-				B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */,
 				8A850458E38A42D3EC0AC36E /* SpotlightView.swift */,
 				EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */,
 			);
@@ -232,6 +236,8 @@
 			isa = PBXGroup;
 			children = (
 				896FE25EBB3002E071FDB502 /* AuthService.swift */,
+				75228747667389CA05EBB789 /* DirectFirestoreClient.swift */,
+				3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */,
 				49D3581883E9C02A57988A5E /* Keychain.swift */,
 				F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */,
 			);
@@ -393,6 +399,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				730CDD59A3C26E52C6330BAD /* AccessibilityTrust.swift in Sources */,
+				CDF2969D2885D49B6965CFDC /* AgentControlBorderOverlay.swift in Sources */,
 				6288D7616BB488699A9C0430 /* AgentController.swift in Sources */,
 				8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */,
 				570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */,
@@ -409,9 +416,11 @@
 				396F086C0CF63D9C88BD8EBF /* Color+Hex.swift in Sources */,
 				B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */,
 				CB29A29CEB8BCFF86588FA31 /* ContextWebView.swift in Sources */,
+				77225D3D643253F097D2DEDB /* DirectFirestoreClient.swift in Sources */,
 				212D2A651EE045225234EB43 /* DoneBanner.swift in Sources */,
 				0FE0B2203DA64B33E546F393 /* EdgeGlow.swift in Sources */,
 				431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */,
+				9DCF63850075B045D0AB0BD7 /* FirebaseConfig.swift in Sources */,
 				D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */,
 				E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */,
 				06AE543DAA319B00BE8C1835 /* GoogleSpeech.swift in Sources */,
@@ -438,7 +447,6 @@
 				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
 				29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */,
 				A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */,
-				B1BORDER001AGENTOVERLAY01 /* AgentControlBorderOverlay.swift in Sources */,
 				50349A6F36C24EDB38724B12 /* SpotlightView.swift in Sources */,
 				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
 				0A5836A5A1F3DA8300E3D733 /* UILayout.swift in Sources */,

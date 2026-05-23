@@ -45,12 +45,15 @@ final class ChatWindowController {
         w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         w.titlebarAppearsTransparent = true
         w.titleVisibility = .hidden
-        w.toolbarStyle = .unified
+        w.isMovableByWindowBackground = true
         w.isReleasedWhenClosed = false
         w.setContentSize(NSSize(width: 960, height: 640))
         w.center()
         w.minSize = NSSize(width: 520, height: 420)
-        w.backgroundColor = NSColor.windowBackgroundColor
+        // Transparent so the SwiftUI VisualEffectBlur shows through under the
+        // title bar — no white strip behind the traffic lights.
+        w.backgroundColor = .clear
+        w.isOpaque = false
         window = w
     }
 }
