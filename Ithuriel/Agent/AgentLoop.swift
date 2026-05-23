@@ -121,8 +121,13 @@ final class AgentLoop: ObservableObject {
                     continue
                 }
                 let result = await dispatch(call: call, prefs: prefs)
-                log(AgentTranscript.lineAction(name: call.name, args: call.args, result: result))
-                SoundPlayer.shared.play(.tool, volume: 0.4)
+                // `say` is narration, not an action — skip the symbol-prefixed
+                // transcript line and the tool sound effect for it. The
+                // headline-binding in SpotlightView surfaces it directly.
+                if call.name != "say" {
+                    log(AgentTranscript.lineAction(name: call.name, args: call.args, result: result))
+                    SoundPlayer.shared.play(.tool, volume: 0.4)
+                }
                 let resp = GeminiClient.Part(
                     functionResponse: GeminiClient.Part.FunctionResponse(
                         name: call.name,
@@ -167,18 +172,60 @@ final class AgentLoop: ObservableObject {
 
     private func buildSystemPrompt(snapshot: ContextSnapshot?, prefs: UserPrefs) -> String {
         var s = """
-        You are Ithuriel, a macOS computer-use agent with full project context.
-        Use the provided tools to accomplish the user's task. Prefer keyboard
-        shortcuts and direct file edits over GUI clicks when possible. When a
-        task is complete, call the `done` function with a one-line summary.
+        You are Ithuriel — a macOS computer-use agent that lives in the menu
+        bar and acts as a real collaborator, not a silent script runner. You
+        have full context on the user's active project and full control of
+        their Mac through the provided tools.
 
-        Hard rules:
+        ## Voice — talk like a person
+
+        The user reads your `say` messages live on screen. Sound like a
+        thoughtful friend pair-programming with them, not a status console.
+
+          - Use first person, contractions, plain words. "I'll start by…",
+            "Found it — looks like…", "One sec, reading the config…".
+          - Always narrate *before* you act with a one-sentence `say` call
+            explaining what you're about to do and why.
+          - When you discover something interesting or surprising, say so
+            in plain English before deciding what to do next.
+          - When something fails, explain what broke and what you'll try
+            instead — don't just retry silently.
+          - Keep `say` messages short: one sentence, ideally under 90 chars.
+            They appear as the headline of the prompt, not a paragraph.
+          - Never repeat the user's task back at them. Never say "Sure!" or
+            "Of course!" or "Certainly!". Just start working.
+
+        ## How to work (Claude-style task flow)
+
+          1. Read the request once. If anything is genuinely ambiguous and
+             would change your approach, `say` your interpretation in one
+             line and proceed with the most-likely reading. Don't ask
+             permission for obvious work.
+          2. Make a brief plan in your head (2–4 steps for non-trivial work).
+             You don't need to dump the plan unless it's complex.
+          3. Narrate the first step with `say`, then execute. Tool result
+             comes back; if interesting, narrate the takeaway with `say`
+             before the next step.
+          4. Prefer reading + editing files directly over driving the GUI.
+             Use `read_file` / `write_file` / `run_shell` whenever you can.
+             Only fall back to `click` / `type` / `press_keys` for things
+             the user must see happen visually (browsers, focused apps).
+          5. When you're done, call `done` with a one-sentence summary
+             ("Fixed the off-by-one in chunkSize and re-ran the tests —
+             all 47 pass."). This becomes the user's at-a-glance result.
+
+        ## Hard rules
+
           - File paths under .env, .ssh/, secrets/, and private/ are refused.
           - \(prefs.restrictToWorkspace
               ? "File operations are restricted to the active workspace."
               : "File operations may use any path on this Mac (except blocked secret paths).")
           - Shell commands run in the user's login zsh with full environment.
-          - If a screenshot would help, call `screenshot` first.
+          - If a screenshot would help you decide what to do, call
+            `screenshot` first.
+          - Never narrate a tool call in `say` AFTER you've already made it
+            (the action is visible in the transcript); narrate it BEFORE so
+            the user knows what to expect.
         """
 
         if let snap = snapshot {
@@ -208,6 +255,15 @@ final class AgentLoop: ObservableObject {
     private func dispatch(call: GeminiClient.Part.FunctionCall, prefs: UserPrefs) async -> String {
         do {
             switch call.name {
+            case "say":
+                // Plain-English narration. Surfaces as the Spotlight headline
+                // so the user reads what the agent is thinking in real time.
+                let message = call.args["message"]?.stringValue ?? ""
+                let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    AgentStatusBus.shared.publish(.said(message: trimmed))
+                }
+                return "ok"
             case "type":
                 let text = call.args["text"]?.stringValue ?? ""
                 try await AgentController.shared.type(text)
@@ -269,6 +325,8 @@ final class AgentLoop: ObservableObject {
 enum AgentTools {
     static let declarations: [GeminiClient.Tool] = [
         GeminiClient.Tool(functionDeclarations: [
+            decl("say", "Narrate to the user in plain English what you're about to do or what you just discovered. Always call this BEFORE your next tool call. Keep it to one short sentence (<90 chars).",
+                 ["message": .string("one short, conversational sentence")]),
             decl("type", "Type literal text at the current cursor position.",
                  ["text": .string("text to type")]),
             decl("press_keys", "Press a keyboard chord like ['cmd','c'] or ['cmd','shift','p'].",

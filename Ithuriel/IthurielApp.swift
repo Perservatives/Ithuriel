@@ -77,6 +77,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 switch event {
                 case .started:
                     self?.menuBarManager?.setStatus(.capturing)
+                case .said:
+                    // Live narration — surfaced inside SpotlightView via the
+                    // bus's @Published lastSpoken. No banner or status flip.
+                    break
                 case .finished(let summary):
                     DoneBannerController.shared.showFinished(summary: summary)
                 case .failed(let err):

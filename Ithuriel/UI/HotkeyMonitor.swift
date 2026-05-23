@@ -3,14 +3,14 @@ import Carbon.HIToolbox
 
 /// Global hotkey dispatcher for Ithuriel.
 ///
-/// - **⇧⌘Space (tap)** — toggle the Spotlight prompt (the small floating chat).
-/// - **⇧⌘Space (hold ≥ 320ms)** — switch into voice mode while held; release
-///   sends the transcribed utterance to the agent.
+/// - **⌃Space (tap)** — toggle the Spotlight prompt from anywhere.
+/// - **⌃Space (hold ≥ 320ms)** — voice mode while held; release submits the
+///   transcribed utterance.
 ///
-/// We use Shift+Command+Space because ⌃Space is the macOS input-switcher,
-/// ⌘Space is Spotlight Search, and ⌥Space inserts a non-breaking space in
-/// many text fields and is sometimes swallowed before our event tap sees it.
-/// ⇧⌘Space is consistently delivered.
+/// ⌃Space is also macOS's default "Select previous input source" shortcut. If
+/// you have multiple input sources, the system shortcut fires alongside ours
+/// (this tap is listen-only). Disable it in System Settings → Keyboard →
+/// Keyboard Shortcuts → Input Sources to silence the side-effect.
 ///
 /// Uses `CGEventTap` because Carbon `RegisterEventHotKey` only fires on
 /// key-down and we need to measure how long the user holds before deciding
@@ -67,10 +67,12 @@ final class HotkeyMonitor {
     private func handle(type: CGEventType, event: CGEvent) {
         let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
-        let isClean = flags.contains(.maskCommand)
-                   && flags.contains(.maskShift)
+        // Exactly Control held, no Command/Option/Shift — so this doesn't
+        // collide with ⇧⌃Space, ⌘⌃Space, ⌥⌃Space etc.
+        let isClean = flags.contains(.maskControl)
+                   && !flags.contains(.maskCommand)
                    && !flags.contains(.maskAlternate)
-                   && !flags.contains(.maskControl)
+                   && !flags.contains(.maskShift)
         switch type {
         case .keyDown:
             guard keyCode == kVK_Space, !pressed, isClean else { return }
@@ -79,8 +81,8 @@ final class HotkeyMonitor {
             guard keyCode == kVK_Space, pressed else { return }
             endPress()
         case .flagsChanged:
-            // Released either modifier without lifting space → treat as end.
-            if pressed && (!flags.contains(.maskCommand) || !flags.contains(.maskShift)) {
+            // Released Control without lifting Space → treat as end.
+            if pressed && !flags.contains(.maskControl) {
                 endPress()
             }
         default:
@@ -132,7 +134,7 @@ final class HotkeyMonitor {
             Task { @MainActor in HotkeyMonitor.shared.onSummonTap() }
             return noErr
         }, 1, &spec, nil, nil)
-        RegisterEventHotKey(UInt32(kVK_Space), UInt32(shiftKey | cmdKey), hotKeyID,
+        RegisterEventHotKey(UInt32(kVK_Space), UInt32(controlKey), hotKeyID,
                             GetApplicationEventTarget(), 0, &carbonHotKey)
     }
 }

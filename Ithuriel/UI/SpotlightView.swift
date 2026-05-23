@@ -7,6 +7,7 @@ import AppKit
 /// While the agent runs, the pill expands downward to reveal the transcript.
 struct SpotlightView: View {
     @ObservedObject var agent: AgentLoop
+    @ObservedObject private var statusBus = AgentStatusBus.shared
     @Environment(\.modelContext) private var context
     @Query private var prefsList: [UserPrefs]
     @FocusState private var fieldFocus: Bool
@@ -222,7 +223,23 @@ struct SpotlightView: View {
     // MARK: - Helpers
 
     private var headlineText: String {
-        if agent.isRunning { return NSLocalizedString("spotlight.headline.running", comment: "") }
+        // When the agent is working, surface its most recent plain-English
+        // narration (via the `say` tool) so the user reads what it's
+        // thinking, not a static "Working on it…". Fall back to the static
+        // copy until the first `say` arrives.
+        if agent.isRunning {
+            if let spoken = statusBus.lastSpoken, !spoken.isEmpty {
+                return spoken
+            }
+            return NSLocalizedString("spotlight.headline.running", comment: "")
+        }
+        // After a run finishes, briefly keep the agent's last spoken summary
+        // visible so the user reads it instead of jumping back to the idle
+        // greeting.
+        if let spoken = statusBus.lastSpoken, !spoken.isEmpty,
+           !agent.transcript.isEmpty {
+            return spoken
+        }
         return NSLocalizedString("spotlight.headline.idle", comment: "")
     }
 
