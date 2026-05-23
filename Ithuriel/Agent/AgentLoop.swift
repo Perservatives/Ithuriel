@@ -122,7 +122,17 @@ final class AgentLoop: ObservableObject {
         } else {
             related = []
         }
-        let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs, related: related)
+        // Local KNN over the Firestore vector index. Independent of the
+        // Cloud Run RAG path above — uses the same `embedding` field shape
+        // and is wrapped so any failure (no key, no network, no index)
+        // silently omits the section instead of breaking the run.
+        let localNeighbours = await fetchLocalNeighbours(userTask: userTask, prefs: prefs, container: container)
+        let systemPrompt = buildSystemPrompt(
+            snapshot: snapshot,
+            prefs: prefs,
+            related: related,
+            localNeighbours: localNeighbours
+        )
 
         // Carry prior turns in the same thread forward so Gemini sees the
         // full conversation, not just the latest user message.
@@ -335,7 +345,43 @@ final class AgentLoop: ObservableObject {
         Log.info("[agent] \(line)")
     }
 
-    private func buildSystemPrompt(snapshot: ContextSnapshot?, prefs: UserPrefs, related: [IthurielClient.RelatedSnapshot] = []) -> String {
+    /// Local vector-DB lookup. Embeds the user's task with Gemini and asks
+    /// Firestore for the nearest snapshots in the user's subcollection.
+    /// Returns up to 3 short summaries; any failure yields `[]` so the
+    /// agent runs unaugmented when the local KNN path is unavailable.
+    private func fetchLocalNeighbours(userTask: String,
+                                      prefs: UserPrefs,
+                                      container: ModelContainer) async -> [String] {
+        guard !prefs.localOnly, AuthService.shared.isSignedIn,
+              !prefs.geminiApiKey.isEmpty else { return [] }
+        do {
+            let hits = try await VectorSearch.nearest(query: userTask, k: 3, prefs: prefs)
+            var out: [String] = []
+            for hit in hits.prefix(3) {
+                guard let uuid = UUID(uuidString: hit.id) else {
+                    out.append("snapshot \(hit.id) (score \(String(format: "%.3f", hit.score)))")
+                    continue
+                }
+                if let snap = await CachedSnapshot.find(id: uuid, in: container) {
+                    let branch = snap.gitState?.branch ?? "?"
+                    let commit = snap.gitState?.lastCommit ?? ""
+                    let shortCommit = commit.isEmpty ? "" : " — \(commit.prefix(80))"
+                    out.append("[\(branch)] \(snap.workspacePath)\(shortCommit)")
+                } else {
+                    out.append("snapshot \(hit.id) (score \(String(format: "%.3f", hit.score)))")
+                }
+            }
+            return out
+        } catch {
+            Log.debug("Local VectorSearch failed (omitting section): \(error)")
+            return []
+        }
+    }
+
+    private func buildSystemPrompt(snapshot: ContextSnapshot?,
+                                   prefs: UserPrefs,
+                                   related: [IthurielClient.RelatedSnapshot] = [],
+                                   localNeighbours: [String] = []) -> String {
         var s = """
         You are Ithuriel — a macOS computer-use agent that lives in the menu
         bar and acts as a real collaborator, not a silent script runner. You
@@ -410,6 +456,13 @@ final class AgentLoop: ObservableObject {
             }
         } else {
             s += "\n\n(No workspace context yet — capture is still warming up.)"
+        }
+
+        if !localNeighbours.isEmpty {
+            s += "\n\nRelated past snapshots:"
+            for line in localNeighbours.prefix(3) {
+                s += "\n  - \(line)"
+            }
         }
 
         return s

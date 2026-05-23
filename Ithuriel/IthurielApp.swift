@@ -246,11 +246,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let (redacted, redactionCount) = Redactor.redact(snapshot: raw, prefs: prefs)
         Log.debug("Capture: source=\(redacted.source.rawValue) edits=\(redacted.recentEdits.count) redactions=\(redactionCount)")
 
-        await CachedSnapshot.persist(redacted, in: container)
+        // Compute a 768-d Gemini embedding for this snapshot when the user
+        // has a key configured. The vector is persisted alongside the cached
+        // payload so it survives restarts, and pushed straight to Firestore
+        // as a native `vectorValue` so the existing composite index matches.
+        var embedding: [Float] = []
+        if !prefs.geminiApiKey.isEmpty {
+            let text = Self.snapshotEmbeddingText(redacted)
+            do {
+                embedding = try await GeminiEmbed.embed(
+                    text: text,
+                    apiKey: prefs.geminiApiKey,
+                    dimensions: 768,
+                    taskType: .retrievalDocument
+                )
+            } catch {
+                Log.error("Snapshot embedding failed: \(error). Continuing without vector.")
+            }
+        }
+
+        await CachedSnapshot.persist(redacted, in: container, embedding: embedding)
 
         if prefs.localOnly {
             Log.debug("Local-only mode: skipping network upload")
             return
+        }
+
+        // Push the snapshot + embedding directly to Firestore under
+        // users/{uid}/snapshots/{id}. This is independent of the Cloud Run
+        // Pub/Sub pipeline — if the user is signed in and we computed a
+        // vector, the local path lands a document with `embedding` set.
+        if !embedding.isEmpty, AuthService.shared.isSignedIn {
+            if let uid = await Self.currentFirebaseUID() {
+                do {
+                    try await DirectFirestoreClient.shared.writeSnapshotWithEmbedding(
+                        redacted, embedding: embedding, userId: uid
+                    )
+                } catch {
+                    Log.error("Direct vector upsert failed: \(error)")
+                }
+            }
         }
 
         if kIthurielDebug {
@@ -264,6 +299,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             Log.error("Snapshot upload failed: \(error). Will retry on next capture.")
         }
+    }
+
+    /// Compact text representation of a snapshot used as the embedding
+    /// input. Capped around ~2000 chars so we stay well inside Gemini's
+    /// per-request limit while still carrying enough signal (workspace,
+    /// branch, last commit, changed files, recent terminal commands).
+    static func snapshotEmbeddingText(_ s: ContextSnapshot) -> String {
+        var lines: [String] = []
+        lines.append("workspace: \(s.workspacePath)")
+        if let g = s.gitState {
+            lines.append("branch: \(g.branch)")
+            lines.append("last commit: \(g.lastCommit)")
+            let files = g.changedFiles.prefix(5).joined(separator: ", ")
+            if !files.isEmpty { lines.append("changed files: \(files)") }
+        }
+        if !s.recentEdits.isEmpty {
+            let edits = s.recentEdits.prefix(5).map { ($0.path as NSString).lastPathComponent }
+            lines.append("recent edits: \(edits.joined(separator: ", "))")
+        }
+        if !s.terminalHistory.isEmpty {
+            let cmds = s.terminalHistory.suffix(5).joined(separator: " | ")
+            lines.append("recent shell: \(cmds)")
+        }
+        let joined = lines.joined(separator: "\n")
+        if joined.count <= 2000 { return joined }
+        return String(joined.prefix(2000))
+    }
+
+    /// Decodes the Firebase uid (sub claim) from the current ID token —
+    /// same trick `IthurielClient` uses to avoid pulling in a JWT lib.
+    static func currentFirebaseUID() async -> String? {
+        guard AuthService.shared.isSignedIn,
+              let token = try? await AuthService.shared.refreshIfNeeded() else { return nil }
+        let parts = token.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+        var payload = String(parts[1])
+        while payload.count % 4 != 0 { payload.append("=") }
+        payload = payload.replacingOccurrences(of: "-", with: "+")
+                         .replacingOccurrences(of: "_", with: "/")
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return (json["user_id"] as? String) ?? (json["sub"] as? String)
     }
 }
 

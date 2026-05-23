@@ -45,6 +45,7 @@
 		7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7110B9703A844A2A9959E461 /* AsteriskBurst.swift */; };
 		7FE425BB03C9EE26996B9A0D /* HotkeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A558D5AC0692A4E0401F03 /* HotkeyMonitor.swift */; };
 		81BA0C5039B72971D78EE4A9 /* IntentClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0EEC2CEE1992046B06F6088 /* IntentClassifier.swift */; };
+		8950974566BACE175241D850 /* VectorSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA1E6CC486C3823C343BC5E /* VectorSearch.swift */; };
 		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
 		98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */; };
 		9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5C15C17AE947AC0627405D /* Persistence.swift */; };
@@ -127,6 +128,7 @@
 		46A558D5AC0692A4E0401F03 /* HotkeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyMonitor.swift; sourceTree = "<group>"; };
 		49D3581883E9C02A57988A5E /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		4B1F72DB31AFD0F593D171EF /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		4EA1E6CC486C3823C343BC5E /* VectorSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorSearch.swift; sourceTree = "<group>"; };
 		516597D218E7C22D12578E08 /* IthurielApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielApp.swift; sourceTree = "<group>"; };
 		5208EF87EDAF04F6AD87121B /* CapturePill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePill.swift; sourceTree = "<group>"; };
 		536821083CCDFD430569FFB9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 				E21063B15C7E5CB6596833E4 /* SecretManagerCLI.swift */,
 				28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */,
 				F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */,
+				4EA1E6CC486C3823C343BC5E /* VectorSearch.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -586,6 +589,7 @@
 				0A5836A5A1F3DA8300E3D733 /* UILayout.swift in Sources */,
 				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,
 				9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */,
+				8950974566BACE175241D850 /* VectorSearch.swift in Sources */,
 				056B4D47D1554F9644B01567 /* VoiceController.swift in Sources */,
 				5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */,
 			);

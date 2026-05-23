@@ -36,6 +36,38 @@ final class DirectFirestoreClient {
         try await Self.send(req)
     }
 
+    /// Writes a snapshot document under `users/{uid}/snapshots/{id}` with the
+    /// 768-dim `embedding` stored as Firestore's native `vectorValue`. Matches
+    /// the field name used by the Python snapshot-processor (`embedding`) so
+    /// the existing composite vector index (`CICAgJiUsZIK`) covers it.
+    func writeSnapshotWithEmbedding(_ snapshot: ContextSnapshot,
+                                    embedding: [Float],
+                                    userId: String) async throws {
+        let token = try await AuthService.shared.refreshIfNeeded()
+        let id    = snapshot.id.uuidString
+        let path  = "projects/\(FirebaseConfig.projectId)/databases/(default)/documents/users/\(userId)/snapshots/\(id)"
+        let url   = URL(string: "https://firestore.googleapis.com/v1/\(path)?updateMask.fieldPaths=*")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "PATCH"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var doc = Self.encode(snapshot: snapshot, userId: userId)
+        if var fields = doc["fields"] as? [String: Any] {
+            fields["embedding"] = Self.vectorValue(embedding)
+            doc["fields"] = fields
+        }
+        req.httpBody = try JSONSerialization.data(withJSONObject: doc)
+        try await Self.send(req)
+    }
+
+    /// Firestore REST vector encoding: every component becomes a tagged
+    /// `doubleValue`. Stored under `vectorValue.values` so the `findNearest`
+    /// query operator can match it against the composite vector index.
+    private static func vectorValue(_ floats: [Float]) -> [String: Any] {
+        let values: [[String: Any]] = floats.map { ["doubleValue": Double($0)] }
+        return ["vectorValue": ["values": values]]
+    }
+
     func writeAgentRun(_ run: AgentRunRecord, userId: String) async throws {
         let token = try await AuthService.shared.refreshIfNeeded()
         let id    = run.id.uuidString

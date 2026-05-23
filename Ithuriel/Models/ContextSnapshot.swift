@@ -73,18 +73,23 @@ final class CachedSnapshot {
     @Attribute(.unique) var id: UUID
     var capturedAt: Date
     var payload: Data
+    /// 768-dim Gemini embedding for the snapshot's compact text representation.
+    /// Empty until the periodic capture computes it; survives restarts so the
+    /// local KNN helper can re-rank against past sessions without re-embedding.
+    var embedding: [Float] = []
 
-    init(id: UUID, capturedAt: Date, payload: Data) {
+    init(id: UUID, capturedAt: Date, payload: Data, embedding: [Float] = []) {
         self.id = id
         self.capturedAt = capturedAt
         self.payload = payload
+        self.embedding = embedding
     }
 
     @MainActor
-    static func persist(_ snapshot: ContextSnapshot, in container: ModelContainer) async {
+    static func persist(_ snapshot: ContextSnapshot, in container: ModelContainer, embedding: [Float] = []) async {
         guard let data = try? JSONEncoder.ithuriel.encode(snapshot) else { return }
         let context = container.mainContext
-        let row = CachedSnapshot(id: snapshot.id, capturedAt: snapshot.capturedAt, payload: data)
+        let row = CachedSnapshot(id: snapshot.id, capturedAt: snapshot.capturedAt, payload: data, embedding: embedding)
         context.insert(row)
         do {
             try pruneOldEntries(in: context, keeping: 50)
@@ -92,6 +97,17 @@ final class CachedSnapshot {
         } catch {
             Log.error("CachedSnapshot persist failed: \(error)")
         }
+    }
+
+    /// Look up a previously cached snapshot by id (used by the local
+    /// VectorSearch helper to render summaries for nearest matches).
+    @MainActor
+    static func find(id: UUID, in container: ModelContainer) -> ContextSnapshot? {
+        let context = container.mainContext
+        var descriptor = FetchDescriptor<CachedSnapshot>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        guard let row = try? context.fetch(descriptor).first else { return nil }
+        return try? JSONDecoder.ithuriel.decode(ContextSnapshot.self, from: row.payload)
     }
 
     @MainActor
