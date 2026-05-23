@@ -16,8 +16,13 @@ struct AppChromeBar: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: compact ? 10 : 12) {
                 Button(action: { AppRouter.shared.openChat() }) {
-                    Label(NSLocalizedString("spotlight.openChat", comment: ""), systemImage: "bubble.left.and.bubble.right.fill")
-                        .labelStyle(compact ? .iconOnly : .titleAndIcon)
+                    if compact {
+                        Label(NSLocalizedString("spotlight.openChat", comment: ""), systemImage: "bubble.left.and.bubble.right.fill")
+                            .labelStyle(.iconOnly)
+                    } else {
+                        Label(NSLocalizedString("spotlight.openChat", comment: ""), systemImage: "bubble.left.and.bubble.right.fill")
+                            .labelStyle(.titleAndIcon)
+                    }
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -46,8 +51,13 @@ struct AppChromeBar: View {
                     .foregroundStyle(.tertiary)
 
                 Button(action: { AppRouter.shared.openSettings() }) {
-                    Label(NSLocalizedString("status.settings", comment: ""), systemImage: "gearshape.fill")
-                        .labelStyle(compact ? .iconOnly : .titleAndIcon)
+                    if compact {
+                        Label(NSLocalizedString("status.settings", comment: ""), systemImage: "gearshape.fill")
+                            .labelStyle(.iconOnly)
+                    } else {
+                        Label(NSLocalizedString("status.settings", comment: ""), systemImage: "gearshape.fill")
+                            .labelStyle(.titleAndIcon)
+                    }
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)

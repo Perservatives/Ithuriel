@@ -41,9 +41,7 @@ final class AppRouter {
 
     /// Copies the latest workspace context to the clipboard. Returns a user-facing status line.
     func copyContext(modelContext: ModelContext, prefs: UserPrefs) async -> String {
-        guard let container = modelContext.container else {
-            return NSLocalizedString("status.copy.empty", comment: "")
-        }
+        let container = modelContext.container
         let snap: ContextSnapshot?
         if let cached = await CachedSnapshot.latest(in: container) {
             snap = cached
