@@ -52,7 +52,6 @@ final class SpotlightCoordinator {
         window.contentView = NSHostingView(rootView:
             LaunchOrbView(onComplete: { [weak self] in
                 self?.dismissLaunch()
-                self?.summon()
             })
         )
         window.orderFrontRegardless()
@@ -80,6 +79,17 @@ final class SpotlightCoordinator {
             dimmerWindow?.animator().alphaValue = 1
         }
         spotlightIsOpen = true
+    }
+
+    /// Hides Spotlight/launch UI immediately so menu-bar popovers are not covered.
+    func dismissImmediately() {
+        spotlightIsOpen = false
+        launchWindow?.orderOut(nil)
+        launchWindow = nil
+        dimmerWindow?.orderOut(nil)
+        spotlightWindow?.orderOut(nil)
+        spotlightWindow?.alphaValue = 1
+        dimmerWindow?.alphaValue = 1
     }
 
     func dismiss() {

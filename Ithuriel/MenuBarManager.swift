@@ -6,14 +6,16 @@ enum CaptureStatus {
     case capturing, paused, error
 }
 
-/// Left-click → dropdown popover. Right-click / control-click → context menu.
-/// ⌘⇧Space still summons the center-screen Spotlight via SpotlightCoordinator.
-@MainActor
+/// Left-click → dropdown popover under the menu bar icon.
+/// Right-click → context menu. ⌘⇧Space → center-screen Spotlight.
 final class MenuBarManager: NSObject, NSPopoverDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private var rightClickMonitor: Any?
     private var outsideClickMonitor: Any?
+    private var ignoreOutsideCloseUntil = Date.distantPast
+
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
     private weak var container: ModelContainer?
@@ -32,13 +34,25 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
 
         if let button = item.button {
             button.target = self
-            button.action = #selector(buttonClicked(_:))
-            button.sendAction(on: [.leftMouseDown, .rightMouseDown])
+            button.action = #selector(statusItemLeftClicked(_:))
+            // Default sendAction mask is leftMouseDown — do not add rightMouseDown here;
+            // it breaks left-click delivery on many macOS versions.
+        }
+
+        rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            guard let self, let button = self.statusItem?.button,
+                  let buttonWindow = button.window,
+                  event.window === buttonWindow else { return event }
+            self.showContextMenu(from: button, event: event)
+            return nil
         }
 
         let popover = NSPopover()
         popover.behavior = .transient
+        popover.animates = true
         popover.contentSize = NSSize(width: 380, height: 480)
+        popover.delegate = self
+
         if let container = container, let loop = agentLoop {
             let root = StatusBarView(
                 agent: loop,
@@ -46,15 +60,24 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
                 onQuit: { NSApp.terminate(nil) }
             )
             .modelContainer(container)
-            popover.contentViewController = NSHostingController(rootView: root)
+            let host = NSHostingController(rootView: root)
+            host.sizingOptions = [.preferredContentSize]
+            popover.contentViewController = host
+        } else {
+            Log.error("MenuBarManager: missing container or agentLoop — popover has no content")
         }
-        popover.delegate = self
+
         self.popover = popover
+    }
+
+    deinit {
+        if let rightClickMonitor { NSEvent.removeMonitor(rightClickMonitor) }
+        stopOutsideClickMonitor()
     }
 
     func showSettings() {
         guard let container = container else { return }
-        popover?.performClose(nil)
+        closePopover()
 
         if settingsWindow == nil {
             let root = SettingsView().modelContainer(container)
@@ -80,6 +103,8 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         refreshIcon()
     }
 
+    // MARK: - Status item
+
     private func refreshIcon() {
         guard let button = statusItem?.button else { return }
         let symbolName: String
@@ -93,29 +118,40 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         button.image?.isTemplate = true
     }
 
-    @objc private func buttonClicked(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else {
-            togglePopover()
-            return
-        }
-        let isRightClick = event.type == .rightMouseDown
-            || event.type == .rightMouseUp
-            || event.modifierFlags.contains(.control)
-        if isRightClick {
-            showContextMenu(from: sender, event: event)
-        } else {
-            togglePopover()
-        }
+    @objc private func statusItemLeftClicked(_ sender: Any?) {
+        togglePopover()
     }
 
-    @objc private func togglePopover() {
-        guard let popover = popover, let button = statusItem?.button else { return }
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            NSApp.activate(ignoringOtherApps: true)
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    private func togglePopover() {
+        guard let popover = popover, let button = statusItem?.button else {
+            Log.error("MenuBarManager: togglePopover missing popover or button")
+            return
         }
+
+        if popover.isShown {
+            closePopover()
+            return
+        }
+
+        // Full-screen Spotlight dimmer sits above normal popovers — hide it first.
+        MainActor.assumeIsolated {
+            SpotlightCoordinator.shared.dismissImmediately()
+        }
+
+        guard popover.contentViewController != nil else {
+            Log.error("MenuBarManager: popover has no contentViewController")
+            return
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        button.highlight(true)
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        statusItem?.button?.highlight(false)
+        stopOutsideClickMonitor()
     }
 
     private func showContextMenu(from button: NSStatusBarButton, event: NSEvent) {
@@ -142,8 +178,8 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     }
 
     @objc private func menuSummon() {
-        popover?.performClose(nil)
-        SpotlightCoordinator.shared.summon()
+        closePopover()
+        Task { @MainActor in SpotlightCoordinator.shared.summon() }
     }
 
     @objc private func menuToggleMute() { SoundPlayer.shared.muted.toggle() }
@@ -153,17 +189,28 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     // MARK: - NSPopoverDelegate
 
     func popoverDidShow(_ notification: Notification) {
+        ignoreOutsideCloseUntil = Date().addingTimeInterval(0.35)
+        // Install after the opening click finishes so we don't instantly self-close.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.installOutsideClickMonitor()
+        }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        statusItem?.button?.highlight(false)
+        stopOutsideClickMonitor()
+    }
+
+    private func installOutsideClickMonitor() {
+        guard outsideClickMonitor == nil, popover?.isShown == true else { return }
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             self?.closePopoverIfClickedOutside()
         }
     }
 
-    func popoverDidClose(_ notification: Notification) {
-        stopOutsideClickMonitor()
-    }
-
     private func closePopoverIfClickedOutside() {
         guard let popover = popover, popover.isShown else { return }
+        guard Date() >= ignoreOutsideCloseUntil else { return }
 
         if let button = statusItem?.button, let window = button.window {
             let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
@@ -172,7 +219,13 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
             }
         }
 
-        popover.performClose(nil)
+        if let popoverWindow = popover.contentViewController?.view.window {
+            if popoverWindow.frame.contains(NSEvent.mouseLocation) {
+                return
+            }
+        }
+
+        closePopover()
     }
 
     private func stopOutsideClickMonitor() {

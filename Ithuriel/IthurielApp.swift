@@ -52,9 +52,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         SpotlightCoordinator.shared.installSummonHotkey()
         requestAccessibilityIfNeeded()
 
-        // Dramatic boot — orb spins up, hands off to the floating prompt.
+        // Boot animation only — menubar popover is the primary surface.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            SpotlightCoordinator.shared.playLaunchThenSummon()
+            Task { @MainActor in SpotlightCoordinator.shared.playLaunchThenSummon() }
         }
 
         let monitor = WorkspaceMonitor(container: modelContainer)
