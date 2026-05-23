@@ -1,0 +1,57 @@
+/* Menu bar */
+"menubar.icon.a11y" = "Ithuriel status";
+
+/* Status popover */
+"status.capturing"             = "Capturing";
+"status.workspace"             = "Active workspace";
+"status.workspace.none"        = "No workspace detected";
+"status.lastSnapshot"          = "Last snapshot";
+"status.lastSnapshot.none"     = "No snapshots yet";
+"status.copy"                  = "Copy context";
+"status.settings"              = "Settings…";
+"status.quit"                  = "Quit Ithuriel";
+"status.agentControl.armed"    = "Agent control armed";
+
+/* Settings tabs */
+"settings.tab.general"         = "General";
+"settings.tab.privacy"         = "Privacy";
+"settings.tab.integrations"    = "Integrations";
+"settings.tab.advanced"        = "Advanced";
+
+/* General */
+"settings.capturing"           = "Enable passive capture";
+"settings.localOnly"           = "Local-only mode";
+"settings.localOnly.detail"    = "When on, no context leaves this Mac. SwiftData stores snapshots locally and on-device summarization is used.";
+
+/* Privacy */
+"settings.redactKeys"          = "Redact API keys and secrets before upload";
+"settings.excludePaths"        = "Exclude paths (comma-separated)";
+"settings.excludePaths.help"   = "Any file whose path contains one of these fragments is skipped entirely.";
+"settings.accessibility.title" = "Accessibility permission required";
+"settings.accessibility.body"  = "Without Accessibility, Ithuriel can still capture context but cannot type-inject into AI tools. Clipboard injection will still work.";
+"settings.accessibility.open"  = "Open System Settings";
+
+/* Integrations */
+"settings.targets"             = "Target AI tools";
+"settings.targets.field"       = "Tool list";
+"settings.targets.help"        = "Comma-separated list. Supported: claude-code, cursor, chatgpt, claude-desktop, copilot-chat, gemini.";
+"settings.api"                 = "Ithuriel API";
+"settings.api.baseURL"         = "Base URL";
+"settings.api.token"           = "Bearer token";
+
+/* Advanced — agent control */
+"settings.agentControl"        = "Enable agent control (opt-in)";
+"settings.agentControl.help"   = "Lets Ithuriel focus a target AI tool and paste context on your behalf — only when you explicitly invoke a hand-off from the menu bar. Off by default.";
+
+/* Injection notifications */
+"inject.ready.title"           = "Context ready";
+"inject.ready.body"            = "Paste with ⌘V into %@.";
+
+/* Agent control confirmations */
+"agent.confirm.title"          = "Ithuriel wants to take an action";
+"agent.confirm.body"           = "Submit the prepared context now? Reason: %@";
+"agent.confirm.allow"          = "Allow";
+"agent.confirm.cancel"         = "Cancel";
+"agent.reason.focus"           = "bring target AI tool to the front";
+"agent.reason.paste"           = "paste the prepared context";
+"agent.reason.submit"          = "press Return to submit";

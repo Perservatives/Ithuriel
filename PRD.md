@@ -146,6 +146,28 @@ Every context snapshot is persisted to Firestore with a timestamp. The web dashb
 
 Developers on the same Git repository can opt-in to a shared context channel. When one developer makes an architectural decision or resolves a complex bug, the context is broadcast to teammates.
 
+### 4.8 Agent control (opt-in computer-use hand-off) `[v1.1]`
+
+> Inspired by openclaw — but scoped strictly to context hand-off. Off by default.
+
+When the user explicitly invokes a "hand off to <tool>" command from the menu bar (or a registered URL scheme), Ithuriel can take three narrowly-defined actions on the user's behalf:
+
+| Action | Description | Confirmation |
+|---|---|---|
+| `focusTool` | Bring the target AI tool to the foreground via `NSRunningApplication.activate` | Silent (feature gate covers consent) |
+| `pasteContext` | Post `⌘V` to the frontmost app via `CGEvent` | Silent |
+| `submitPrompt` | Post `Return` to send the prompt | **Modal NSAlert confirmation required** |
+
+**Hard constraints:**
+
+- Disabled until the user toggles **Settings → Advanced → Enable agent control**.
+- Requires Accessibility permission; refuses with `AgentControlError.accessibilityDenied` otherwise.
+- Never triggered from background monitoring. Only fires on explicit user invocation.
+- The `submitPrompt` action always shows an `NSAlert` for one-shot consent.
+- Implemented in `Ithuriel/AgentControl/AgentController.swift`. No third-party agent framework is bundled — this remains a pure Mac app.
+
+This feature exists so a user can press one hotkey and have their freshly-prepared context automatically land in the right tool, ready to send — without giving up control of their machine.
+
 ---
 
 ## 5. Technical Architecture
@@ -179,7 +201,7 @@ Cloud Function (Python)
 
 | Component | Technology | Responsibility |
 |---|---|---|
-| macOS Agent | Swift 5.9 / SwiftUI | Menu bar app. Monitors FSEvents, NSWorkspace, terminal. Captures context, sends to API, injects into AI tools. |
+| macOS Agent | Swift 5.9 / SwiftUI | Menu bar app. Monitors FSEvents, NSWorkspace, terminal. Captures context, sends to API, injects into AI tools. Optional `AgentControl` module for explicit, user-invoked computer-use hand-off (opt-in, see 4.8). |
 | VS Code Extension | TypeScript / VS Code API | Captures open file tree, cursor position, recent edits, workspace config. Posts to API on change events. |
 | Ithuriel API | Node.js + TypeScript / Cloud Run | REST + WebSocket API. Receives snapshots, triggers processing pipeline, serves formatted context. |
 | Context Processor | Python / Cloud Functions gen2 | Subscribes to Pub/Sub. Calls Vertex AI. Writes to Firestore + GCS. |

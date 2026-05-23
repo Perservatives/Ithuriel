@@ -1,6 +1,15 @@
 # Local tool state — not for the repo
 .claude-flow/
+.agents/
+.observer.lock
 .DS_Store
+
+# Xcode / SwiftPM
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.build/
+Package.resolved
 
 # Env / secrets
 .env
