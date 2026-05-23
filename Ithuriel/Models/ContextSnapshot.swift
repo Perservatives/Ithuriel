@@ -28,6 +28,14 @@ struct ContextSnapshot: Codable, Identifiable, Sendable {
     let recentEdits: [EditRecord]
     let terminalHistory: [String]
     let activeFiles: [String]
+
+    // Ambient capture fields (optional)
+    /// Clipboard contents — set only when the pasteboard holds code-shaped text.
+    var clipboard: String?
+    /// Bundle identifiers of regular (non-agent/accessory) running applications.
+    var openApps: [String] = []
+    /// Bundle identifier of the frontmost application.
+    var frontmostApp: String?
 }
 
 extension ContextSnapshot {

@@ -18,6 +18,7 @@ final class AgentStatusBus: ObservableObject {
         case finished(summary: String)
         case failed(error: String)
         case stopped
+        case captured(workspace: String)   // context capture completed
     }
 
     @Published private(set) var isRunning = false
@@ -47,6 +48,8 @@ final class AgentStatusBus: ObservableObject {
             lastSpoken = summary
         case .failed, .stopped:
             isRunning = false
+        case .captured:
+            break   // purely a notification; does not change run state
         }
         for listener in listeners { listener(event) }
     }

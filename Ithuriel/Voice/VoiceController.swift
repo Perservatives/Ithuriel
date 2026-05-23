@@ -44,22 +44,31 @@ final class VoiceController {
               let loop = agentLoop else { return }
         Task {
             let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
-            let key = prefs.googleCloudAPIKey.isEmpty ? prefs.geminiApiKey : prefs.googleCloudAPIKey
-            guard !key.isEmpty else {
-                Log.error("No Google Cloud key for STT.")
+            guard let text = await Self.transcribe(pcm16: data, prefs: prefs), !text.isEmpty else {
+                Log.error("STT: no key configured or all backends failed.")
                 return
             }
+            Log.info("STT: \(text)")
+            await loop.run(task: text)
+        }
+    }
+
+    /// Two-tier STT. Primary: OpenAI Whisper. Fallback: Google Cloud Speech.
+    private static func transcribe(pcm16: Data, prefs: UserPrefs) async -> String? {
+        if !prefs.openAIAPIKey.isEmpty {
             do {
-                let text = try await GoogleSpeech.transcribe(pcm16: data, apiKey: key)
-                guard !text.isEmpty else { return }
-                Log.info("STT: \(text)")
-                // AgentLoop already routes the final summary through
-                // AgentSpeaker (which honors spokenResponsesEnabled). The
-                // earlier inline speak() call here resulted in double-playback.
-                await loop.run(task: text)
+                return try await OpenAISpeech.transcribe(pcm16: pcm16, apiKey: prefs.openAIAPIKey)
             } catch {
-                Log.error("Voice run failed: \(error)")
+                Log.info("OpenAI Whisper unavailable (\(error)) — trying Google STT")
             }
+        }
+        let googleKey = prefs.googleCloudAPIKey.isEmpty ? prefs.geminiApiKey : prefs.googleCloudAPIKey
+        guard !googleKey.isEmpty else { return nil }
+        do {
+            return try await GoogleSpeech.transcribe(pcm16: pcm16, apiKey: googleKey)
+        } catch {
+            Log.error("All STT backends failed: \(error)")
+            return nil
         }
     }
 

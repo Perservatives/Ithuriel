@@ -87,7 +87,16 @@ enum Redactor {
             )
         }
 
-        let cleaned = ContextSnapshot(
+        // Ambient fields
+        var cleanClipboard: String? = nil
+        if let cb = snapshot.clipboard {
+            let scrubbed = scrub(cb)
+            cleanClipboard = scrubbed.isEmpty ? nil : scrubbed
+        }
+        let cleanOpenApps = snapshot.openApps   // bundle IDs contain no secrets
+        let cleanFrontmost = snapshot.frontmostApp  // bundle ID — no secrets
+
+        var cleaned = ContextSnapshot(
             id: snapshot.id,
             capturedAt: snapshot.capturedAt,
             source: snapshot.source,
@@ -97,6 +106,9 @@ enum Redactor {
             terminalHistory: cleanHistory,
             activeFiles: cleanFiles
         )
+        cleaned.clipboard = cleanClipboard
+        cleaned.openApps = cleanOpenApps
+        cleaned.frontmostApp = cleanFrontmost
         return (cleaned, redactions)
     }
 }

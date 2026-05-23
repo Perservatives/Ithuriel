@@ -32,6 +32,18 @@ final class UserPrefs {
     /// users running.
     var googleCloudAPIKey: String
 
+    /// OpenAI API key (sk-…). One paste covers Whisper STT + OpenAI TTS —
+    /// the primary voice path for the consumer flow.
+    var openAIAPIKey: String = ""
+
+    /// OpenAI TTS voice: alloy / ash / ballad / coral / echo / fable /
+    /// nova / onyx / sage / shimmer.
+    var openAITTSVoice: String = "alloy"
+
+    /// OpenAI TTS model. Default `gpt-4o-mini-tts`; alternatives `tts-1`,
+    /// `tts-1-hd`.
+    var openAITTSModel: String = "gpt-4o-mini-tts"
+
     /// Whether to speak agent finishes via Google Cloud TTS.
     var spokenResponsesEnabled: Bool
 
@@ -140,6 +152,11 @@ final class UserPrefs {
             if existing.geminiApiKey.isEmpty,
                let seed = Keychain.get("gemini.apiKey"), !seed.isEmpty {
                 existing.geminiApiKey = seed
+                try? context.save()
+            }
+            if existing.openAIAPIKey.isEmpty,
+               let seed = Keychain.get("openai.apiKey"), !seed.isEmpty {
+                existing.openAIAPIKey = seed
                 try? context.save()
             }
             // One-time migration: ⌃Space is reserved by macOS for "Show next

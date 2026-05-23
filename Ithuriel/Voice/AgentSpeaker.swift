@@ -1,19 +1,17 @@
 import Foundation
 import AVFoundation
 
-/// Speaks the agent's final summary out loud. Three-tier strategy so the
-/// consumer flow works with just a Gemini API key — no separate GCP enablement,
-/// no service account, nothing else to set up.
+/// Speaks the agent's final summary out loud. Cascading fallback so the user
+/// never hears silence:
 ///
-///   1. **Gemini TTS** via `generativelanguage.googleapis.com/v1beta/models/
-///      gemini-2.5-flash-preview-tts`. The Gemini key already speaks to this
-///      endpoint, so it works the moment the user pastes a key.
-///   2. **Google Cloud TTS** via `texttospeech.googleapis.com`. Higher-quality
-///      Neural2 voices, but requires the user's key to have the
-///      `texttospeech.googleapis.com` service enabled (most consumer keys
-///      don't). Only used when path 1 fails.
-///   3. **Apple `AVSpeechSynthesizer`**. Free, instant, offline. Final fallback
-///      so the agent never goes silent.
+///   1. **OpenAI TTS** (`gpt-4o-mini-tts`) — primary. One `sk-…` key covers
+///      both this and Whisper STT, so it's the default consumer path.
+///   2. **Gemini TTS** (`gemini-2.5-flash-preview-tts`) — used when no OpenAI
+///      key is set but a Gemini key is. Works without enabling any extra
+///      GCP services.
+///   3. **Google Cloud TTS** (`texttospeech.googleapis.com`) — Neural2 voices,
+///      requires a key whose project has the service enabled.
+///   4. **Apple `AVSpeechSynthesizer`** — free, offline, never silent.
 @MainActor
 final class AgentSpeaker {
     static let shared = AgentSpeaker()
@@ -33,13 +31,30 @@ final class AgentSpeaker {
         player?.stop()
         appleSynth.stopSpeaking(at: .immediate)
 
+        let openAIKey = prefs.openAIAPIKey
         let geminiKey = prefs.geminiApiKey
         let cloudKey  = prefs.googleCloudAPIKey.isEmpty ? geminiKey : prefs.googleCloudAPIKey
 
         inFlight = Task { [weak self] in
             guard let self else { return }
 
-            // Path 1: Gemini TTS — works with the consumer Gemini key.
+            // Path 1: OpenAI TTS — primary consumer path.
+            if !openAIKey.isEmpty {
+                do {
+                    let audio = try await OpenAISpeech.synthesize(
+                        text: cleaned, apiKey: openAIKey,
+                        model: prefs.openAITTSModel, voice: prefs.openAITTSVoice,
+                        speed: prefs.ttsRate
+                    )
+                    guard !Task.isCancelled else { return }
+                    try self.playRawAudio(audio)
+                    return
+                } catch {
+                    Log.info("OpenAI TTS unavailable (\(error)) — trying Gemini TTS")
+                }
+            }
+
+            // Path 2: Gemini TTS via the Generative Language API.
             if !geminiKey.isEmpty {
                 do {
                     let audio = try await GeminiTTS.synthesize(
@@ -53,7 +68,7 @@ final class AgentSpeaker {
                 }
             }
 
-            // Path 2: Google Cloud TTS (Neural2 voices).
+            // Path 3: Google Cloud TTS (Neural2 voices).
             if !cloudKey.isEmpty {
                 do {
                     let audio = try await GoogleSpeech.synthesize(
@@ -67,7 +82,7 @@ final class AgentSpeaker {
                 }
             }
 
-            // Path 3: Apple on-device speech. Always available.
+            // Path 4: Apple on-device speech. Always available.
             guard !Task.isCancelled else { return }
             let utterance = AVSpeechUtterance(string: cleaned)
             utterance.rate = AVSpeechUtteranceDefaultSpeechRate * Float(prefs.ttsRate)

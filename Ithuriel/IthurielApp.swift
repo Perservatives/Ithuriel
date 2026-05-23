@@ -72,6 +72,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 switch event {
                 case .started, .said, .replied:
                     break
+                case .captured(let workspace):
+                    let hex = (try? UserPrefs.load(in: container))?.launchColorHex ?? "#7B5BFF"
+                    CapturePillController.shared.flash(workspace: workspace, accentHex: hex)
                 case .finished(let summary):
                     DoneBannerController.shared.showFinished(summary: summary)
                 case .failed(let err):
