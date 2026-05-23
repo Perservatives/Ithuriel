@@ -18,12 +18,12 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
 
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
-    private var container: ModelContainer?
-    private var agentLoop: AgentLoop?
+    private let container: ModelContainer
+    private let agentLoop: AgentLoop
     /// Retained separately — NSPopover alone can drop the hosting controller.
     private var popoverHost: NSViewController?
 
-    init(container: ModelContainer?, agentLoop: AgentLoop?) {
+    init(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
         self.agentLoop = agentLoop
         super.init()
@@ -67,7 +67,6 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     }
 
     func showSettings() {
-        guard let container = container else { return }
         closePopover()
 
         if settingsWindow == nil {
@@ -131,7 +130,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         }
 
         guard popover.contentViewController != nil else {
-            Log.error("MenuBarManager: popover has no contentViewController (container=\(container != nil), agentLoop=\(agentLoop != nil))")
+            Log.error("MenuBarManager: popover has no contentViewController after rebuild")
             return
         }
 
@@ -231,10 +230,6 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     private func ensurePopoverContent() {
         guard let popover else { return }
         if popoverHost != nil, popover.contentViewController != nil { return }
-        guard let container, let agentLoop else {
-            Log.error("MenuBarManager: cannot build popover (container=\(container != nil), agentLoop=\(agentLoop != nil))")
-            return
-        }
 
         let root = StatusBarView(
             agent: agentLoop,

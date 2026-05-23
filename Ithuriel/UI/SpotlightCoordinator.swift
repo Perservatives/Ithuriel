@@ -21,7 +21,7 @@ final class SpotlightCoordinator {
     private var summonHotKeyRef: EventHotKeyRef?
     private var spotlightIsOpen = false
 
-    func configure(container: ModelContainer?, agentLoop: AgentLoop?) {
+    func configure(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
         self.agentLoop = agentLoop
     }

@@ -36,21 +36,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        do {
-            modelContainer = try ModelContainer(for: UserPrefs.self, CachedSnapshot.self)
-        } catch {
-            Log.error("Failed to initialize SwiftData container: \(error)")
-        }
+        let container = Persistence.makeContainer()
+        modelContainer = container
 
-        agentLoop = AgentLoop(container: modelContainer)
-        menuBarManager = MenuBarManager(container: modelContainer, agentLoop: agentLoop)
+        let loop = AgentLoop(container: container)
+        agentLoop = loop
+        menuBarManager = MenuBarManager(container: container, agentLoop: loop)
         MainActor.assumeIsolated {
             menuBarManager?.install()
         }
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
-        SpotlightCoordinator.shared.configure(container: modelContainer, agentLoop: agentLoop)
+        SpotlightCoordinator.shared.configure(container: container, agentLoop: loop)
         SpotlightCoordinator.shared.installSummonHotkey()
         requestAccessibilityIfNeeded()
 
@@ -59,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in SpotlightCoordinator.shared.playLaunchThenSummon() }
         }
 
-        let monitor = WorkspaceMonitor(container: modelContainer)
+        let monitor = WorkspaceMonitor(container: container)
         monitor.start()
         workspaceMonitor = monitor
 
