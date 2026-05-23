@@ -20,6 +20,8 @@ final class UserPrefs {
     var activeWorkspace: String
     var confirmEveryAction: Bool
     var autoApproveSafeOnly: Bool
+    /// When false, file ops may touch any path (except Redactor-blocked secrets paths).
+    var restrictToWorkspace: Bool
 
     init(id: String = "default",
          redactKeys: Bool = true,
@@ -35,7 +37,8 @@ final class UserPrefs {
          geminiModel: String = "gemini-3.5-flash",
          activeWorkspace: String = "",
          confirmEveryAction: Bool = false,
-         autoApproveSafeOnly: Bool = true) {
+         autoApproveSafeOnly: Bool = false,
+         restrictToWorkspace: Bool = false) {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -51,6 +54,7 @@ final class UserPrefs {
         self.activeWorkspace = activeWorkspace
         self.confirmEveryAction = confirmEveryAction
         self.autoApproveSafeOnly = autoApproveSafeOnly
+        self.restrictToWorkspace = restrictToWorkspace
     }
 
     var excludePaths: [String] {

@@ -144,9 +144,11 @@ final class AgentLoop: ObservableObject {
         task is complete, call the `done` function with a one-line summary.
 
         Hard rules:
-          - File operations are sandboxed to the active workspace.
-          - Destructive actions (write_file, delete_file, run_shell, quit_app)
-            will prompt the user — that is expected, do not be deterred.
+          - File paths under .env, .ssh/, secrets/, and private/ are refused.
+          - \(prefs.restrictToWorkspace
+              ? "File operations are restricted to the active workspace."
+              : "File operations may use any path on this Mac (except blocked secret paths).")
+          - Shell commands run in the user's login zsh with full environment.
           - If a screenshot would help, call `screenshot` first.
         """
 
@@ -252,16 +254,16 @@ enum AgentTools {
                  ["bundle_id": .string("e.g. com.apple.Terminal")]),
             decl("launch_app", "Launch an app by bundle identifier.",
                  ["bundle_id": .string("bundle id")]),
-            decl("quit_app", "Quit an app by bundle identifier. Destructive — user will confirm.",
-                 ["bundle_id": .string("bundle id")]),
-            decl("read_file", "Read a UTF-8 file inside the workspace sandbox.",
+            decl("read_file", "Read a UTF-8 file (absolute or ~ path).",
                  ["path": .string("absolute or workspace-relative path")]),
-            decl("write_file", "Write/overwrite a UTF-8 file. Destructive — user will confirm.",
+            decl("write_file", "Write/overwrite a UTF-8 file.",
                  ["path": .string("path"), "content": .string("full file contents")]),
-            decl("delete_file", "Delete a file. Destructive — user will confirm.",
+            decl("delete_file", "Delete a file.",
                  ["path": .string("path")]),
-            decl("run_shell", "Run a zsh command. Destructive — user will confirm. Returns stdout+stderr.",
+            decl("run_shell", "Run a zsh login-shell command. Returns stdout+stderr and exit code on failure.",
                  ["command": .string("shell command")]),
+            decl("quit_app", "Quit an app by bundle identifier.",
+                 ["bundle_id": .string("bundle id")]),
             decl("done", "Signal task complete with a one-line summary.",
                  ["summary": .string("what you accomplished")])
         ])

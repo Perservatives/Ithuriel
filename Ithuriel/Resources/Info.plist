@@ -25,9 +25,9 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Ithuriel uses Apple Events only when you explicitly hand off context to an AI tool.</string>
+    <string>Ithuriel uses Apple Events to launch apps, control other applications, and run agent tasks on your behalf.</string>
     <key>NSAccessibilityUsageDescription</key>
-    <string>Ithuriel needs Accessibility access to detect when you switch to an AI tool and to optionally paste context for you. Without it, capture still works and clipboard injection remains available.</string>
+    <string>Ithuriel needs Accessibility access to type, click, send keyboard shortcuts, and drive apps while executing agent tasks.</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

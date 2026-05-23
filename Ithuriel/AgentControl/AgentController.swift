@@ -11,8 +11,8 @@ import Carbon.HIToolbox
 /// Non-destructive actions (type, click, keypress, screenshot, focus,
 /// read_file) run silently when the agent is enabled.
 ///
-/// Destructive actions (write_file, delete_file, run_shell, quit_app)
-/// always require an NSAlert confirmation, regardless of settings.
+/// Destructive actions (write_file, delete_file, run_shell, quit_app) prompt
+/// only when `UserPrefs.confirmEveryAction` is enabled.
 enum AgentControlError: Error, CustomStringConvertible {
     case disabled
     case accessibilityDenied
@@ -196,8 +196,13 @@ final class AgentController {
         return await withCheckedContinuation { (cont: CheckedContinuation<String, Never>) in
             DispatchQueue.global(qos: .utility).async {
                 let p = Process()
-                p.launchPath = "/bin/zsh"
-                p.arguments = ["-lc", command]
+                p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                p.arguments = ["-l", "-c", command]
+                p.environment = ProcessInfo.processInfo.environment
+                let cwd = prefs.activeWorkspace.isEmpty
+                    ? FileManager.default.homeDirectoryForCurrentUser.path
+                    : prefs.activeWorkspace
+                p.currentDirectoryURL = URL(fileURLWithPath: cwd)
                 let pipe = Pipe()
                 p.standardOutput = pipe
                 p.standardError = pipe
@@ -207,7 +212,11 @@ final class AgentController {
                 }
                 p.waitUntilExit()
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                cont.resume(returning: String(data: data, encoding: .utf8) ?? "")
+                let output = String(data: data, encoding: .utf8) ?? ""
+                let status = p.terminationStatus == 0
+                    ? output
+                    : "exit \(p.terminationStatus):\n\(output)"
+                cont.resume(returning: status)
             }
         }
     }
@@ -220,23 +229,23 @@ final class AgentController {
 
     private func sandbox(path: String, prefs: UserPrefs) throws -> URL {
         let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL
-        let workspace = URL(fileURLWithPath: prefs.activeWorkspace.isEmpty
-                            ? FileManager.default.homeDirectoryForCurrentUser.path
-                            : prefs.activeWorkspace).standardizedFileURL
-        if !url.path.hasPrefix(workspace.path) {
-            throw AgentControlError.fileOutsideSandbox(url.path)
-        }
         if Redactor.isSensitivePath(url.path) {
             throw AgentControlError.fileOutsideSandbox(url.path)
+        }
+        if prefs.restrictToWorkspace {
+            let workspace = URL(fileURLWithPath: prefs.activeWorkspace.isEmpty
+                                ? FileManager.default.homeDirectoryForCurrentUser.path
+                                : prefs.activeWorkspace).standardizedFileURL
+            if !url.path.hasPrefix(workspace.path) {
+                throw AgentControlError.fileOutsideSandbox(url.path)
+            }
         }
         return url
     }
 
     @MainActor
     private func confirmDestructive(title: String, body: String, prefs: UserPrefs) async throws {
-        if prefs.confirmEveryAction == false && prefs.autoApproveSafeOnly == false {
-            // Should never happen — keep the gate strict by default.
-        }
+        guard prefs.confirmEveryAction else { return }
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = title

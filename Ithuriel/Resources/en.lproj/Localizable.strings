@@ -34,9 +34,11 @@
 "settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
 "settings.agent.workspace"     = "Workspace sandbox";
 "settings.agent.workspacePath" = "Workspace path";
-"settings.agent.workspaceHelp" = "File operations are restricted to this directory tree. Auto-filled from your most recent VS Code/Cursor workspace.";
+"settings.agent.workspaceHelp" = "Default cwd for shell commands and context. When “Restrict to workspace” is off, file ops may use any path.";
 "settings.agent.safety"        = "Safety";
-"settings.agent.confirmEvery"  = "Confirm every action (slower, safer)";
+"settings.agent.confirmEvery"  = "Confirm destructive actions before running";
+"settings.agent.restrictWorkspace" = "Restrict file access to workspace";
+"settings.agent.safetyHelp"    = "Off by default: shell, file writes, deletes, and app quits run immediately. Turn on confirmation for a slower, safer mode.";
 "settings.agent.killSwitch"    = "Global kill switch: ⌃⌥⌘. (control-option-command-period) stops the agent instantly.";
 
 /* Capture */
