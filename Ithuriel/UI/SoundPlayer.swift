@@ -33,13 +33,19 @@ enum AgentSound: String, CaseIterable {
 @MainActor
 final class SoundPlayer {
     static let shared = SoundPlayer()
+    private static let mutedKey = "Ithuriel.SoundsMuted"
 
-    private var players: [String: AVAudioPlayer] = [:]
-    private let mutedKey = "Ithuriel.SoundsMuted"
-
-    var muted: Bool {
+    /// Readable from AppKit handlers that are not MainActor-isolated.
+    nonisolated static var isMuted: Bool {
         get { UserDefaults.standard.bool(forKey: mutedKey) }
         set { UserDefaults.standard.set(newValue, forKey: mutedKey) }
+    }
+
+    private var players: [String: AVAudioPlayer] = [:]
+
+    var muted: Bool {
+        get { Self.isMuted }
+        set { Self.isMuted = newValue }
     }
 
     private init() {

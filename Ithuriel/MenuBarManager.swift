@@ -161,7 +161,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         summon.target = self
         summon.keyEquivalentModifierMask = [.command, .shift]
         menu.addItem(.separator())
-        let muteItem = menu.addItem(withTitle: SoundPlayer.shared.muted
+        let muteItem = menu.addItem(withTitle: SoundPlayer.isMuted
                                     ? NSLocalizedString("menubar.menu.unmute", comment: "")
                                     : NSLocalizedString("menubar.menu.mute", comment: ""),
                                     action: #selector(menuToggleMute), keyEquivalent: "")
@@ -182,7 +182,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         Task { @MainActor in SpotlightCoordinator.shared.summon() }
     }
 
-    @objc private func menuToggleMute() { SoundPlayer.shared.muted.toggle() }
+    @objc private func menuToggleMute() { SoundPlayer.isMuted = !SoundPlayer.isMuted }
     @objc private func menuOpenSettings() { showSettings() }
     @objc private func menuQuit() { NSApp.terminate(nil) }
 
