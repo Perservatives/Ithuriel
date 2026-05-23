@@ -49,6 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
         SpotlightCoordinator.shared.configure(container: container, agentLoop: loop)
+        ChatWindowController.shared.configure(container: container, agent: loop)
+        VoiceController.shared.configure(container: container, agentLoop: loop)
         SpotlightCoordinator.shared.installSummonHotkey()
         refreshPermissionState()
 

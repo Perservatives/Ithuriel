@@ -27,6 +27,11 @@ final class UserPrefs {
     /// fuzzy blobs and the orb halo. Independent of system accent color.
     var launchColorHex: String
 
+    /// Google Cloud API key for Speech-to-Text and Text-to-Speech. Defaults
+    /// to falling back to `geminiApiKey` when empty so a single key gets
+    /// users running.
+    var googleCloudAPIKey: String
+
     init(id: String = "default",
          redactKeys: Bool = true,
          localOnly: Bool = false,
@@ -43,7 +48,8 @@ final class UserPrefs {
          confirmEveryAction: Bool = false,
          autoApproveSafeOnly: Bool = false,
          restrictToWorkspace: Bool = false,
-         launchColorHex: String = "#7B5BFF") {
+         launchColorHex: String = "#7B5BFF",
+         googleCloudAPIKey: String = "") {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -61,6 +67,7 @@ final class UserPrefs {
         self.autoApproveSafeOnly = autoApproveSafeOnly
         self.restrictToWorkspace = restrictToWorkspace
         self.launchColorHex = launchColorHex
+        self.googleCloudAPIKey = googleCloudAPIKey
     }
 
     var excludePaths: [String] {

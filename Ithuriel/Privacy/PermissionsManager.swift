@@ -48,6 +48,13 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestAccessibility() {
+        // Short-circuit if already granted — re-calling the prompt API
+        // re-pops System Settings even when the checkbox is already on.
+        if AXIsProcessTrusted() {
+            accessibilityGranted = true
+            NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
+            return
+        }
         let opts: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         _ = AXIsProcessTrustedWithOptions(opts as CFDictionary)
         Task { await refresh() }
@@ -58,6 +65,11 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestScreenRecording() {
+        if ScreenCapture.hasScreenRecordingAccess() {
+            screenRecordingGranted = true
+            NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
+            return
+        }
         if #available(macOS 10.15, *) {
             _ = CGRequestScreenCaptureAccess()
         }
@@ -69,6 +81,14 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestNotifications() async {
+        if notificationsGranted { return }
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        // requestAuthorization only produces a prompt in .notDetermined.
+        // Calling it after a denial just silently fails — feels like nagging.
+        guard settings.authorizationStatus == .notDetermined else {
+            await refresh()
+            return
+        }
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
         await refresh()
     }

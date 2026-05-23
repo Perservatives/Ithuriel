@@ -40,10 +40,21 @@
 /* Settings tabs */
 "settings.window.title"        = "Ithuriel Settings";
 "settings.tab.agent"           = "Agent";
+"settings.tab.voice"           = "Voice";
 "settings.tab.appearance"      = "Appearance";
 "settings.tab.capture"         = "Capture";
 "settings.tab.privacy"         = "Privacy";
 "settings.tab.integrations"    = "Integrations";
+"settings.tab.permissions"     = "Permissions";
+
+/* Voice tab */
+"settings.voice.cloud"         = "Google Cloud";
+"settings.voice.key"           = "Google Cloud API key (Speech-to-Text + Text-to-Speech)";
+"settings.voice.help"          = "Enable the Cloud Speech-to-Text and Text-to-Speech APIs on the project tied to this key. Leave blank to reuse your Gemini API key.";
+"settings.voice.shortcut"      = "Hold ⌥Space to talk. Release to send.";
+
+/* Workspace picker */
+"settings.agent.workspacePick" = "Choose…";
 
 /* Appearance tab */
 "settings.appearance.launch"       = "Launch animation";

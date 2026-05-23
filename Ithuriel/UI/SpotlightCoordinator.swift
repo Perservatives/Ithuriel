@@ -14,12 +14,10 @@ final class SpotlightCoordinator {
     private weak var container: ModelContainer?
     private weak var agentLoop: AgentLoop?
 
-    private var dimmerWindow: NSWindow?
     private var spotlightWindow: NSWindow?
     private var launchWindow: NSWindow?
     private var launchBackdropWindow: NSWindow?
 
-    private var summonHotKeyRef: EventHotKeyRef?
     private var spotlightIsOpen = false
 
     func configure(container: ModelContainer, agentLoop: AgentLoop) {
@@ -97,25 +95,22 @@ final class SpotlightCoordinator {
         return Color(hex: prefs.launchColorHex, fallback: .accentColor)
     }
 
-    /// Show the Spotlight prompt at screen centre.
+    /// Show the Spotlight prompt at screen centre. No screen dimming —
+    /// only the launch sequence darkens the desktop.
     func summon() {
         guard let container, let agentLoop else { return }
         SoundPlayer.shared.play(.summon, volume: 0.4)
 
         if spotlightWindow == nil { buildSpotlightWindow(container: container, agentLoop: agentLoop) }
-        if dimmerWindow == nil { buildDimmerWindow() }
-
-        // Position centred each summon (handles display changes).
         positionWindows()
-        dimmerWindow?.alphaValue = 0
-        dimmerWindow?.orderFront(nil)
+        spotlightWindow?.alphaValue = 0
         spotlightWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.24
+            ctx.duration = 0.22
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
-            dimmerWindow?.animator().alphaValue = 1
+            spotlightWindow?.animator().alphaValue = 1
         }
         spotlightIsOpen = true
     }
@@ -125,24 +120,20 @@ final class SpotlightCoordinator {
         spotlightIsOpen = false
         launchWindow?.orderOut(nil)
         launchWindow = nil
-        dimmerWindow?.orderOut(nil)
         spotlightWindow?.orderOut(nil)
         spotlightWindow?.alphaValue = 1
-        dimmerWindow?.alphaValue = 1
     }
 
     func dismiss() {
-        guard spotlightIsOpen, let dimmer = dimmerWindow, let spot = spotlightWindow else { return }
+        guard spotlightIsOpen, let spot = spotlightWindow else { return }
         spotlightIsOpen = false
         SoundPlayer.shared.play(.dismiss, volume: 0.3)
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.16
+            ctx.duration = 0.14
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
-            dimmer.animator().alphaValue = 0
             spot.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             Task { @MainActor in
-                self?.dimmerWindow?.orderOut(nil)
                 self?.spotlightWindow?.orderOut(nil)
                 self?.spotlightWindow?.alphaValue = 1
             }
@@ -154,28 +145,17 @@ final class SpotlightCoordinator {
         if spotlightIsOpen { dismiss() } else { summon() }
     }
 
-    // MARK: - Hotkey
+    // MARK: - Hotkeys
 
+    /// ⌃Space toggles Spotlight. ⌥Space tap opens the full Chat window;
+    /// hold ⌥Space starts voice capture and release submits.
     func installSummonHotkey() {
-        let hotKeyID = EventHotKeyID(signature: OSType(0x49544855 /* 'ITHU' */), id: 2)
-        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
-                                 eventKind: UInt32(kEventHotKeyPressed))
-        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
-            var hotKeyID = EventHotKeyID()
-            GetEventParameter(event, EventParamName(kEventParamDirectObject),
-                              EventParamType(typeEventHotKeyID),
-                              nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
-            if hotKeyID.id == 2 {
-                Task { @MainActor in SpotlightCoordinator.shared.toggle() }
-            }
-            return noErr
-        }, 1, &spec, nil, nil)
-
-        // ⌘⇧Space — close to Raycast/Spotlight, easy to remap later.
-        let modifiers = UInt32(cmdKey | shiftKey)
-        let keyCode = UInt32(kVK_Space)
-        RegisterEventHotKey(keyCode, modifiers, hotKeyID,
-                            GetApplicationEventTarget(), 0, &summonHotKeyRef)
+        let monitor = HotkeyMonitor.shared
+        monitor.onSummonTap = { [weak self] in self?.toggle() }
+        monitor.onChatTap   = { Task { @MainActor in ChatWindowController.shared.toggle() } }
+        monitor.onVoiceStart = { Task { @MainActor in VoiceController.shared.start() } }
+        monitor.onVoiceEnd   = { Task { @MainActor in VoiceController.shared.stopAndSubmit() } }
+        monitor.install()
     }
 
     // MARK: - Internals
@@ -220,33 +200,8 @@ final class SpotlightCoordinator {
         spotlightWindow = window
     }
 
-    private func buildDimmerWindow() {
-        let screen = NSScreen.main ?? NSScreen.screens.first!
-        let window = NSWindow(
-            contentRect: screen.frame,
-            styleMask: [.borderless],
-            backing: .buffered, defer: false
-        )
-        window.isOpaque = false
-        window.backgroundColor = NSColor.black.withAlphaComponent(0.42)
-        window.hasShadow = false
-        window.level = .floating - 1
-        window.ignoresMouseEvents = false
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        let dimContent = NSView(frame: screen.frame)
-        dimContent.wantsLayer = true
-        dimContent.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.42).cgColor
-        let click = NSClickGestureRecognizer(target: self, action: #selector(handleBackdropClick))
-        dimContent.addGestureRecognizer(click)
-        window.contentView = dimContent
-        dimmerWindow = window
-    }
-
-    @objc private func handleBackdropClick() { dismiss() }
-
     private func positionWindows() {
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        dimmerWindow?.setFrame(screen.frame, display: false)
         if let spot = spotlightWindow {
             let size = spot.contentView?.fittingSize ?? NSSize(width: 640, height: 80)
             let w: CGFloat = 640
