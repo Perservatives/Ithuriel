@@ -73,6 +73,13 @@ final class HotkeyMonitor {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
+            // CGEventTap requires Accessibility. Without it we still get
+            // tap-to-summon via Carbon, but hold-to-talk is dead. Surface a
+            // notification banner so the user knows to grant access.
+            Log.info("HotkeyMonitor: CGEventTap denied — falling back to Carbon. Grant Accessibility for hold-to-talk.")
+            DoneBannerController.shared.showFailed(
+                summary: "Grant Accessibility in System Settings → Privacy → Accessibility so the shortcut works."
+            )
             installCarbonFallback()
             return
         }
