@@ -201,6 +201,12 @@ struct StatusBarView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
+            Button(action: openChat) {
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+            }
+            .buttonStyle(.pressable(sound: .tool))
+            .help("Open Chat Window")
+
             Button(action: copyContext) {
                 Label(NSLocalizedString("status.copy", comment: ""), systemImage: "doc.on.doc")
                     .labelStyle(.iconOnly)
@@ -232,6 +238,10 @@ struct StatusBarView: View {
     }
 
     // MARK: - Actions
+
+    private func openChat() {
+        NotificationCenter.default.post(name: .ithurielOpenChat, object: nil)
+    }
 
     private func runAgent() {
         let task = prompt.trimmingCharacters(in: .whitespacesAndNewlines)

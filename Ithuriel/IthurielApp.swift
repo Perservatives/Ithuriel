@@ -32,12 +32,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var captureTimer: Timer?
     private(set) var modelContainer: ModelContainer?
     private(set) var agentLoop: AgentLoop?
+    private var chatWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         do {
-            modelContainer = try ModelContainer(for: UserPrefs.self, CachedSnapshot.self)
+            modelContainer = try ModelContainer(
+                for: UserPrefs.self, CachedSnapshot.self, Conversation.self, ChatMessage.self
+            )
         } catch {
             Log.error("Failed to initialize SwiftData container: \(error)")
         }
@@ -49,6 +52,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
         requestAccessibilityIfNeeded()
+
+        NotificationCenter.default.addObserver(
+            forName: .ithurielOpenChat, object: nil, queue: .main
+        ) { [weak self] _ in self?.openChatWindow() }
 
         let monitor = WorkspaceMonitor(container: modelContainer)
         monitor.start()
@@ -67,6 +74,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         captureTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { await self?.runPeriodicCapture(reason: .timer) }
         }
+    }
+
+    func openChatWindow() {
+        if let wc = chatWindowController, let win = wc.window, win.isVisible {
+            win.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        guard let container = modelContainer, let loop = agentLoop else { return }
+
+        let chatView = ChatWindowView(agent: loop).modelContainer(container)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 960, height: 660),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Ithuriel"
+        window.setFrameAutosaveName("IthurielChatWindow")
+        window.minSize = NSSize(width: 700, height: 500)
+        window.contentView = NSHostingView(rootView: chatView)
+        window.center()
+        window.delegate = self
+
+        let wc = NSWindowController(window: window)
+        chatWindowController = wc
+        wc.showWindow(nil)
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -141,6 +177,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Log.error("Snapshot upload failed: \(error). Will retry on next capture.")
         }
     }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === chatWindowController?.window else { return }
+        chatWindowController = nil
+        NSApp.setActivationPolicy(.accessory)
+    }
+}
+
+extension Notification.Name {
+    static let ithurielOpenChat = Notification.Name("IthurielOpenChat")
 }
 
 enum Log {
