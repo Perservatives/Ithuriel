@@ -52,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         URLSchemeHandler.shared.install()
         LaunchCoordinator.shared.configure(container: container)
         ChatWindowController.shared.configure(container: container, agent: loop)
+        InstantChatController.shared.configure(container: container, agent: loop)
         VoiceController.shared.configure(container: container, agentLoop: loop)
         AgentControlBorderOverlay.shared.configure(agentLoop: loop)
         installGlobalHotkey()
@@ -173,8 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let monitor = HotkeyMonitor.shared
         monitor.onHotkeyTap = {
             Task { @MainActor in
-                guard let container = self.modelContainer, let loop = self.agentLoop else { return }
-                ChatWindowController.shared.show(container: container, agent: loop)
+                InstantChatController.shared.toggle()
             }
         }
         monitor.onVoiceStart = { Task { @MainActor in VoiceController.shared.start() } }

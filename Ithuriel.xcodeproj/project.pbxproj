@@ -17,6 +17,8 @@
 		183431CEFA7E4D97C53952BD /* LaunchBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */; };
 		1CCC498533C7E8DBE47C3B56 /* GeminiTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B6B0DCAA7072A6E6BBE510 /* GeminiTTS.swift */; };
 		212D2A651EE045225234EB43 /* DoneBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2249AA5388624D12B6B6EF8 /* DoneBanner.swift */; };
+		22239A14423BC6F3CB156A03 /* InstantChatController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF8F9E9AD45970C3656659D6 /* InstantChatController.swift */; };
+		259A35A2D19DCB45CAE9D5DC /* InstantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D7EA477F198799D56DD6B56 /* InstantChatView.swift */; };
 		29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEBCABAF164410E96E13023 /* SoundPlayer.swift */; };
 		339F757EFC6B5AEB5A4063A9 /* SecretManagerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */; };
 		349BC74CF7EC0967C6ABF46F /* LaunchBlobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB347B68858B7CB3E1D8B5EF /* LaunchBlobsView.swift */; };
@@ -130,6 +132,7 @@
 		55B951B012E95739BF6F355D /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		58F5ED6887679899168B411A /* TerminalCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalCapture.swift; sourceTree = "<group>"; };
 		5CEBCABAF164410E96E13023 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
+		5D7EA477F198799D56DD6B56 /* InstantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantChatView.swift; sourceTree = "<group>"; };
 		62F0DAD4ED5681A6BF676DE9 /* AgentTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTranscript.swift; sourceTree = "<group>"; };
 		637C0A46248697B73FF0F272 /* ThinkingSpinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingSpinner.swift; sourceTree = "<group>"; };
 		6C1F917DEA75F51337BC698C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -171,6 +174,7 @@
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
 		DEF405A92594796F12FBC14E /* TranscriptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptChip.swift; sourceTree = "<group>"; };
+		DF8F9E9AD45970C3656659D6 /* InstantChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantChatController.swift; sourceTree = "<group>"; };
 		EA3D60E690647FAA6DCB97CD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EA63356B176A586DBB19722B /* AgentStatusBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusBus.swift; sourceTree = "<group>"; };
 		EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
@@ -261,6 +265,7 @@
 				637C0A46248697B73FF0F272 /* ThinkingSpinner.swift */,
 				DEF405A92594796F12FBC14E /* TranscriptChip.swift */,
 				EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */,
+				40DCC7B95BDC5B1C6871CFDB /* InstantChat */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -275,6 +280,15 @@
 				6D1D911182FB411A12A15707 /* UserPrefs.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		40DCC7B95BDC5B1C6871CFDB /* InstantChat */ = {
+			isa = PBXGroup;
+			children = (
+				DF8F9E9AD45970C3656659D6 /* InstantChatController.swift */,
+				5D7EA477F198799D56DD6B56 /* InstantChatView.swift */,
+			);
+			path = InstantChat;
 			sourceTree = "<group>";
 		};
 		4AB0BF95FF2F60CBFD1B18A3 = {
@@ -528,6 +542,8 @@
 				6178BCD6D9F4E079CCA8FD93 /* HotkeyPickerView.swift in Sources */,
 				BDCE41B20B1175357C14EB7A /* HowToView.swift in Sources */,
 				AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */,
+				22239A14423BC6F3CB156A03 /* InstantChatController.swift in Sources */,
+				259A35A2D19DCB45CAE9D5DC /* InstantChatView.swift in Sources */,
 				81BA0C5039B72971D78EE4A9 /* IntentClassifier.swift in Sources */,
 				E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */,
 				9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */,

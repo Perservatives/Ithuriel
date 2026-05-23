@@ -18,6 +18,10 @@
 "chrome.mute"          = "Mute sounds";
 "chrome.unmute"        = "Unmute sounds";
 
+/* Instant chat (⌥Space popup) */
+"instantchat.placeholder" = "Ask anything…";
+"instantchat.escalate"    = "Open in full chat";
+
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";
 "status.prompt.label"          = "Ask Ithuriel to do something";

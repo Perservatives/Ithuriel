@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import AppKit
+import UniformTypeIdentifiers
 
 /// ChatGPT-desktop-style layout. NavigationSplitView with a collapsible sidebar
 /// on the left and the conversation pane on the right. The right pane shows the
@@ -16,6 +17,8 @@ struct ChatView: View {
     @State private var prompt: String = ""
     @State private var searchQuery: String = ""
     @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
+    @State private var webSearchEnabled: Bool = false
+    @State private var isListening: Bool = false
     @FocusState private var inputFocused: Bool
     @ObservedObject private var permissions = PermissionsManager.shared
 
@@ -28,7 +31,10 @@ struct ChatView: View {
                 runs: runs,
                 searchQuery: $searchQuery,
                 selectedRunID: $selectedRunID,
+                activeWorkspace: prefs?.activeWorkspace ?? "",
                 onNew: newConversation,
+                onHome: clearSelection,
+                onSelectWorkspace: setActiveWorkspace,
                 onDelete: deleteRun
             )
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 320)
@@ -96,9 +102,13 @@ struct ChatView: View {
                 placeholder: keyMissing ? "Add your Gemini API key in Settings…" : "Ask anything",
                 canSubmit: canSubmit,
                 isRunning: agent.isRunning,
+                webSearchEnabled: webSearchEnabled,
+                isListening: isListening,
                 onSubmit: runAgent,
                 onStop: stopAgentIfRunning,
-                onMic: toggleVoice
+                onMic: toggleVoice,
+                onAttach: attachFiles,
+                onToggleWebSearch: toggleWebSearch
             )
             .padding(.horizontal, 24)
             .padding(.bottom, 18)
@@ -194,6 +204,21 @@ struct ChatView: View {
         inputFocused = true
     }
 
+    /// "Ithuriel" home row — clears the active selection so the empty hero
+    /// shows, but doesn't grab focus or wipe an in-progress draft.
+    private func clearSelection() {
+        selectedRunID = nil
+    }
+
+    /// Project row click — point the agent at this workspace path and clear
+    /// the active conversation so the next prompt runs against the new scope.
+    private func setActiveWorkspace(_ path: String) {
+        guard let prefs else { return }
+        prefs.activeWorkspace = path
+        try? modelContext.save()
+        selectedRunID = nil
+    }
+
     private func temporaryConversation() {
         UserDefaults.standard.set(true, forKey: "Ithuriel.NextRunTemporary")
         selectedRunID = nil
@@ -206,8 +231,9 @@ struct ChatView: View {
     }
 
     private func runAgent() {
-        let task = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !task.isEmpty, !agent.isRunning else { return }
+        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !agent.isRunning else { return }
+        let task = webSearchEnabled ? "[search the web] \(trimmed)" : trimmed
         prompt = ""
         selectedRunID = nil
         Task { await agent.run(task: task) }
@@ -217,8 +243,36 @@ struct ChatView: View {
         // Tap to start, tap again to stop+submit. Mirrors the hold-to-talk
         // hotkey but as a click affordance in the composer.
         Task { @MainActor in
-            VoiceController.shared.start()
+            if isListening {
+                VoiceController.shared.stopAndSubmit()
+                isListening = false
+            } else {
+                VoiceController.shared.start()
+                isListening = true
+            }
         }
+    }
+
+    /// Open an NSOpenPanel and append each chosen path as a "[Attached: <name>]"
+    /// prefix to the composer text. Images + plain text are allowed.
+    private func attachFiles() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.image, .plainText, .pdf, .sourceCode, .json, .text, .data]
+        guard panel.runModal() == .OK else { return }
+        let attachments = panel.urls
+            .map { "[Attached: \($0.path)]" }
+            .joined(separator: "\n")
+        if attachments.isEmpty { return }
+        if prompt.isEmpty { prompt = attachments + "\n" }
+        else { prompt = attachments + "\n" + prompt }
+        inputFocused = true
+    }
+
+    private func toggleWebSearch() {
+        webSearchEnabled.toggle()
     }
 
     private func deleteRun(_ run: SavedAgentRun) {
@@ -233,7 +287,10 @@ private struct ChatSidebar: View {
     let runs: [SavedAgentRun]
     @Binding var searchQuery: String
     @Binding var selectedRunID: UUID?
+    let activeWorkspace: String
     let onNew: () -> Void
+    let onHome: () -> Void
+    let onSelectWorkspace: (String) -> Void
     let onDelete: (SavedAgentRun) -> Void
 
     private var filteredRuns: [SavedAgentRun] {
@@ -277,7 +334,11 @@ private struct ChatSidebar: View {
                         sectionHeader("Projects")
                         VStack(spacing: 2) {
                             ForEach(projectFolders, id: \.self) { path in
-                                ProjectRow(path: path)
+                                ProjectRow(
+                                    path: path,
+                                    isActive: path == activeWorkspace,
+                                    action: { onSelectWorkspace(path) }
+                                )
                             }
                         }
                         .padding(.horizontal, 8)
@@ -351,10 +412,31 @@ private struct ChatSidebar: View {
 
     private var topItems: some View {
         VStack(spacing: 2) {
-            TopItemRow(icon: .asterisk,      label: "Ithuriel", isAccent: true, action: onNew)
-            TopItemRow(icon: .system("books.vertical"),  label: "Library",    action: onNew)
-            TopItemRow(icon: .system("square.grid.2x2"), label: "Workspaces", action: onNew)
+            TopItemRow(icon: .asterisk,                  label: "Ithuriel",   isAccent: true, action: onHome)
+            TopItemRow(icon: .system("books.vertical"),  label: "Library",    action: { LibraryWindowController.shared.show() })
+            TopItemRow(icon: .system("square.grid.2x2"), label: "Workspaces", action: {
+                WorkspacesWindowController.shared.show(
+                    knownPaths: workspaceCandidates,
+                    activeWorkspace: activeWorkspace,
+                    onSelect: { onSelectWorkspace($0) }
+                )
+            })
         }
+    }
+
+    /// Distinct workspace paths from saved runs, with the current editor
+    /// workspace mixed in. Used both for the Projects section in the sidebar
+    /// and the Workspaces window.
+    private var workspaceCandidates: [String] {
+        var seen = Set<String>()
+        var out: [String] = []
+        if let recent = WorkspaceMonitor.mostRecentEditorWorkspace(), !recent.isEmpty {
+            seen.insert(recent); out.append(recent)
+        }
+        for run in runs where !run.workspacePath.isEmpty {
+            if seen.insert(run.workspacePath).inserted { out.append(run.workspacePath) }
+        }
+        return out
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -447,29 +529,41 @@ private struct TopItemRow: View {
 
 private struct ProjectRow: View {
     let path: String
+    let isActive: Bool
+    let action: () -> Void
     @State private var hovering = false
 
     private var name: String { URL(fileURLWithPath: path).lastPathComponent }
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "folder")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 18)
-            Text(name)
-                .font(.system(size: 13))
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer()
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: isActive ? "folder.fill" : "folder")
+                    .font(.system(size: 12))
+                    .foregroundStyle(isActive ? Color.accentColor : .secondary)
+                    .frame(width: 18)
+                Text(name)
+                    .font(.system(size: 13))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+                if isActive {
+                    Circle()
+                        .fill(Color.accentColor)
+                        .frame(width: 5, height: 5)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(isActive
+                          ? Color.primary.opacity(0.08)
+                          : (hovering ? Color.primary.opacity(0.06) : Color.clear))
+            )
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color.primary.opacity(hovering ? 0.06 : 0))
-        )
-        .contentShape(Rectangle())
+        .buttonStyle(.plain)
         .onHover { h in
             withAnimation(Motion.easeOut) { hovering = h }
         }
@@ -532,44 +626,69 @@ private struct SidebarRow: View {
 
 private struct UserFooterRow: View {
     @State private var hovering = false
+    /// Bumped whenever `.authProfileDidUpdate` fires so the view recomputes
+    /// initials/label without owning AuthService as an ObservableObject.
+    @State private var refreshTick: Int = 0
+
+    private var isSignedIn: Bool { AuthService.shared.isSignedIn }
 
     private var initials: String {
-        guard AuthService.shared.isSignedIn,
-              let uid = AuthService.shared.uid,
-              !uid.isEmpty
-        else { return "?" }
-        // No display name in AuthService — fall back to first two chars of uid.
-        return String(uid.prefix(2)).uppercased()
+        if isSignedIn {
+            if let name = AuthService.shared.displayName, !name.isEmpty {
+                let parts = name.split(separator: " ")
+                if parts.count >= 2 {
+                    return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
+                }
+                return String(name.prefix(2)).uppercased()
+            }
+            if let email = AuthService.shared.userEmail, !email.isEmpty {
+                return String(email.prefix(2)).uppercased()
+            }
+            if let uid = AuthService.shared.uid, !uid.isEmpty {
+                return String(uid.prefix(2)).uppercased()
+            }
+        }
+        return "?"
     }
 
     private var label: String {
-        AuthService.shared.isSignedIn ? "Account" : "Sign in"
+        if !isSignedIn { return "Sign in" }
+        return AuthService.shared.displayName
+            ?? AuthService.shared.userEmail
+            ?? "Account"
     }
 
     private var subtitle: String {
-        AuthService.shared.isSignedIn ? "Settings & preferences" : "Configure Ithuriel"
+        isSignedIn ? "Settings & preferences" : "Configure Ithuriel"
     }
 
     var body: some View {
-        Button(action: { AppRouter.shared.openSettings() }) {
+        Button(action: handleTap) {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
-                        .fill(Color.primary.opacity(0.10))
+                        .fill(isSignedIn
+                              ? AnyShapeStyle(LinearGradient(
+                                    colors: [Color.accentColor.opacity(0.85), Color.accentColor.opacity(0.55)],
+                                    startPoint: .top, endPoint: .bottom))
+                              : AnyShapeStyle(Color.primary.opacity(0.10)))
                         .frame(width: 28, height: 28)
                     Text(initials)
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(isSignedIn ? Color.white : .primary)
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     Text(label)
                         .font(.system(size: 12, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                     Text(subtitle)
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
                 Spacer()
-                Image(systemName: "gearshape")
+                Image(systemName: isSignedIn ? "gearshape" : "arrow.right.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -581,6 +700,23 @@ private struct UserFooterRow: View {
         .buttonStyle(.plain)
         .onHover { h in
             withAnimation(Motion.easeOut) { hovering = h }
+        }
+        .id(refreshTick)
+        .onAppear {
+            // Lazily resolve display name once for an already-signed-in user.
+            AuthService.shared.refreshUserProfileIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .authProfileDidUpdate)) { _ in
+            refreshTick &+= 1
+        }
+        .help(isSignedIn ? "Open Settings" : "Sign in with Google")
+    }
+
+    private func handleTap() {
+        if isSignedIn {
+            AppRouter.shared.openSettings()
+        } else {
+            AuthService.shared.beginGoogleSignIn()
         }
     }
 }
@@ -822,9 +958,13 @@ private struct ChatComposer: View {
     let placeholder: String
     let canSubmit: Bool
     let isRunning: Bool
+    let webSearchEnabled: Bool
+    let isListening: Bool
     let onSubmit: () -> Void
     let onStop: () -> Void
     let onMic: () -> Void
+    let onAttach: () -> Void
+    let onToggleWebSearch: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -852,13 +992,22 @@ private struct ChatComposer: View {
 
             // Controls row
             HStack(spacing: 6) {
-                ComposerIconButton(system: "plus", help: "Attach") { }
-                ComposerIconButton(system: "globe", help: "Search the web") { }
-                ComposerIconButton(system: "character.textbox", help: "Style") { }
+                ComposerIconButton(system: "plus", help: "Attach file", action: onAttach)
+                ComposerIconButton(
+                    system: "globe",
+                    help: webSearchEnabled ? "Web search on — click to disable" : "Search the web",
+                    active: webSearchEnabled,
+                    action: onToggleWebSearch
+                )
 
                 Spacer()
 
-                ComposerIconButton(system: "mic.fill", help: "Voice input", action: onMic)
+                ComposerIconButton(
+                    system: isListening ? "stop.circle.fill" : "mic.fill",
+                    help: isListening ? "Stop and submit" : "Voice input",
+                    active: isListening,
+                    action: onMic
+                )
                 sendOrStopButton
             }
             .padding(.horizontal, 10)
@@ -912,6 +1061,7 @@ private struct ChatComposer: View {
 private struct ComposerIconButton: View {
     let system: String
     let help: String
+    var active: Bool = false
     let action: () -> Void
 
     @State private var hovering = false
@@ -920,17 +1070,27 @@ private struct ComposerIconButton: View {
         Button(action: action) {
             Image(systemName: system)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(active ? Color.accentColor : .secondary)
                 .frame(width: 30, height: 30)
                 .background(
-                    Circle().fill(Color.primary.opacity(hovering ? 0.08 : 0))
+                    Circle().fill(
+                        active
+                        ? Color.accentColor.opacity(0.16)
+                        : Color.primary.opacity(hovering ? 0.08 : 0)
+                    )
+                )
+                .overlay(
+                    Circle()
+                        .strokeBorder(Color.accentColor.opacity(active ? 0.35 : 0), lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
         .help(help)
         .onHover { h in
+            // Emil rule: hover micro-motion ~220ms with the cubic curve.
             withAnimation(Motion.easeOut) { hovering = h }
         }
+        .animation(Motion.easeOut, value: active)
     }
 }
 
@@ -956,5 +1116,270 @@ enum ChatBubble {
             return "\(p.title)\n\(detail)"
         }
         return p.title
+    }
+}
+
+// MARK: - Library window
+
+/// Placeholder Library window — surfaces saved prompts/snippets in a future
+/// step. The shell is shipped now so the sidebar entry is navigable.
+struct LibraryView: View {
+    private struct StubEntry: Identifiable, Hashable {
+        let id = UUID()
+        let title: String
+        let hint: String
+    }
+
+    private let entries: [StubEntry] = [
+        StubEntry(title: "Saved prompts coming soon",
+                  hint: "Pinned prompts will live here."),
+        StubEntry(title: "Reusable snippets",
+                  hint: "Bits of context you re-use across runs."),
+        StubEntry(title: "Workspace recipes",
+                  hint: "Per-project prompt templates."),
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "books.vertical.fill")
+                    .foregroundStyle(.secondary)
+                Text("Library")
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 12)
+
+            Divider().opacity(0.3)
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(entries.enumerated()), id: \.element.id) { idx, entry in
+                        LibraryRow(title: entry.title, hint: entry.hint)
+                            .staggered(idx)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(minWidth: 460, minHeight: 360)
+        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+    }
+}
+
+private struct LibraryRow: View {
+    let title: String
+    let hint: String
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Text(hint)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 9)
+        .background(Color.primary.opacity(hovering ? 0.05 : 0))
+        .contentShape(Rectangle())
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
+    }
+}
+
+@MainActor
+final class LibraryWindowController {
+    static let shared = LibraryWindowController()
+    private init() {}
+
+    private var window: NSWindow?
+
+    func show() {
+        if window == nil {
+            let host = NSHostingController(rootView: LibraryView())
+            let w = NSWindow(contentViewController: host)
+            w.title = "Library"
+            w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            w.titlebarAppearsTransparent = true
+            w.isReleasedWhenClosed = false
+            w.setContentSize(NSSize(width: 520, height: 420))
+            w.minSize = NSSize(width: 460, height: 360)
+            w.center()
+            w.backgroundColor = .clear
+            w.isOpaque = false
+            window = w
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
+    }
+}
+
+// MARK: - Workspaces window
+
+/// Shows distinct workspace paths so the user can re-scope the chat without
+/// digging through Settings.
+struct WorkspacesView: View {
+    let paths: [String]
+    let activeWorkspace: String
+    let onSelect: (String) -> Void
+    let dismiss: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "square.grid.2x2.fill")
+                    .foregroundStyle(.secondary)
+                Text("Workspaces")
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 12)
+
+            Divider().opacity(0.3)
+
+            if paths.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "folder.badge.questionmark")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.tertiary)
+                    Text("No workspaces yet")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Open a project in your editor or run a task to populate this list.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 30)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(paths.enumerated()), id: \.element) { idx, path in
+                            WorkspaceCard(
+                                path: path,
+                                isActive: path == activeWorkspace,
+                                action: {
+                                    onSelect(path)
+                                    dismiss()
+                                }
+                            )
+                            .staggered(idx)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(minWidth: 520, minHeight: 360)
+        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+    }
+}
+
+private struct WorkspaceCard: View {
+    let path: String
+    let isActive: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    private var name: String { URL(fileURLWithPath: path).lastPathComponent }
+    private var parent: String {
+        URL(fileURLWithPath: path).deletingLastPathComponent().path
+            .replacingOccurrences(of: NSHomeDirectory(), with: "~")
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: isActive ? "folder.fill" : "folder")
+                    .font(.system(size: 14))
+                    .foregroundStyle(isActive ? Color.accentColor : .secondary)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                    Text(parent)
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                }
+                Spacer()
+                if isActive {
+                    Text("Active")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule().fill(Color.accentColor.opacity(0.14))
+                        )
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .background(Color.primary.opacity(hovering ? 0.05 : 0))
+        }
+        .buttonStyle(.plain)
+        .help(path)
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
+    }
+}
+
+@MainActor
+final class WorkspacesWindowController {
+    static let shared = WorkspacesWindowController()
+    private init() {}
+
+    private var window: NSWindow?
+
+    func show(knownPaths: [String], activeWorkspace: String, onSelect: @escaping (String) -> Void) {
+        // Rebuild the hosting view each time so the path list is current.
+        let view = WorkspacesView(
+            paths: knownPaths,
+            activeWorkspace: activeWorkspace,
+            onSelect: onSelect,
+            dismiss: { [weak self] in self?.window?.orderOut(nil) }
+        )
+        let host = NSHostingController(rootView: view)
+
+        if let w = window {
+            w.contentViewController = host
+        } else {
+            let w = NSWindow(contentViewController: host)
+            w.title = "Workspaces"
+            w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            w.titlebarAppearsTransparent = true
+            w.isReleasedWhenClosed = false
+            w.setContentSize(NSSize(width: 560, height: 420))
+            w.minSize = NSSize(width: 520, height: 360)
+            w.center()
+            w.backgroundColor = .clear
+            w.isOpaque = false
+            window = w
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
     }
 }

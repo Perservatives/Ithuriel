@@ -37,6 +37,17 @@ final class AuthService {
 
     var idToken: String? { Keychain.get(idTokenKey) }
     var refreshToken: String? { Keychain.get(refreshTokenKey) }
+    /// Cached human-facing identity for the signed-in user. Populated lazily
+    /// via `accounts:lookup` after sign-in (and on demand from the UI). Stored
+    /// in `UserDefaults` so window restoration doesn't show a stale "?".
+    var displayName: String? {
+        get { UserDefaults.standard.string(forKey: "firebase.displayName") }
+        set { UserDefaults.standard.set(newValue, forKey: "firebase.displayName") }
+    }
+    var userEmail: String? {
+        get { UserDefaults.standard.string(forKey: "firebase.email") }
+        set { UserDefaults.standard.set(newValue, forKey: "firebase.email") }
+    }
     /// Google OAuth access token from the most recent sign-in. Used by
     /// `SecretManagerClient` to talk to `secretmanager.googleapis.com`.
     /// Lives in memory only — not persisted; users get a fresh one each
@@ -51,6 +62,42 @@ final class AuthService {
         Keychain.remove(refreshTokenKey)
         Keychain.remove(idTokenExpiry)
         Keychain.remove(uidKey)
+        UserDefaults.standard.removeObject(forKey: "firebase.displayName")
+        UserDefaults.standard.removeObject(forKey: "firebase.email")
+    }
+
+    /// Hits Identity Toolkit `accounts:lookup` to grab the display name + email
+    /// for the current user. Safe to call repeatedly — short-circuits if we
+    /// already have a cached display name.
+    func refreshUserProfileIfNeeded() {
+        guard isSignedIn else { return }
+        if (displayName?.isEmpty == false) { return }
+        Task { @MainActor in
+            do {
+                let token = try await refreshIfNeeded()
+                let apiKey = resolvedWebAPIKey()
+                guard !apiKey.isEmpty else { return }
+                let url = URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=\(apiKey)")!
+                var req = URLRequest(url: url)
+                req.httpMethod = "POST"
+                req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                req.httpBody = try JSONSerialization.data(withJSONObject: ["idToken": token])
+                let (data, resp) = try await URLSession.shared.data(for: req)
+                guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return }
+                struct LookupResp: Decodable {
+                    struct User: Decodable { let displayName: String?; let email: String? }
+                    let users: [User]?
+                }
+                let decoded = try JSONDecoder().decode(LookupResp.self, from: data)
+                if let user = decoded.users?.first {
+                    self.displayName = user.displayName
+                    self.userEmail = user.email
+                    NotificationCenter.default.post(name: .authProfileDidUpdate, object: nil)
+                }
+            } catch {
+                Log.info("accounts:lookup failed: \(error)")
+            }
+        }
     }
 
     // MARK: - Sign-in (ASWebAuthenticationSession + PKCE + signInWithIdp)
@@ -64,6 +111,7 @@ final class AuthService {
             do {
                 try await runGoogleSignIn()
                 Log.info("Google sign-in complete uid=\(uid ?? "?")")
+                refreshUserProfileIfNeeded()
             } catch {
                 Log.error("Google sign-in failed: \(error)")
             }
@@ -283,6 +331,13 @@ private extension Data {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
     }
+}
+
+extension Notification.Name {
+    /// Fires after `AuthService.refreshUserProfileIfNeeded` writes a fresh
+    /// `displayName` / `userEmail`. The chat sidebar listens to repaint the
+    /// user footer without polling.
+    static let authProfileDidUpdate = Notification.Name("dev.ithuriel.authProfileDidUpdate")
 }
 
 enum AuthError: Error, CustomStringConvertible {
