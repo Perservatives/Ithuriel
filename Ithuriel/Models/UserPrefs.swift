@@ -38,6 +38,10 @@ final class UserPrefs {
     /// Google Cloud TTS voice name (e.g. "en-US-Neural2-F").
     var ttsVoice: String
 
+    /// Gemini-native TTS voice (e.g. "Kore", "Puck", "Zephyr"). Used by the
+    /// primary TTS path because it works with a consumer Gemini key.
+    var geminiTTSVoice: String
+
     /// TTS speaking rate, 0.25–4.0; 1.0 is normal.
     var ttsRate: Double
 
@@ -74,6 +78,7 @@ final class UserPrefs {
          googleCloudAPIKey: String = "",
          spokenResponsesEnabled: Bool = true,
          ttsVoice: String = "en-US-Neural2-F",
+         geminiTTSVoice: String = "Kore",
          ttsRate: Double = 1.0,
          hotkeyKeyCode: Int = 49,        // kVK_Space
          hotkeyModifiers: Int = 4,       // option — ⌃Space is reserved by macOS for input source
@@ -99,6 +104,7 @@ final class UserPrefs {
         self.googleCloudAPIKey = googleCloudAPIKey
         self.spokenResponsesEnabled = spokenResponsesEnabled
         self.ttsVoice = ttsVoice
+        self.geminiTTSVoice = geminiTTSVoice
         self.ttsRate = ttsRate
         self.hotkeyKeyCode = hotkeyKeyCode
         self.hotkeyModifiers = hotkeyModifiers

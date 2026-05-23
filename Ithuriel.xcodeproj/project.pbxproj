@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		00EA6FB58CBBC50057F4A2E2 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D069FD433FB93CF0A1C66F4 /* AppRouter.swift */; };
+		05660508D57FCFA33822230E /* GeminiEmbed.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */; };
 		056B4D47D1554F9644B01567 /* VoiceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAAF5B9943A1B66D6FF4FB3C /* VoiceController.swift */; };
 		06AE543DAA319B00BE8C1835 /* GoogleSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBEE8650545308064AC12A2 /* GoogleSpeech.swift */; };
 		0975CEB5E72DAF4F7F076A97 /* ConversationalTurn.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA39A825F3B02142900BBC56 /* ConversationalTurn.swift */; };
 		0A5836A5A1F3DA8300E3D733 /* UILayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */; };
 		0FE0B2203DA64B33E546F393 /* EdgeGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5EE10DEB42E034DC91B4A2 /* EdgeGlow.swift */; };
 		183431CEFA7E4D97C53952BD /* LaunchBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */; };
+		1CCC498533C7E8DBE47C3B56 /* GeminiTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B6B0DCAA7072A6E6BBE510 /* GeminiTTS.swift */; };
 		212D2A651EE045225234EB43 /* DoneBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2249AA5388624D12B6B6EF8 /* DoneBanner.swift */; };
 		29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEBCABAF164410E96E13023 /* SoundPlayer.swift */; };
 		349BC74CF7EC0967C6ABF46F /* LaunchBlobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB347B68858B7CB3E1D8B5EF /* LaunchBlobsView.swift */; };
@@ -100,6 +102,7 @@
 		2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshot.swift; sourceTree = "<group>"; };
 		2D44D95499CACE7017FC62EF /* ChatWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatWindowController.swift; sourceTree = "<group>"; };
 		3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConfig.swift; sourceTree = "<group>"; };
+		30B6B0DCAA7072A6E6BBE510 /* GeminiTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiTTS.swift; sourceTree = "<group>"; };
 		3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchOrb.swift; sourceTree = "<group>"; };
 		3E12D6383C65B836F6C97E05 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
 		3EBEE8650545308064AC12A2 /* GoogleSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSpeech.swift; sourceTree = "<group>"; };
@@ -157,6 +160,7 @@
 		F50F4661A7AA396F9B346E75 /* MicRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicRecorder.swift; sourceTree = "<group>"; };
 		F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
 		F82F492D381182E0EE2A44BA /* AppChromeBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeBar.swift; sourceTree = "<group>"; };
+		FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiEmbed.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +199,8 @@
 			isa = PBXGroup;
 			children = (
 				92021DBC0B300E353647494B /* AgentSpeaker.swift */,
+				FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */,
+				30B6B0DCAA7072A6E6BBE510 /* GeminiTTS.swift */,
 				3EBEE8650545308064AC12A2 /* GoogleSpeech.swift */,
 				F50F4661A7AA396F9B346E75 /* MicRecorder.swift */,
 				EAAF5B9943A1B66D6FF4FB3C /* VoiceController.swift */,
@@ -482,6 +488,8 @@
 				431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */,
 				9DCF63850075B045D0AB0BD7 /* FirebaseConfig.swift in Sources */,
 				D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */,
+				05660508D57FCFA33822230E /* GeminiEmbed.swift in Sources */,
+				1CCC498533C7E8DBE47C3B56 /* GeminiTTS.swift in Sources */,
 				E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */,
 				06AE543DAA319B00BE8C1835 /* GoogleSpeech.swift in Sources */,
 				7FE425BB03C9EE26996B9A0D /* HotkeyMonitor.swift in Sources */,
