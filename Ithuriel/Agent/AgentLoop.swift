@@ -24,6 +24,7 @@ final class AgentLoop: ObservableObject {
         lastError = nil
         transcript.removeAll()
         AgentController.shared.arm()
+        SoundPlayer.shared.play(.submit)
         defer { isRunning = false }
 
         guard let container = container else { return }
@@ -93,10 +94,12 @@ final class AgentLoop: ObservableObject {
                     sawDone = true
                     let summary = call.args["summary"]?.stringValue ?? "done"
                     log("✓ \(summary)")
+                    SoundPlayer.shared.play(.done)
                     continue
                 }
                 let result = await dispatch(call: call, prefs: prefs)
                 log("→ \(call.name): \(result.prefix(120))")
+                SoundPlayer.shared.play(.tool, volume: 0.4)
                 let resp = GeminiClient.Part(
                     text: nil,
                     inlineData: nil,
