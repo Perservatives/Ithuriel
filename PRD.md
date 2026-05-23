@@ -1,0 +1,459 @@
+# Ithuriel
+
+> *"Your AI never starts cold again."*
+
+**Product Requirements Document & Technical Architecture**
+
+| | |
+|---|---|
+| Product | Ithuriel |
+| Version | 1.0 — PRD |
+| Author | Rishith |
+| Platform | macOS + Cloud |
+| Cloud | Google Cloud Platform |
+| Status | Pre-build / Draft |
+| Date | May 23, 2026 |
+
+---
+
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [Problem Statement](#2-problem-statement)
+3. [Users & Goals](#3-users--goals)
+4. [Core Features](#4-core-features)
+5. [Technical Architecture](#5-technical-architecture)
+6. [Google Cloud Platform Architecture](#6-google-cloud-platform-architecture)
+7. [Development Roadmap](#7-development-roadmap)
+8. [Success Metrics](#8-success-metrics)
+9. [Risks & Mitigations](#9-risks--mitigations)
+10. [Open Questions](#10-open-questions)
+- [Appendix A: Full Tech Stack](#appendix-a-full-tech-stack)
+
+---
+
+## 1. Executive Summary
+
+Ithuriel is a macOS-native AI context orchestration platform that silently monitors a developer's active workspace and automatically injects rich, structured context into any AI coding tool the moment they switch to it — eliminating the cold-start problem that costs developers 45–75 minutes of re-explanation every single day.
+
+The problem is structural: every AI coding tool (Claude Code, Cursor, GitHub Copilot, Gemini Code Assist) starts each session with zero knowledge of what the developer has been doing. Every switch between tools requires a manual, imperfect re-explanation. Ithuriel sits one layer above all of these tools, maintaining a living context graph that any tool can consume instantly.
+
+> **Core value proposition:** Open any AI tool. Ithuriel has already told it what you're working on, what decisions you've made, and what your codebase looks like. You start working, not explaining.
+
+### 1.1 Key differentiators
+
+- **Zero friction** — fully passive, no commands, no configuration after setup
+- **macOS-native** — menu bar agent built in Swift, not a CLI script
+- **Multi-tool aware** — formats context differently for Claude Code, Cursor, Copilot, and ChatGPT
+- **Privacy-first** — all context processing is opt-in; sensitive paths are redacted by default
+- **Google Cloud backend** — Vertex AI for summarization, Firestore for persistence, Pub/Sub for real-time sync
+
+---
+
+## 2. Problem Statement
+
+### 2.1 The cold-start tax
+
+According to Stack Overflow's 2025 Developer Survey, 76% of developers now use two or more AI coding tools concurrently. Each tool operates in a hermetically sealed context silo — switching between Claude Code and Cursor mid-session means re-pasting file contents, re-explaining architecture decisions, and re-describing what you're trying to build. At 3–5 switches per day, this amounts to **45–75 minutes of pure waste daily** per developer.
+
+### 2.2 Existing solutions fall short
+
+| Tool | Limitation |
+|---|---|
+| ai-context-bridge | CLI tool, requires manual init on each project, only runs on commit hooks. No passive capture, no native UI. |
+| CLAUDE.md / .cursorrules | Static config files. Must be manually maintained. Don't capture runtime state or recent edits. |
+| Copilot context | Single-tool only. No cross-tool portability. Passive file reader, not an active context agent. |
+| Copy-paste | What most developers do today. Fragile, incomplete, and completely manual. |
+
+### 2.3 The gap Ithuriel fills
+
+No existing product is a fully passive, always-on, native macOS agent that monitors workspace state and proactively formats it for multiple AI tools simultaneously. That is the precise gap Ithuriel fills.
+
+---
+
+## 3. Users & Goals
+
+### 3.1 Primary user
+
+| Attribute | Detail |
+|---|---|
+| Who | Individual software developer or student using 2+ AI coding tools |
+| OS | macOS Sonoma 14+ (Sequoia 15 target) |
+| Tools used | Any combination of Claude Code, Cursor, Copilot, ChatGPT, Gemini |
+| Pain felt | Spends 10–20 min re-explaining project context after every tool switch or rate limit hit |
+| Goal | Jump directly into AI-assisted work without preamble |
+
+### 3.2 Secondary users
+
+- Small engineering teams sharing context across developers on the same codebase
+- CS students switching between personal AI tools and school-mandated ones
+- Freelancers managing multiple client codebases simultaneously
+
+### 3.3 User stories
+
+1. As a developer, I want Ithuriel to silently watch my VS Code workspace so that when I open Claude Code it already knows my project structure, recent edits, and active branch.
+2. As a developer, I want Ithuriel to detect when I hit a rate limit and automatically prepare a resume prompt for the next tool I open.
+3. As a student, I want Ithuriel to redact file paths containing personal info or API keys before sending context anywhere.
+4. As a developer, I want to see a history of context snapshots so I can recover what I was working on after a crash.
+5. As a developer, I want Ithuriel to format context differently depending on the target tool — CLAUDE.md format for Claude Code, system message for ChatGPT, .cursorrules for Cursor.
+
+---
+
+## 4. Core Features
+
+### 4.1 Passive workspace monitor `[MVP]`
+
+A background macOS agent (Swift, NSWorkspace + FSEvents) that continuously captures:
+
+- Active VS Code / Xcode / Cursor workspace path and open files
+- Recent file edits (last 10 files changed, with diff summaries)
+- Active git branch, recent commits, and current diff
+- Terminal command history (last 20 commands, configurable)
+- Recent clipboard contents when they contain code (opt-in)
+
+### 4.2 Context summarization engine `[MVP]`
+
+Vertex AI (Gemini 1.5 Pro) processes each raw context snapshot and produces a structured summary in three formats:
+
+| Format | Length | Used for |
+|---|---|---|
+| Short | ~100 tokens | Clipboard injection, status bar |
+| Medium | ~500 tokens | Cursor system messages, ChatGPT |
+| Full | ~2000 tokens | Claude Code CLAUDE.md, deep sessions |
+
+### 4.3 Tool-aware injection `[MVP]`
+
+When the user switches focus to a supported AI tool, Ithuriel detects the application activation event (via Accessibility API) and places the appropriate formatted context on the clipboard automatically.
+
+**Supported injection targets v1.0:** Claude Code CLI, Cursor, ChatGPT (web + desktop), GitHub Copilot Chat, Gemini Code Assist, any custom Claude API app.
+
+### 4.4 Rate-limit resume `[MVP]`
+
+Ithuriel listens for error patterns that indicate rate limit hits. On detection, it instantly generates a "resume prompt" — a compact context packet that tells the next tool exactly where you were, what was in progress, and what the next step is.
+
+### 4.5 Context history & snapshots `[v1.1]`
+
+Every context snapshot is persisted to Firestore with a timestamp. The web dashboard shows a timeline of snapshots, lets you restore any previous context, and shows which tools received which snapshots.
+
+### 4.6 Privacy controls `[MVP]`
+
+- **Sensitive path redaction:** paths matching `.env`, `secrets/`, `private/`, `api_key` automatically scrubbed
+- **Local-only mode:** all processing on-device, no data leaves the machine
+- **Per-project rules:** exclude specific folders or file types from monitoring
+- **On-screen indicator:** menu bar icon shows real-time capture status
+
+### 4.7 Team context sync `[v2.0]`
+
+Developers on the same Git repository can opt-in to a shared context channel. When one developer makes an architectural decision or resolves a complex bug, the context is broadcast to teammates.
+
+---
+
+## 5. Technical Architecture
+
+### 5.1 System overview
+
+Ithuriel is composed of five layers: a native macOS agent, a Google Cloud backend, a context processing pipeline, a storage layer, and a web dashboard. All layers communicate over HTTPS/gRPC with Firebase Auth JWTs.
+
+```
+Data flow:
+
+macOS Agent
+    │
+    │  POST /v1/context/snapshot
+    ▼
+Cloud Run API  ──────────────────────────────────► WebSocket push back to agent
+    │
+    │  Publish to Pub/Sub topic: ithuriel-snapshots
+    ▼
+Cloud Function (Python)
+    │
+    ├──► Vertex AI Gemini 1.5 Flash  → short + medium summaries
+    ├──► Vertex AI Gemini 1.5 Pro    → full summary
+    ├──► Vertex AI text-embedding-005 → 1536-dim embedding
+    │
+    ├──► Firestore  (metadata, summaries)
+    └──► Cloud Storage  (raw blob, embedding vector)
+```
+
+### 5.2 Component breakdown
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| macOS Agent | Swift 5.9 / SwiftUI | Menu bar app. Monitors FSEvents, NSWorkspace, terminal. Captures context, sends to API, injects into AI tools. |
+| VS Code Extension | TypeScript / VS Code API | Captures open file tree, cursor position, recent edits, workspace config. Posts to API on change events. |
+| Ithuriel API | Node.js + TypeScript / Cloud Run | REST + WebSocket API. Receives snapshots, triggers processing pipeline, serves formatted context. |
+| Context Processor | Python / Cloud Functions gen2 | Subscribes to Pub/Sub. Calls Vertex AI. Writes to Firestore + GCS. |
+| Context Store | Firestore + Cloud Storage | Firestore: metadata, user prefs, snapshot index. GCS: raw and processed snapshot blobs. |
+| Real-time sync | Cloud Pub/Sub | Decouples ingestion from processing. Enables team broadcast for v2.0. |
+| Web Dashboard | React + Vite / Cloud Run | Context history, integration settings, privacy controls, team sync management. |
+| Auth | Firebase Auth + Cloud IAM | Google/GitHub OAuth for users. Service account for agent-to-API. |
+
+### 5.3 macOS agent deep dive
+
+#### Capture subsystems
+
+| Subsystem | API / Method | Detail |
+|---|---|---|
+| File watcher | `FSEventStream` | Watches active workspace directory, 5-second debounce |
+| App detection | `NSWorkspace.shared.frontmostApplication` | Detects active app switches in real time |
+| Terminal history | `ProcessInfo` + `libproc` | Reads terminal PID, extracts recent shell history via `$HISTFILE` |
+| Git state | Git CLI subprocess | Runs `git status`, `git log --oneline -10`, `git diff --stat` on 30s timer |
+| Clipboard | `NSPasteboard` monitoring | Opt-in capture of code-shaped clipboard contents |
+
+#### Privacy scrubbing (on-device, pre-upload)
+
+- Regex pass removes any token matching API key patterns (`sk-`, `ghp_`, `xoxb-`, `AIza`, etc.)
+- Path filter excludes files in `.env`, `.ssh/`, `secrets/`, `private/` subdirectories
+- Local-only mode: SwiftData local store only, Vertex AI replaced with on-device CoreML DistilBERT summarizer
+
+#### Injection mechanism
+
+- Accessibility API (`AXUIElement`) detects target tool focus events
+- Clipboard injection: `NSPasteboard.general.setString()` writes formatted context
+- Type-injection (allowlisted apps only): `CGEventPost` with keystroke simulation
+- Configurable per-app: clipboard-only, auto-type, or manual trigger via hotkey
+
+### 5.4 API design
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/v1/context/snapshot` | Bearer JWT | Receive raw context snapshot from macOS agent or VS Code extension |
+| `GET` | `/v1/context/current` | Bearer JWT | Return latest processed context, formatted for specified target tool |
+| `GET` | `/v1/context/history` | Bearer JWT | Return paginated list of past snapshots |
+| `GET` | `/v1/context/:id` | Bearer JWT | Return specific snapshot by ID |
+| `POST` | `/v1/context/inject` | Bearer JWT | Generate tool-specific injection payload (cursor|claude|chatgpt|copilot) |
+| `WS` | `/v1/context/stream` | Bearer JWT | WebSocket — pushes real-time context updates to connected agent |
+| `POST` | `/v1/team/broadcast` | Bearer JWT | Broadcast context snapshot to all team members on same repo |
+| `GET` | `/v1/health` | None | Health check for Cloud Run load balancer |
+
+### 5.5 Data model
+
+#### Firestore: `users/{uid}`
+
+```json
+{
+  "id": "string — Firebase Auth UID",
+  "email": "string",
+  "plan": "free | pro | team",
+  "prefs": {
+    "redactKeys": true,
+    "localOnly": false,
+    "targetTools": ["claude", "cursor", "chatgpt"],
+    "excludePaths": [".env", "secrets/"]
+  },
+  "createdAt": "Timestamp"
+}
+```
+
+#### Firestore: `users/{uid}/snapshots/{snapshotId}`
+
+```json
+{
+  "id": "string — UUID v4",
+  "capturedAt": "Timestamp",
+  "source": "vscode | xcode | cursor | terminal",
+  "rawRef": "string — GCS object path",
+  "summaryShort": "string — 100-token Vertex AI summary",
+  "summaryMedium": "string — 500-token summary",
+  "summaryFull": "string — 2000-token summary",
+  "embeddingRef": "string — GCS path to 1536-dim vector",
+  "gitBranch": "string",
+  "gitCommit": "string — latest commit SHA",
+  "activeFiles": ["string — redacted paths"],
+  "recentEdits": [{ "path": "", "linesAdded": 0, "linesRemoved": 0, "summary": "" }],
+  "terminalHistory": ["string — last N commands"]
+}
+```
+
+#### Firestore: `teams/{teamId}`
+
+```json
+{
+  "id": "string",
+  "repoUrl": "string — used to match members by Git remote",
+  "memberUids": ["string"],
+  "sharedSnapshotId": "string — latest team broadcast snapshot"
+}
+```
+
+---
+
+## 6. Google Cloud Platform Architecture
+
+### 6.1 GCP services inventory
+
+| GCP Service | Tier / Config | Usage in Ithuriel |
+|---|---|---|
+| Cloud Run | min 0 / max 10 instances, 1 vCPU 512 MB | Hosts Ithuriel REST API (Node.js) and Web Dashboard (React). Auto-scales to zero on inactivity. |
+| Cloud Pub/Sub | Standard tier, global topic | Decouples snapshot ingestion from Vertex AI processing. Enables async team broadcast. |
+| Cloud Firestore | Native mode, us-central1 | Primary database for users, snapshot metadata, team state. Real-time listeners for agent sync. |
+| Cloud Storage | Standard storage, us-central1 | Raw snapshot blobs and embedding vectors. Lifecycle: auto-delete after 90 days. |
+| Vertex AI Gemini Flash | `gemini-1.5-flash-001` | Fast summarization for short + medium context lengths. |
+| Vertex AI Gemini Pro | `gemini-1.5-pro-001` | High-quality full summaries and tool-specific formatting. |
+| Vertex AI Embeddings | `text-embedding-005` | 1536-dim embeddings for semantic context search and dedup detection. |
+| Cloud Functions gen2 | Python 3.12, 2 vCPU, 4 GB | Context processing subscriber — Pub/Sub → Vertex AI → Firestore + GCS. |
+| Firebase Auth | Google + GitHub OAuth | User authentication. Issues JWTs validated by Cloud Run API. |
+| Secret Manager | 1 version per secret, auto-rotation | Stores Vertex AI keys, GitHub OAuth secrets, service account credentials. |
+| Cloud Build | E2 machine type | CI/CD: lint + test → Docker build → Artifact Registry → Cloud Run deploy. |
+| Artifact Registry | Docker format, us-central1 | Versioned Docker images for API and Dashboard containers. |
+| Cloud Monitoring | Custom dashboards + uptime checks | API latency, Pub/Sub lag, Vertex AI quota, error rates. |
+| Cloud Logging | 30-day retention | Structured JSON logs from all Cloud Run instances and Cloud Functions. |
+| Cloud IAM | Least-privilege service accounts | Separate accounts for API, Cloud Functions, and CI/CD. |
+| Cloud Armor | WAF on Load Balancer | Rate limiting 100 req/min per IP, SQLi/XSS rule sets. |
+
+### 6.2 Ingestion pipeline (step by step)
+
+```
+1. macOS agent POSTs snapshot  →  POST /v1/context/snapshot
+2. Cloud Run API validates JWT, redacts PII
+3. API publishes message to Pub/Sub topic: ithuriel-snapshots
+4. Cloud Function pulls message within <2s
+5. Function calls Vertex AI Gemini Flash  →  short + medium summaries  (<1s)
+6. Function calls Vertex AI Gemini Pro    →  full summary              (<3s)
+7. Function calls Embeddings API          →  1536-dim vector           (<1s)
+8. Writes metadata + summaries  →  Firestore
+9. Writes raw blob + embedding  →  Cloud Storage
+10. Publishes completion event  →  ithuriel-processed topic
+11. Cloud Run WebSocket pushes update  →  macOS agent
+```
+
+Total end-to-end latency target: **< 4 seconds**
+
+### 6.3 CI/CD pipeline
+
+```
+GitHub push to main
+    │
+    ▼
+Cloud Build trigger
+    ├── ESLint + Jest unit tests
+    ├── Docker multi-stage build  →  minimal production image
+    ├── Push to Artifact Registry  (tagged with commit SHA)
+    └── Cloud Run deploy
+            └── 10% canary traffic split
+                    └── 100% after 15-min health check passes
+```
+
+### 6.4 Security architecture
+
+| Layer | Control |
+|---|---|
+| API auth | Firebase Auth JWT validation middleware on all endpoints |
+| Database | Firestore security rules: users read/write own documents only |
+| Object storage | GCS bucket private; access via signed URLs generated by Cloud Run |
+| Messaging | Pub/Sub: service account auth only, no public access |
+| Secrets | Secret Manager injects env vars at Cloud Run startup — never in image |
+| Network perimeter | VPC Service Controls: Firestore, GCS, Pub/Sub locked to Ithuriel project |
+| WAF | Cloud Armor: 100 req/min/IP rate limit, SQLi/XSS rules |
+
+### 6.5 Cost estimate (per 1,000 active users/month)
+
+| Service | Estimated cost |
+|---|---|
+| Cloud Run (API) | ~$12 |
+| Firestore | ~$8 |
+| Cloud Storage | ~$5 |
+| Vertex AI Gemini Flash | ~$45 |
+| Vertex AI Embeddings | ~$10 |
+| Cloud Functions | ~$4 |
+| Cloud Pub/Sub | ~$3 |
+| **Total** | **~$87 / month (~$0.09 / user / month)** |
+
+---
+
+## 7. Development Roadmap
+
+### Phase 1 — MVP (Weeks 1–4)
+
+> Goal: A working macOS menu bar app that captures VS Code context and injects it into Claude Code via clipboard.
+
+- **Week 1:** macOS agent skeleton (Swift menu bar, FSEvents, NSWorkspace)
+- **Week 1:** GCP project setup — Terraform, Firebase Auth, Cloud Run scaffold, Firestore schema
+- **Week 2:** VS Code extension — workspace capture, file tree, git status, API post
+- **Week 2:** Cloud Run API — `/v1/context/snapshot` and `/v1/context/current` endpoints
+- **Week 3:** Pub/Sub → Cloud Function → Vertex AI Gemini summarization pipeline
+- **Week 3:** Clipboard injection for Claude Code target
+- **Week 4:** Privacy scrubbing, local-only mode toggle, menu bar status UI
+- **Week 4:** End-to-end integration test: VS Code edit → API → Vertex AI → Claude Code clipboard
+
+### Phase 2 — Multi-tool + Web Dashboard (Weeks 5–8)
+
+- Tool-specific formatting: Cursor (`.cursorrules`), ChatGPT (system message), Copilot Chat
+- Rate-limit detection and resume prompt generation
+- Web dashboard: context history timeline, snapshot viewer
+- Firestore-powered context history with 90-day retention
+- Cloud Monitoring dashboards + uptime alerts
+
+### Phase 3 — Polish + Team (Weeks 9–12)
+
+- Xcode integration (in addition to VS Code)
+- Semantic search over context history (Vertex AI Embeddings)
+- Team context sync via Pub/Sub broadcast channel
+- Homebrew Cask distribution + onboarding flow
+- Performance: context snapshot latency target < 4 seconds end-to-end
+
+---
+
+## 8. Success Metrics
+
+| Metric | Target |
+|---|---|
+| Daily active agents | 500 installs with agent running daily by end of Month 2 |
+| Context injection rate | > 80% of tool switches result in successful injection |
+| End-to-end latency | < 4 seconds from file edit to context ready |
+| Vertex AI accuracy | > 90% of users rate injected summary as "relevant" |
+| Privacy compliance | 0 API keys or secrets stored in Firestore / GCS |
+| API uptime | 99.5% monthly uptime on Cloud Run |
+| Cost per user | < $0.15 / active user / month at 1,000 users |
+| Time saved | Users report saving > 10 min/day of re-explanation (NPS survey) |
+
+---
+
+## 9. Risks & Mitigations
+
+| Risk | Mitigation |
+|---|---|
+| macOS Accessibility API restrictions | Clipboard-only mode as fallback; direct DMG/Homebrew distribution (no App Store dependency for v1) |
+| Developer trust / privacy concerns | Local-only mode as first-class option; open-source the agent; visible on-screen capture indicator |
+| Vertex AI cost spikes | Client-side debouncing (min 30s between snapshots); quota alerts in Cloud Monitoring; Gemini Flash for non-full summaries |
+| Context quality degradation | User feedback loop (thumbs up/down); prompt iteration using low-rated examples as training signal |
+| Competitive response from Cursor/Claude Code | Ship fast; deep macOS integration that web-first companies deprioritize; multi-tool angle as core differentiator |
+| Rate limit detection fragility | Manual hotkey trigger as primary UX; auto-detection as bonus layer |
+
+---
+
+## 10. Open Questions
+
+1. Should Ithuriel support Windows / Linux in v1.0, or remain macOS-only to leverage native APIs and ship faster?
+2. Should the VS Code extension be the primary capture mechanism with the macOS agent as enhancement?
+3. What is the right pricing model — free tier with limited history, $5/mo pro, $15/mo team?
+4. Should team context sync require a shared Git remote, or allow manual team codes?
+5. Is on-device CoreML summarization good enough for local-only mode vs. Vertex AI quality?
+6. Should Ithuriel integrate with Coven (multi-agent macOS orchestrator) as a built-in context layer, or remain a standalone product?
+
+---
+
+## Appendix A: Full Tech Stack
+
+| Component | Technology | Notes |
+|---|---|---|
+| macOS Agent | Swift 5.9 / SwiftUI 5 | Menu bar app, FSEvents, NSWorkspace, Accessibility API, SwiftData local store |
+| VS Code Extension | TypeScript 5 / VS Code Extension API | Workspace capture, file watcher, git integration, HTTP client |
+| Cloud Run API | Node.js 20 + TypeScript + Fastify | REST endpoints, WebSocket, Firebase Auth middleware, Pub/Sub publisher |
+| Context Processor | Python 3.12 + google-cloud-aiplatform | Pub/Sub subscriber, Vertex AI calls, Firestore + GCS writes |
+| Web Dashboard | React 18 + Vite + TailwindCSS | Context timeline, snapshot viewer, settings, team management |
+| Database | Cloud Firestore (Native mode) | User data, snapshot metadata, team state |
+| Object Storage | Cloud Storage (Standard) | Raw snapshot blobs, embedding vectors, 90-day lifecycle |
+| AI / ML | Vertex AI Gemini 1.5 Flash/Pro + text-embedding-005 | Summarization (3 lengths), 1536-dim embeddings |
+| Auth | Firebase Authentication | Google + GitHub OAuth, JWT issuance |
+| Messaging | Cloud Pub/Sub | Async pipeline decoupling, team broadcast |
+| Serverless | Cloud Functions gen2 (Python) | Context processing subscriber |
+| IaC | Terraform 1.7 + google provider | All GCP resources defined as code |
+| CI/CD | Cloud Build + Artifact Registry | Automated test → build → deploy pipeline |
+| Monitoring | Cloud Monitoring + Cloud Logging | Metrics, dashboards, alerts, structured logs |
+| Security | Secret Manager + Cloud Armor + VPC SC | Secrets, WAF, service perimeter |
+| Distribution | Homebrew Cask + GitHub Releases | Direct DMG + Homebrew tap for macOS agent |
+
+---
+
+*Ithuriel — named for the angel in Paradise Lost whose spear reveals what is hidden. Your AI sees what you've been doing.*

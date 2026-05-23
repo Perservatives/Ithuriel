@@ -1,0 +1,11 @@
+# Local tool state — not for the repo
+.claude-flow/
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
