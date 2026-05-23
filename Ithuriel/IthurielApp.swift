@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var agentLoop: AgentLoop?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        NSApp.setActivationPolicy(.regular)
 
         // Initialize Firebase from the bundled GoogleService-Info.plist
         // BEFORE anything that might want to talk to the project (AuthService,
@@ -50,10 +50,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
-        SpotlightCoordinator.shared.configure(container: container, agentLoop: loop)
+        LaunchCoordinator.shared.configure(container: container)
         ChatWindowController.shared.configure(container: container, agent: loop)
         VoiceController.shared.configure(container: container, agentLoop: loop)
-        SpotlightCoordinator.shared.installSummonHotkey()
+        AgentControlBorderOverlay.shared.configure(agentLoop: loop)
+        installGlobalHotkey()
 
         // Seed the hotkey binding from saved prefs (defaults to ⌃Space).
         Task { @MainActor in
@@ -65,29 +66,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Apple-Intelligence-style screen-edge glow while voice hotkey is held.
-        let prev = HotkeyMonitor.shared.onVoiceStart
-        HotkeyMonitor.shared.onVoiceStart = {
-            Task { @MainActor in
-                EdgeGlowController.shared.show()
-                prev()
-            }
-        }
-        let prevEnd = HotkeyMonitor.shared.onVoiceEnd
-        HotkeyMonitor.shared.onVoiceEnd = {
-            Task { @MainActor in
-                EdgeGlowController.shared.hide()
-                prevEnd()
-            }
-        }
-
         // Done/Failed/Stopped banner responds to bus events.
         AgentStatusBus.shared.subscribe { event in
             Task { @MainActor in
                 switch event {
-                case .started, .said:
-                    // Live narration — surfaced inside SpotlightView via the
-                    // bus's @Published lastSpoken. No banner or status flip.
+                case .started, .said, .replied:
                     break
                 case .finished(let summary):
                     DoneBannerController.shared.showFinished(summary: summary)
@@ -101,21 +84,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         refreshPermissionState()
 
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.refreshPermissionState()
-        }
-
-        // Sequence: blob backdrop blooms in → orb assembles centre-screen →
-        // if first run, the orb shrinks into the onboarding header while the
-        // backdrop dims and the onboarding glass fades in over it; on
-        // onboarding finish, both launch surfaces fade out and the chat
-        // window appears. Otherwise the orb fades and the chat window opens.
+        // Sequence: launch animation → onboarding (only on first run) →
+        // chat window. The chat window is the primary surface, but we keep
+        // it off-screen until onboarding completes so the user isn't seeing
+        // two windows fight for focus.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             Task { @MainActor in
+                LaunchCoordinator.shared.playLaunchAnimation()
+
                 let needsOnboarding: Bool = {
                     if let prefs = try? UserPrefs.load(in: container) {
                         return prefs.onboardingComplete == false
@@ -123,25 +99,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     return true
                 }()
 
+                // Wait for the orb sequence to finish before opening any
+                // window so the animation isn't covered.
+                try? await Task.sleep(nanoseconds: 1_900_000_000)
+
                 if needsOnboarding {
                     OnboardingCoordinator.shared.onFinish = {
                         Task { @MainActor in
-                            SpotlightCoordinator.shared.fadeOutLaunchSurfaces {
-                                ChatWindowController.shared.show(container: container, agent: loop)
-                            }
+                            ChatWindowController.shared.show(container: container, agent: loop)
                         }
                     }
-                    SpotlightCoordinator.shared.playLaunchThenSummon(onAssembled: {
-                        Task { @MainActor in
-                            SpotlightCoordinator.shared.handoffToOnboarding(container: container)
-                        }
-                    })
+                    OnboardingCoordinator.shared.present(container: container)
                 } else {
-                    // No onboarding: orb fades into the chat window as before.
-                    SpotlightCoordinator.shared.playLaunchThenSummon()
-                    // playLaunchThenSummon's default path opens the chat
-                    // window via dismissLaunch → ChatWindowController.toggle.
-                    // We don't need an explicit show() here.
+                    ChatWindowController.shared.show(container: container, agent: loop)
                 }
             }
         }
@@ -174,6 +144,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshPermissionState() {
         Task { @MainActor in
             await PermissionsManager.shared.refresh()
+        }
+    }
+
+    /// ⌃Space (or user-configured chord): tap opens chat, hold starts voice.
+    @MainActor
+    private func installGlobalHotkey() {
+        let monitor = HotkeyMonitor.shared
+        monitor.onHotkeyTap = {
+            Task { @MainActor in
+                guard let container = self.modelContainer, let loop = self.agentLoop else { return }
+                ChatWindowController.shared.show(container: container, agent: loop)
+            }
+        }
+        monitor.onVoiceStart = { Task { @MainActor in VoiceController.shared.start() } }
+        monitor.onVoiceEnd   = { Task { @MainActor in VoiceController.shared.stopAndSubmit() } }
+        monitor.install()
+
+        let prev = HotkeyMonitor.shared.onVoiceStart
+        HotkeyMonitor.shared.onVoiceStart = {
+            Task { @MainActor in
+                EdgeGlowController.shared.show()
+                prev()
+            }
+        }
+        let prevEnd = HotkeyMonitor.shared.onVoiceEnd
+        HotkeyMonitor.shared.onVoiceEnd = {
+            Task { @MainActor in
+                EdgeGlowController.shared.hide()
+                prevEnd()
+            }
         }
     }
 

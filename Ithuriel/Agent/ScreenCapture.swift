@@ -7,26 +7,42 @@ import ScreenCaptureKit
 /// for inline upload to Gemini. Uses CGDisplayCreateImage which is widely
 /// available across macOS versions (deprecated in macOS 15 but functional).
 enum ScreenCapture {
-    /// `CGPreflightScreenCaptureAccess` can stay false after the user grants access
-    /// (common with ad-hoc debug builds). Fall back to real capture and ScreenCaptureKit.
+    /// Same key as `PermissionsManager` — one source of truth for cached screen-recording grant.
+    private static let verifiedKey = "perm.screenRecording"
+
+    /// Non-intrusive — safe to call from periodic UI refresh. Never opens a TCC dialog.
+    static func hasScreenRecordingAccessPassive() -> Bool {
+        if CGPreflightScreenCaptureAccess() { return true }
+        let ud = UserDefaults.standard
+        if ud.bool(forKey: verifiedKey) { return true }
+        // Legacy key from earlier builds.
+        return ud.bool(forKey: "perm.screenRecordingVerified")
+    }
+
+    /// Full probe for Settings "Enable" and first-time verification. May trigger TCC once.
     static func hasScreenRecordingAccess() async -> Bool {
         if CGPreflightScreenCaptureAccess() { return true }
-        if CGDisplayCreateImage(CGMainDisplayID()) != nil { return true }
+        if captureMainDisplayImage() != nil {
+            markVerified()
+            return true
+        }
         if #available(macOS 12.3, *) {
-            return await screenCaptureKitProbe()
+            let ok = await screenCaptureKitProbe()
+            if ok { markVerified() }
+            return ok
         }
         return false
     }
 
-    /// Synchronous probe for button handlers — avoids awaiting when already working.
+    /// Synchronous check before an agent screenshot — no `CGRequestScreenCaptureAccess`.
     static func hasScreenRecordingAccessNow() -> Bool {
-        if CGPreflightScreenCaptureAccess() { return true }
-        return CGDisplayCreateImage(CGMainDisplayID()) != nil
+        hasScreenRecordingAccessPassive()
     }
 
     static func mainDisplayJPEGBase64(maxWidth: CGFloat = 1280, quality: Double = 0.7) -> String? {
-        let displayId = CGMainDisplayID()
-        guard let cgImage = CGDisplayCreateImage(displayId) else { return nil }
+        guard hasScreenRecordingAccessNow() else { return nil }
+        guard let cgImage = captureMainDisplayImage() else { return nil }
+        markVerified()
 
         let original = NSBitmapImageRep(cgImage: cgImage)
         let scaled = downsample(original, maxWidth: maxWidth) ?? original
@@ -34,6 +50,14 @@ enum ScreenCapture {
         let props: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: quality]
         guard let jpeg = scaled.representation(using: .jpeg, properties: props) else { return nil }
         return jpeg.base64EncodedString()
+    }
+
+    private static func captureMainDisplayImage() -> CGImage? {
+        CGDisplayCreateImage(CGMainDisplayID())
+    }
+
+    private static func markVerified() {
+        UserDefaults.standard.set(true, forKey: verifiedKey)
     }
 
     @available(macOS 12.3, *)

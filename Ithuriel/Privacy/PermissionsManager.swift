@@ -6,7 +6,8 @@ extension Notification.Name {
     static let ithurielPermissionsDidChange = Notification.Name("IthurielPermissionsDidChange")
 }
 
-/// Tracks macOS permissions and requests them only when the user asks in Settings.
+/// Tracks macOS permissions. Never opens TCC dialogs except when the user taps
+/// Enable in Settings or onboarding.
 @MainActor
 final class PermissionsManager: ObservableObject {
     static let shared = PermissionsManager()
@@ -28,28 +29,58 @@ final class PermissionsManager: ObservableObject {
         static let notifications    = "perm.notifications"
     }
 
+    private var pollTask: Task<Void, Never>?
+    private var lastPassiveRefresh = Date.distantPast
+    private static let passiveRefreshMinInterval: TimeInterval = 45
+
     private init() {
-        // Seed from last-known state so the UI never flashes "missing" on cold launch.
         let ud = UserDefaults.standard
         accessibilityGranted   = ud.bool(forKey: CacheKey.accessibility)
         screenRecordingGranted = ud.bool(forKey: CacheKey.screenRecording)
         notificationsGranted   = ud.bool(forKey: CacheKey.notifications)
+
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                await PermissionsManager.shared.refresh(force: true)
+            }
+        }
     }
 
-    func refresh() async {
-        await measureAndPublish(retryIfMissing: true)
+    /// Passive status check — no TCC prompts. Safe on a timer or `didBecomeActive`.
+    func refresh(force: Bool = false) async {
+        let now = Date()
+        let firstRefresh = !hasRefreshed
+        if !force, !firstRefresh,
+           now.timeIntervalSince(lastPassiveRefresh) < Self.passiveRefreshMinInterval {
+            return
+        }
+        lastPassiveRefresh = now
+        // First launch: probe capture without opening TCC dialogs so already-granted
+        // access is detected. Later refreshes stay passive-only.
+        await measureAndPublish(probeScreen: firstRefresh || force)
         hasRefreshed = true
     }
 
+    /// After the user taps Enable — may show the system dialog once, then poll quietly.
+    func refreshAfterUserRequest() async {
+        lastPassiveRefresh = .distantPast
+        await measureAndPublish(probeScreen: true)
+        hasRefreshed = true
+        startPermissionPolling()
+    }
+
     func requestAccessibility() {
-        if AccessibilityTrust.isGranted() {
+        if accessibilityGranted || AccessibilityTrust.isGranted() {
             apply(accessibility: true, screen: screenRecordingGranted, notifications: notificationsGranted)
             return
         }
         let opts: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         _ = AXIsProcessTrustedWithOptions(opts as CFDictionary)
-        Task { await refresh() }
-        startPermissionPolling()
+        Task { await refreshAfterUserRequest() }
     }
 
     func openAccessibilitySettings() {
@@ -57,15 +88,18 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestScreenRecording() {
-        if ScreenCapture.hasScreenRecordingAccessNow() {
+        if screenRecordingGranted || ScreenCapture.hasScreenRecordingAccessPassive() {
             apply(accessibility: accessibilityGranted, screen: true, notifications: notificationsGranted)
             return
         }
         if #available(macOS 10.15, *) {
+            if CGPreflightScreenCaptureAccess() {
+                apply(accessibility: accessibilityGranted, screen: true, notifications: notificationsGranted)
+                return
+            }
             _ = CGRequestScreenCaptureAccess()
         }
-        Task { await refresh() }
-        startPermissionPolling()
+        Task { await refreshAfterUserRequest() }
     }
 
     func openScreenRecordingSettings() {
@@ -75,33 +109,39 @@ final class PermissionsManager: ObservableObject {
     func requestNotifications() async {
         if notificationsGranted { return }
         let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else {
-            await measureAndPublish(retryIfMissing: false)
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            apply(accessibility: accessibilityGranted, screen: screenRecordingGranted, notifications: true)
             return
+        case .denied:
+            await measureAndPublish(probeScreen: false)
+            return
+        default:
+            break
         }
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
-        await measureAndPublish(retryIfMissing: false)
+        await measureAndPublish(probeScreen: false)
     }
 
     // MARK: - Private
 
-    private func measureAndPublish(retryIfMissing: Bool) async {
-        var a11y = AccessibilityTrust.isGranted()
-        var screen = await ScreenCapture.hasScreenRecordingAccess()
+    /// `probeScreen`: try a silent capture probe (no TCC dialog) to detect grants
+    /// that `CGPreflightScreenCaptureAccess` misses in debug builds.
+    private func measureAndPublish(probeScreen: Bool) async {
+        let a11yCheck = AccessibilityTrust.isGranted()
+        let screenCheck: Bool
+        if probeScreen {
+            screenCheck = await ScreenCapture.hasScreenRecordingAccess()
+        } else {
+            screenCheck = ScreenCapture.hasScreenRecordingAccessPassive()
+        }
         let notifications = await measureNotifications()
 
+        // Sticky grants: once detected or cached, never auto-revoke via flaky probes.
+        let a11y = a11yCheck || accessibilityGranted
+        let screen = screenCheck || screenRecordingGranted
+
         apply(accessibility: a11y, screen: screen, notifications: notifications)
-
-        guard retryIfMissing, needsRequired else { return }
-
-        // TCC can lag briefly after returning from System Settings.
-        for _ in 0..<3 {
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            a11y = AccessibilityTrust.isGranted()
-            screen = await ScreenCapture.hasScreenRecordingAccess()
-            apply(accessibility: a11y, screen: screen, notifications: notifications)
-            if !needsRequired { break }
-        }
     }
 
     private func measureNotifications() async -> Bool {
@@ -114,13 +154,13 @@ final class PermissionsManager: ObservableObject {
         }
     }
 
-    /// Polls every 2 s for up to 30 s after a permission request so TCC
-    /// propagation delays don't leave the UI stale.
     private func startPermissionPolling() {
-        Task {
+        pollTask?.cancel()
+        pollTask = Task {
             for _ in 0..<15 {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
-                await measureAndPublish(retryIfMissing: false)
+                guard !Task.isCancelled else { return }
+                await measureAndPublish(probeScreen: true)
                 if !needsRequired { break }
             }
         }

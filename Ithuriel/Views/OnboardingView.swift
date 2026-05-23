@@ -76,7 +76,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Pick your shortcut")
                 .font(.system(.title2, design: .rounded).weight(.semibold))
-            Text("Press the key combination you want to use to summon Ithuriel from anywhere. The default is ⌃Space.")
+            Text("Press the key combination you want to use to open Ithuriel from anywhere. The default is ⌃Space.")
                 .font(.body).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let prefs {
@@ -87,7 +87,7 @@ struct OnboardingView: View {
                                        set: { prefs.hotkeyModifiers = $0; try? context.save(); pushHotkey() })
                 )
                 .padding(.top, 4)
-                Text("Hold the shortcut to talk; tap to type. You can change this any time in Settings.")
+                Text("Hold the shortcut to talk; tap to open chat. You can change this any time in Settings.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -106,7 +106,7 @@ struct OnboardingView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            bullet("⌃Space", NSLocalizedString("onboarding.welcome.summon", comment: ""))
+            bullet("⌃Space", NSLocalizedString("onboarding.welcome.hotkey", comment: ""))
             bullet(NSLocalizedString("onboarding.welcome.holdLabel", comment: ""),
                    NSLocalizedString("onboarding.welcome.voice", comment: ""))
             bullet("⌃⌥⌘.", NSLocalizedString("onboarding.welcome.kill", comment: ""))
@@ -251,7 +251,12 @@ struct OnboardingView: View {
         switch step {
         case .welcome:     step = .signIn
         case .signIn:      step = .hotkey
-        case .hotkey:      step = .permissions
+        case .hotkey:
+            if permissions.hasRefreshed && !permissions.needsRequired {
+                complete()
+            } else {
+                step = .permissions
+            }
         case .permissions: complete()
         case .done:        break
         }

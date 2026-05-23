@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Full-screen edge highlight while `AgentLoop` is driving keyboard/mouse.
+/// Full-screen white edge frame while `AgentLoop` is driving keyboard/mouse.
 /// One borderless, click-through window per display.
 @MainActor
 final class AgentControlBorderOverlay {
@@ -37,7 +37,7 @@ final class AgentControlBorderOverlay {
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
-            window.level = .statusBar
+            window.level = .screenSaver
             window.ignoresMouseEvents = true
             window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
             window.contentView = NSHostingView(rootView: AgentControlBorderView())
@@ -54,35 +54,21 @@ final class AgentControlBorderOverlay {
     }
 }
 
-/// Glowing frame around the active display while the agent is in control.
+/// White frame around each display while the agent is in control.
 private struct AgentControlBorderView: View {
     @State private var pulse = false
 
-    private let borderWidth: CGFloat = 3
-    private let inset: CGFloat = 4
+    private let borderWidth: CGFloat = 4
+    private let inset: CGFloat = 2
 
     var body: some View {
         Rectangle()
-            .strokeBorder(borderGradient, lineWidth: borderWidth)
+            .strokeBorder(Color.white.opacity(pulse ? 0.95 : 0.72), lineWidth: borderWidth)
             .padding(inset)
-            .shadow(color: Color(red: 0.25, green: 0.92, blue: 0.55).opacity(pulse ? 0.55 : 0.35),
-                    radius: pulse ? 14 : 9)
-            .shadow(color: Color.accentColor.opacity(pulse ? 0.35 : 0.2), radius: pulse ? 8 : 5)
-            .animation(.easeInOut(duration: 1.15).repeatForever(autoreverses: true), value: pulse)
+            .shadow(color: Color.white.opacity(pulse ? 0.55 : 0.30), radius: pulse ? 16 : 10)
+            .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: pulse)
             .onAppear { pulse = true }
             .ignoresSafeArea()
             .allowsHitTesting(false)
-    }
-
-    private var borderGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(red: 0.30, green: 0.95, blue: 0.58),
-                Color.accentColor,
-                Color(red: 0.22, green: 0.88, blue: 0.50)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
     }
 }

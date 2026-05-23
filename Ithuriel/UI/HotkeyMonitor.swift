@@ -4,7 +4,7 @@ import SwiftData
 
 /// Global hotkey dispatcher for Ithuriel.
 ///
-/// User-configurable. Default is **⌃Space**: tap toggles the Spotlight prompt,
+/// User-configurable. Default is **⌃Space**: tap opens the chat window,
 /// hold ≥320ms enters voice mode until release. The key code + modifier mask
 /// are stored on `UserPrefs.hotkeyKeyCode` / `UserPrefs.hotkeyModifiers` and
 /// `updateBinding(...)` is called by the Settings UI when changed.
@@ -26,7 +26,7 @@ final class HotkeyMonitor {
         static let ctrl    = ModifierMask(rawValue: 8)
     }
 
-    var onSummonTap: () -> Void = {}
+    var onHotkeyTap: () -> Void = {}
     var onVoiceStart: () -> Void = {}
     var onVoiceEnd: () -> Void = {}
 
@@ -151,7 +151,7 @@ final class HotkeyMonitor {
         if wasHold {
             onVoiceEnd()
         } else {
-            onSummonTap()
+            onHotkeyTap()
         }
     }
 
@@ -159,7 +159,7 @@ final class HotkeyMonitor {
         UInt64(Date().timeIntervalSince1970 * 1000)
     }
 
-    // MARK: - Carbon fallback (no Accessibility yet — tap=summon only)
+    // MARK: - Carbon fallback (no Accessibility yet — tap opens chat only)
 
     private var carbonHotKey: EventHotKeyRef?
     private var carbonHandlerRef: EventHandlerRef?
@@ -172,7 +172,7 @@ final class HotkeyMonitor {
         // re-installed on every rebind, leaking handlers each time.
         if carbonHandlerRef == nil {
             InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
-                Task { @MainActor in HotkeyMonitor.shared.onSummonTap() }
+                Task { @MainActor in HotkeyMonitor.shared.onHotkeyTap() }
                 return noErr
             }, 1, &spec, nil, &carbonHandlerRef)
         }

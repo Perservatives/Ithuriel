@@ -1,15 +1,9 @@
-/* App chrome (chat + spotlight toolbars) */
-"chrome.summon"        = "Summon";
-"chrome.openChat"      = "Open Chat";
+/* Launch animation */
+"launch.caption"               = "ITHURIEL";
+
+/* App chrome (chat toolbar) */
 "chrome.mute"          = "Mute sounds";
 "chrome.unmute"        = "Unmute sounds";
-
-/* Spotlight (center-screen prompt) */
-"spotlight.headline.idle"      = "What can I help you with today?";
-"spotlight.headline.running"   = "Working on it…";
-"spotlight.subhead.needsKey"   = "Add your Gemini API key in Settings to begin";
-"spotlight.newChat"            = "New Chat";
-"spotlight.hotkey"             = "⌃Space to summon · hold to talk · ⎋ dismiss · ⌃⌥⌘. kill";
 
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";
@@ -60,8 +54,8 @@
 
 /* Hotkey */
 "settings.tab.hotkey"      = "Hotkey";
-"settings.hotkey.summon"   = "Summon shortcut";
-"settings.hotkey.help"     = "Tap to summon Ithuriel. Hold the same chord to talk. Click the box and press any key combination; Esc to cancel.";
+"settings.hotkey.title"    = "Global shortcut";
+"settings.hotkey.help"     = "Tap to open the chat window. Hold the same chord to talk. Click the box and press any key combination; Esc to cancel.";
 "settings.hotkey.listening" = "Press a chord…";
 "settings.hotkey.click"    = "Click to record";
 "settings.hotkey.verbosity"= "Show agent steps";
@@ -83,7 +77,7 @@
 /* Onboarding */
 "onboarding.welcome.title"     = "Welcome to Ithuriel";
 "onboarding.welcome.body"      = "Your context-aware computer-use agent. A few quick basics before you start.";
-"onboarding.welcome.summon"    = "Tap to summon the prompt anywhere.";
+"onboarding.welcome.hotkey"    = "Tap to open the chat window from anywhere.";
 "onboarding.welcome.holdLabel" = "hold";
 "onboarding.welcome.voice"     = "Hold the shortcut to talk. Release to send.";
 "onboarding.welcome.kill"      = "Kill switch — stops the agent mid-action.";
@@ -103,12 +97,12 @@
 "settings.tab.howto"     = "How To";
 "howto.title"            = "How to use Ithuriel";
 "howto.subtitle"         = "A one-page reference. Most of the app is keyboard-driven.";
-"howto.summon.title"     = "⌃Space to summon";
-"howto.summon.body"      = "Tap Control-Space anywhere on your Mac to bring up the prompt. Type a task; press Return to send. ⎋ closes the prompt. (macOS also uses ⌃Space for input-source switching — disable it in System Settings → Keyboard → Keyboard Shortcuts → Input Sources if you have multiple sources.)";
+"howto.hotkey.title"     = "⌃Space to open chat";
+"howto.hotkey.body"      = "Tap Control-Space anywhere on your Mac to bring Ithuriel to the front. Type a task in the chat composer and press Return to send. (macOS also uses ⌃Space for input-source switching — disable it in System Settings → Keyboard → Keyboard Shortcuts → Input Sources if you have multiple sources.)";
 "howto.voice.title"      = "Hold ⌃Space to talk";
 "howto.voice.body"       = "Keep Control-Space held to speak. A 'Listening…' pill appears at the top of the screen. Release to send the transcribed message to the agent.";
 "howto.chat.title"       = "Open the full chat window";
-"howto.chat.body"        = "The chat window opens at launch. Use Open Chat in Spotlight or the toolbar at the bottom of the window. You get conversation history, the composer, and the Context Web inspector.";
+"howto.chat.body"        = "The chat window opens at launch. Use the Dock icon or your global shortcut to bring it back. You get conversation history, the composer, and the Context Web inspector.";
 "howto.kill.title"       = "Kill switch — ⌃⌥⌘.";
 "howto.kill.body"        = "Press Control-Option-Command-Period at any time to stop the agent mid-step. Use it freely; the agent expects this.";
 "howto.privacy.title"    = "Sandbox + secret scrubber";
@@ -193,6 +187,7 @@
 
 /* Agent loop */
 "agent.err.noKey"              = "Set your Gemini API key in Settings → Agent before running the agent.";
+"agent.err.emptyReply"         = "The model returned an empty reply. Try again.";
 "agent.err.disabled"           = "Agent control is turned off in Settings → Agent.";
 
 /* Agent run transcript (menu bar, spotlight, chat) */

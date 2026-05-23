@@ -1,132 +1,77 @@
 import SwiftUI
 import AppKit
 
-/// 8-shard brand reveal for the Ithuriel mark, executed to the canonical
-/// "thing arrives" timing model from Material's deceleration curve, with a
-/// radial micro-stagger between petals (15 ms apart) so the assembly reads
-/// as motion rather than a snap. Total run time ≈ 1.10s; idle hand-off
-/// behind that.
-///
-/// References (see research brief):
-///   • Material entering-element curve: cubic-bezier(0.0, 0.0, 0.2, 1.0)
-///   • Stagger between siblings: ≤ 20 ms (we use 15 ms)
-///   • Spring overshoot settle:   cubic-bezier(0.34, 1.56, 0.64, 1)
-///   • Reduce Motion variant:     opacity-only cross-fade, no transform
+/// Spinning 8-point brand mark — white AsteriskBurst at centre, wordmark beneath.
 struct LaunchOrbView: View {
-    /// Phase 0 = pre-arrival (shards out), 1 = arrived.
-    @State private var arrived = false
-    /// Soft overshoot scale of the assembled mark (1.08 → 1.0 settle).
-    @State private var petalScale: CGFloat = 0.0
-    /// Halo bloom pulse — runs in parallel with the convergence.
-    @State private var haloScale: CGFloat = 0.4
+    @State private var rotation: Double = 0
+    @State private var petalScale: CGFloat = 0.35
+    @State private var haloScale: CGFloat = 0.5
     @State private var haloOpacity: Double = 0
-    /// Final fade-out before handoff.
     @State private var coreOpacity: Double = 1
+    @State private var captionOpacity: Double = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    let tint: Color
-    /// When true, skip the closing fade-out and call `onComplete` with the
-    /// orb still fully visible — so the launch surface can be handed off to
-    /// another window (e.g. shrunken to become the onboarding header mark).
-    let holdAfterAssembly: Bool
     let onComplete: () -> Void
 
-    init(tint: Color = .accentColor,
-         holdAfterAssembly: Bool = false,
-         onComplete: @escaping () -> Void) {
-        self.tint = tint
-        self.holdAfterAssembly = holdAfterAssembly
-        self.onComplete = onComplete
-    }
-
-    /// Base design canvas the shard geometry was tuned against. The view
-    /// renders at any host size by uniformly scaling around this reference.
-    private static let designSide: CGFloat = 700
+    private let starPrimary = Color.white
+    private let starSecondary = Color.white.opacity(0.62)
 
     var body: some View {
-        GeometryReader { geo in
-            // Uniform scale so the entire mark — halo, shards, travel
-            // distances — fits whatever frame the window hands us. Lets the
-            // coordinator animate the window from 720pt down to ~180pt and
-            // have the orb shrink with it as one continuous object.
-            let scale = min(geo.size.width, geo.size.height) / Self.designSide
-
+        VStack(spacing: 22) {
             ZStack {
-                // Halo — parallel pulse layer behind the petals.
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [tint.opacity(0.35), tint.opacity(0.06), .clear],
-                            center: .center, startRadius: 6, endRadius: 240
+                            colors: [starPrimary.opacity(0.38), starPrimary.opacity(0.10), .clear],
+                            center: .center, startRadius: 8, endRadius: 200
                         )
                     )
-                    .frame(width: 480, height: 480)
-                    .blur(radius: 24)
+                    .frame(width: 380, height: 380)
+                    .blur(radius: 28)
                     .scaleEffect(haloScale)
                     .opacity(haloOpacity)
 
-                ForEach(0..<8) { i in
-                    shard(index: i)
-                }
+                Circle()
+                    .strokeBorder(starPrimary.opacity(0.22), lineWidth: 1)
+                    .frame(width: 220, height: 220)
+                    .scaleEffect(petalScale * 0.92)
+                    .opacity(haloOpacity * 0.8)
+
+                AsteriskBurst(
+                    rotation: rotation,
+                    petalScale: petalScale,
+                    tint: starPrimary,
+                    secondaryTint: starSecondary,
+                    glowRadius: 22
+                )
+                .frame(width: 200, height: 200)
             }
-            .frame(width: Self.designSide, height: Self.designSide)
-            .scaleEffect(scale)
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+            .frame(width: 340, height: 340)
+
+            Text(NSLocalizedString("launch.caption", comment: ""))
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .tracking(9)
+                .foregroundStyle(starPrimary.opacity(0.92))
+                .opacity(captionOpacity)
+                .padding(.bottom, 4)
         }
+        .frame(width: 400, height: 480)
         .opacity(coreOpacity)
         .task { await runSequence() }
     }
-
-    // MARK: - Shard geometry
-
-    private func shard(index i: Int) -> some View {
-        let angle: Double = Double(i) * 45.0
-        // Far state: pulled outward by 1.6× the assembled radius.
-        // r ≈ 100pt assembled → 160pt extra travel.
-        let pulled: CGFloat = arrived ? 0 : 160
-        let dx: CGFloat = CGFloat(cos(angle * .pi / 180)) * pulled
-        let dy: CGFloat = CGFloat(sin(angle * .pi / 180)) * pulled
-        let fill: Color = i.isMultiple(of: 2) ? tint : tint.opacity(0.65)
-        let alpha: Double = arrived ? 1 : 0
-
-        return Petal()
-            .fill(fill)
-            .frame(width: 56, height: 200)
-            .offset(y: -100)
-            .rotationEffect(.degrees(angle - 90))
-            // Travel from the periphery.
-            .offset(x: dx, y: dy)
-            .scaleEffect(petalScale)
-            .opacity(alpha)
-            // Per-petal delay creates the radial micro-stagger.
-            .animation(
-                .timingCurve(0.0, 0.0, 0.2, 1.0, duration: 0.55)
-                    .delay(Double(i) * 0.015),
-                value: arrived
-            )
-            .animation(.easeOut(duration: 0.3).delay(Double(i) * 0.015), value: petalScale)
-    }
-
-    // MARK: - Sequence
 
     private func runSequence() async {
         SoundPlayer.shared.play(.launch, volume: 0.5)
 
         if reduceMotion {
-            // Cross-fade only — no transform motion.
+            rotation = 0
             petalScale = 1.0
-            arrived = true
-            withAnimation(.easeOut(duration: 0.35)) {
-                haloOpacity = 0.25
-            }
-            try? await Task.sleep(nanoseconds: 700_000_000)
-            if holdAfterAssembly {
-                // Hand off to the coordinator with the mark still on screen.
-                onComplete()
-                return
-            }
+            haloOpacity = 0.35
+            captionOpacity = 0.9
+            try? await Task.sleep(nanoseconds: 900_000_000)
             withAnimation(.easeOut(duration: 0.28)) {
                 coreOpacity = 0
+                captionOpacity = 0
                 haloOpacity = 0
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
@@ -134,48 +79,27 @@ struct LaunchOrbView: View {
             return
         }
 
-        // T=0 — kick off convergence. The shards animate via their .animation
-        // modifier on `arrived`; this single flip cascades through the
-        // 15ms stagger inside `shard(index:)`.
-        arrived = true
-        // Overshoot scale arrives at 1.08, settles to 1.0 in the SETTLE phase.
-        withAnimation(.timingCurve(0.0, 0.0, 0.2, 1.0, duration: 0.55)) {
-            petalScale = 1.08
+        withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false)) {
+            rotation = 360
         }
 
-        // T=0.30 — halo bloom (parallel for 0.8s).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-            withAnimation(.easeInOut(duration: 0.8)) {
-                haloScale = 1.6
-                haloOpacity = 0
-            }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.72)) {
+            petalScale = 1.0
+            haloScale = 1.0
             haloOpacity = 0.55
         }
 
-        // T=0.55 — soft snap chime.
-        try? await Task.sleep(nanoseconds: 550_000_000)
+        try? await Task.sleep(nanoseconds: 400_000_000)
         SoundPlayer.shared.play(.done, volume: 0.32)
+        withAnimation(.easeOut(duration: 0.35)) { captionOpacity = 0.9 }
 
-        // T=0.55 → 0.75 — settle with a tiny spring overshoot.
-        withAnimation(.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.2)) {
-            petalScale = 1.0
-        }
-
-        // T=0.95 — short hold so the assembled mark gets its beat.
-        try? await Task.sleep(nanoseconds: 250_000_000)
-
-        if holdAfterAssembly {
-            // Coordinator owns the next moment (e.g. shrink into onboarding
-            // header). Leave the mark fully visible.
-            onComplete()
-            return
-        }
-
-        // Default path: fade for handoff to Spotlight prompt.
-        withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.28)) {
+        try? await Task.sleep(nanoseconds: 700_000_000)
+        withAnimation(.easeOut(duration: 0.30)) {
             coreOpacity = 0
+            captionOpacity = 0
+            haloOpacity = 0
         }
-        try? await Task.sleep(nanoseconds: 300_000_000)
+        try? await Task.sleep(nanoseconds: 320_000_000)
         onComplete()
     }
 }

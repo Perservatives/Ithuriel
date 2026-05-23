@@ -14,6 +14,7 @@ final class AgentStatusBus: ObservableObject {
     enum Event {
         case started(task: String)
         case said(message: String)         // human-readable narration from the agent
+        case replied(message: String)      // casual chat reply (no task banner)
         case finished(summary: String)
         case failed(error: String)
         case stopped
@@ -37,6 +38,9 @@ final class AgentStatusBus: ObservableObject {
             isRunning = true
             lastSpoken = nil
         case .said(let message):
+            lastSpoken = message
+        case .replied(let message):
+            isRunning = false
             lastSpoken = message
         case .finished(let summary):
             isRunning = false

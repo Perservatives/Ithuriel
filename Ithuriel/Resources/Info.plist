@@ -22,8 +22,6 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
-    <key>LSUIElement</key>
-    <true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Ithuriel uses Apple Events to launch apps, control other applications, and run agent tasks on your behalf.</string>
     <key>NSAccessibilityUsageDescription</key>

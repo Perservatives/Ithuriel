@@ -12,8 +12,8 @@ struct HowToView: View {
                 .font(.callout).foregroundStyle(.secondary)
 
             tip(symbol: "command",
-                title: NSLocalizedString("howto.summon.title", comment: ""),
-                body:  NSLocalizedString("howto.summon.body",  comment: ""))
+                title: NSLocalizedString("howto.hotkey.title", comment: ""),
+                body:  NSLocalizedString("howto.hotkey.body",  comment: ""))
 
             tip(symbol: "waveform",
                 title: NSLocalizedString("howto.voice.title", comment: ""),

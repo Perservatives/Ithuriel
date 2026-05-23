@@ -1,21 +1,13 @@
 import SwiftUI
 import SwiftData
 
-/// Shared app controls: summon, chat, copy context, mute, settings, quit.
+/// Shared app controls: copy context, mute, settings, quit.
 struct AppChromeBar: View {
-    enum Placement {
-        /// Spotlight — user may open the full chat window.
-        case spotlight
-        /// Chat window — user may summon the center prompt.
-        case chat
-    }
-
     @Environment(\.modelContext) private var context
     @Query private var prefsList: [UserPrefs]
     @ObservedObject private var permissions = PermissionsManager.shared
     @State private var copyStatus: String?
 
-    var placement: Placement = .chat
     var compact: Bool = false
 
     private var prefs: UserPrefs? { prefsList.first }
@@ -23,32 +15,6 @@ struct AppChromeBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: compact ? 10 : 12) {
-                if placement == .chat {
-                    Button(action: { AppRouter.shared.toggleSpotlight() }) {
-                        if compact {
-                            Image(systemName: "sparkles")
-                        } else {
-                            Label(NSLocalizedString("chrome.summon", comment: ""), systemImage: "sparkles")
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help(NSLocalizedString("chrome.summon", comment: ""))
-                }
-
-                if placement == .spotlight {
-                    Button(action: { AppRouter.shared.openChat() }) {
-                        if compact {
-                            Image(systemName: "bubble.left.and.bubble.right.fill")
-                        } else {
-                            Label(NSLocalizedString("chrome.openChat", comment: ""), systemImage: "bubble.left.and.bubble.right.fill")
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help(NSLocalizedString("chrome.openChat", comment: ""))
-                }
-
                 Button(action: copyContext) {
                     Label(NSLocalizedString("status.copy", comment: ""), systemImage: "doc.on.doc")
                         .labelStyle(.iconOnly)

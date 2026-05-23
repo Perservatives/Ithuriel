@@ -70,9 +70,6 @@ struct SettingsView: View {
         }
         .frame(minWidth: 760, minHeight: 540)
         .task { await permissions.refresh() }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await permissions.refresh() }
-        }
         .onChange(of: permissions.needsRequired) { _, stillNeeded in
             if !stillNeeded, section == .permissions { section = .agent }
         }
@@ -189,7 +186,7 @@ struct SettingsView: View {
 
     private var hotkeySection: some View {
         sectionShell(title: section.title) {
-            card(NSLocalizedString("settings.hotkey.summon", comment: "")) {
+            card(NSLocalizedString("settings.hotkey.title", comment: "")) {
                 HotkeyPickerView(
                     keyCode: binding(\.hotkeyKeyCode),
                     modifiers: binding(\.hotkeyModifiers)

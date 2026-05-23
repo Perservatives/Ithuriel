@@ -12,7 +12,7 @@ final class AgentLoop: ObservableObject {
     @Published private(set) var lastError: String?
 
     private weak var container: ModelContainer?
-    private let maxSteps = 25
+    private let maxSteps = 100
 
     init(container: ModelContainer?) {
         self.container = container
@@ -36,6 +36,11 @@ final class AgentLoop: ObservableObject {
         }
         guard !prefs.geminiApiKey.isEmpty else {
             lastError = NSLocalizedString("agent.err.noKey", comment: "")
+            return
+        }
+
+        if ConversationalTurn.matches(userTask) {
+            await runConversational(userTask: userTask, prefs: prefs, container: container)
             return
         }
 
@@ -178,6 +183,114 @@ final class AgentLoop: ObservableObject {
     func stop() {
         AgentController.shared.kill()
         log(AgentTranscript.lineStopRequested())
+    }
+
+    // MARK: - Casual chat (agent enabled, no computer-use tools)
+
+    private func runConversational(userTask: String, prefs: UserPrefs, container: ModelContainer) async {
+        let temporary = UserDefaults.standard.bool(forKey: "Ithuriel.NextRunTemporary")
+        if temporary { UserDefaults.standard.set(false, forKey: "Ithuriel.NextRunTemporary") }
+
+        let runId = UUID()
+        let startedAt = Date()
+        let apiClient = IthurielClient(prefs: prefs)
+        let cloudSyncEnabled = !temporary && !prefs.localOnly && AuthService.shared.isSignedIn
+        if cloudSyncEnabled {
+            try? await apiClient.postAgentRun(.init(
+                id: runId, task: userTask, status: .running,
+                startedAt: startedAt, finishedAt: nil,
+                transcript: [], error: nil, snapshotId: nil
+            ))
+        }
+
+        let workspacePath = prefs.activeWorkspace
+        let modelName = prefs.geminiModel
+        await SavedAgentRun.persist(
+            id: runId, task: userTask, status: .running,
+            startedAt: startedAt, finishedAt: nil,
+            transcript: transcript, errorText: nil,
+            workspacePath: workspacePath, modelName: modelName,
+            in: container
+        )
+
+        func uploadFinalState(_ status: AgentRunRecord.Status) async {
+            await SavedAgentRun.persist(
+                id: runId, task: userTask, status: status,
+                startedAt: startedAt, finishedAt: Date(),
+                transcript: transcript, errorText: lastError,
+                workspacePath: workspacePath, modelName: modelName,
+                in: container
+            )
+            guard cloudSyncEnabled else { return }
+            try? await apiClient.postAgentRun(.init(
+                id: runId, task: userTask, status: status,
+                startedAt: startedAt, finishedAt: Date(),
+                transcript: transcript, error: lastError, snapshotId: nil
+            ))
+        }
+
+        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
+        let snapshot = await CachedSnapshot.latest(in: container)
+        let systemPrompt = buildConversationalSystemPrompt(snapshot: snapshot, prefs: prefs)
+        log(AgentTranscript.lineTaskStarted(userTask))
+
+        do {
+            let modelTurn = try await client.step(
+                contents: [.init(role: "user", parts: [.init(text: userTask)])],
+                tools: [],
+                system: systemPrompt
+            )
+            let reply = Self.displayText(from: modelTurn)
+            guard !reply.isEmpty else {
+                lastError = NSLocalizedString("agent.err.emptyReply", comment: "")
+                log(AgentTranscript.lineGeminiError(lastError ?? ""))
+                AgentStatusBus.shared.publish(.failed(error: lastError ?? ""))
+                await uploadFinalState(.failed)
+                return
+            }
+            log(AgentTranscript.lineReply(reply))
+            SoundPlayer.shared.play(.done, volume: 0.35)
+            AgentStatusBus.shared.publish(.replied(message: reply))
+            AgentSpeaker.shared.speakAsync(reply, prefs: prefs)
+            await uploadFinalState(.completed)
+        } catch {
+            lastError = "\(error)"
+            log(AgentTranscript.lineGeminiError("\(error)"))
+            AgentStatusBus.shared.publish(.failed(error: "\(error)"))
+            await uploadFinalState(.failed)
+        }
+    }
+
+    private func buildConversationalSystemPrompt(snapshot: ContextSnapshot?, prefs: UserPrefs) -> String {
+        var s = """
+        You are Ithuriel — a friendly macOS assistant the user chats with from the menu bar.
+        This turn is casual conversation, not a computer-use task.
+
+        Reply naturally, like a helpful colleague:
+          - If they greet you, greet them back briefly.
+          - Answer questions about yourself or what you can do in plain language.
+          - Keep replies concise (usually 1–3 sentences) unless they ask for more.
+          - Do not say you "finished", "completed", or "greeted" a task.
+          - Do not use bullet lists or status-report tone unless they asked for detail.
+          - You are not driving their Mac on this turn — just talk.
+
+        If they clearly want you to do something on their computer (edit files, run commands,
+        click apps), tell them to ask in a direct task sentence and you will take over.
+        """
+
+        if let snap = snapshot, !snap.workspacePath.isEmpty {
+            s += "\n\n(Context: their active workspace is \(snap.workspacePath).)"
+        }
+        return s
+    }
+
+    private static func displayText(from content: GeminiClient.Content) -> String {
+        content.parts.compactMap { part -> String? in
+            if part.thought == true { return nil }
+            guard let text = part.text else { return nil }
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }.joined(separator: "\n")
     }
 
     private func log(_ line: String) {

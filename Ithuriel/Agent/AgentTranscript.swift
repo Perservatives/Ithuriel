@@ -11,6 +11,8 @@ enum AgentTranscript {
     static let errorPrefix = "✗"
     static let stoppedPrefix = "■"
     static let progressPrefix = "◌"
+    /// Plain assistant chat reply (no "Finished:" wrapper).
+    static let replyPrefix = "«"
 
     private static let outcomeSeparator = " — "
 
@@ -24,6 +26,12 @@ enum AgentTranscript {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let preview = trimmed.count > 280 ? String(trimmed.prefix(277)) + "…" : trimmed
         return "\(thinkingPrefix) \(preview)"
+    }
+
+    static func lineReply(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let preview = trimmed.count > 4000 ? String(trimmed.prefix(3997)) + "…" : trimmed
+        return "\(replyPrefix) \(preview)"
     }
 
     static func lineAction(name: String, args: [String: AnyJSON], result: String) -> String {
@@ -63,7 +71,7 @@ enum AgentTranscript {
     // MARK: - UI presentation
 
     enum Kind {
-        case task, thinking, action, done, error, stopped, progress, plain
+        case task, thinking, action, done, error, stopped, progress, reply, plain
     }
 
     struct Presentation {
@@ -97,6 +105,9 @@ enum AgentTranscript {
         if line.hasPrefix(progressPrefix) {
             return .init(symbol: progressPrefix, title: rest, detail: nil, kind: .progress)
         }
+        if line.hasPrefix(replyPrefix) {
+            return .init(symbol: replyPrefix, title: rest, detail: nil, kind: .reply)
+        }
         return .init(symbol: " ", title: line, detail: nil, kind: .plain)
     }
 
@@ -109,6 +120,7 @@ enum AgentTranscript {
         case .error:     return .red
         case .stopped:   return .orange
         case .progress:  return .secondary
+        case .reply:     return .primary
         case .plain:     return .secondary
         }
     }
@@ -119,7 +131,7 @@ enum AgentTranscript {
         guard let first = line.first else { return line }
         let known: Set<Character> = [Character(taskPrefix), Character(thinkingPrefix), Character(actionPrefix),
                                      Character(donePrefix), Character(errorPrefix), Character(stoppedPrefix),
-                                     Character(progressPrefix)]
+                                     Character(progressPrefix), Character(replyPrefix)]
         if known.contains(first) {
             return String(line.dropFirst())
         }

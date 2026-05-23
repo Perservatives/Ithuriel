@@ -3,7 +3,7 @@ import SwiftUI
 import SwiftData
 
 /// Owns the standalone chat window — primary app surface. Opened on launch,
-/// from AppChromeBar, Spotlight, or when the user clicks the Dock icon.
+/// from AppChromeBar, the global hotkey, or when the user clicks the Dock icon.
 @MainActor
 final class ChatWindowController {
     static let shared = ChatWindowController()

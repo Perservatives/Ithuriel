@@ -19,7 +19,17 @@ final class MicRecorder: @unchecked Sendable {
     private(set) var isRecording = false
 
     func requestPermission() async -> Bool {
-        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .denied, .restricted:
+            return false
+        case .notDetermined:
+            break
+        @unknown default:
+            break
+        }
+        return await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
             AVCaptureDevice.requestAccess(for: .audio) { granted in
                 cont.resume(returning: granted)
             }

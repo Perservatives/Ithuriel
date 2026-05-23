@@ -26,14 +26,6 @@ final class AppRouter {
         ChatWindowController.shared.show(container: container, agent: agentLoop)
     }
 
-    func toggleSpotlight() {
-        SpotlightCoordinator.shared.toggle()
-    }
-
-    func summonSpotlight() {
-        SpotlightCoordinator.shared.summon()
-    }
-
     func quit() {
         NSApp.terminate(nil)
     }

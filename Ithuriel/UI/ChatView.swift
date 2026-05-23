@@ -82,9 +82,6 @@ struct ChatView: View {
             isFullScreen = false
         }
         .task { await PermissionsManager.shared.refresh() }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await PermissionsManager.shared.refresh() }
-        }
     }
 
     /// Single floating control in the top-right of the conversation pane —
@@ -238,7 +235,7 @@ struct ChatView: View {
 
     private var conversation: some View {
         VStack(spacing: 0) {
-            if permissions.hasRefreshed && permissions.needsRequired {
+            if permissions.hasRefreshed && permissions.needsRequired && !agent.isRunning {
                 PermissionsBanner()
                     .padding(.horizontal, 20)
                     .padding(.top, 48)
@@ -263,7 +260,7 @@ struct ChatView: View {
                 }
             }
             composer.padding(20)
-            AppChromeBar(placement: .chat)
+            AppChromeBar()
                 .padding(.horizontal, 20)
                 .padding(.bottom, 14)
         }
@@ -734,7 +731,7 @@ enum ChatBubble {
     static func agentForLine(_ line: String) -> Role {
         switch AgentTranscript.present(line).kind {
         case .task:      return .user
-        case .thinking:  return .assistant
+        case .thinking, .reply: return .assistant
         case .action:    return .tool
         case .done:      return .assistant
         case .error:     return .error
