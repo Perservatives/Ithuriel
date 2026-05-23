@@ -18,9 +18,9 @@ struct ChatView: View {
     @State private var searchQuery: String = ""
     @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @State private var webSearchEnabled: Bool = false
-    @State private var isListening: Bool = false
     @FocusState private var inputFocused: Bool
     @ObservedObject private var permissions = PermissionsManager.shared
+    @ObservedObject private var voice = VoiceController.shared
 
     private var prefs: UserPrefs? { prefsList.first }
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
@@ -103,7 +103,7 @@ struct ChatView: View {
                 canSubmit: canSubmit,
                 isRunning: agent.isRunning,
                 webSearchEnabled: webSearchEnabled,
-                isListening: isListening,
+                isListening: voice.isListening,
                 onSubmit: runAgent,
                 onStop: stopAgentIfRunning,
                 onMic: toggleVoice,
@@ -244,15 +244,14 @@ struct ChatView: View {
     }
 
     private func toggleVoice() {
-        // Tap to start, tap again to stop+submit. Mirrors the hold-to-talk
-        // hotkey but as a click affordance in the composer.
         Task { @MainActor in
-            if isListening {
-                VoiceController.shared.stopAndSubmit()
-                isListening = false
+            if voice.isListening {
+                if let text = await voice.stopAndTranscribe(showErrors: true), !text.isEmpty {
+                    prompt = text
+                    runAgent()
+                }
             } else {
-                VoiceController.shared.start()
-                isListening = true
+                _ = await voice.start()
             }
         }
     }
@@ -729,6 +728,7 @@ private struct UserFooterRow: View {
 
 private struct ChatTopBar: View {
     let workspaceLabel: String?
+    @State private var settingsHovering = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -749,6 +749,21 @@ private struct ChatTopBar: View {
                 )
             }
             Spacer()
+            Button(action: { AppRouter.shared.openSettings() }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(settingsHovering ? 0.72 : 0.45))
+                    .frame(width: 28, height: 28)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(settingsHovering ? 0.10 : 0.05))
+                    )
+            }
+            .buttonStyle(.plain)
+            .onHover { hovering in
+                withAnimation(Motion.easeOut) { settingsHovering = hovering }
+            }
+            .help(NSLocalizedString("status.settings", comment: ""))
         }
         .padding(.leading, 16)
         .padding(.trailing, 16)

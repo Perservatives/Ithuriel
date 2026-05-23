@@ -1,97 +1,131 @@
 import AVFoundation
 import AppKit
+import Combine
 import SwiftData
 
-/// Bridges the press-and-hold ⌥Space hotkey to the Google Speech-to-Text
-/// → AgentLoop → Text-to-Speech pipeline.
+/// Bridges press-and-hold hotkeys and composer mic buttons to OpenAI Whisper
+/// → AgentLoop.
 ///
 /// While recording, a full-width "Listening" pill appears at the bottom of the
 /// chat window — matching the ChatGPT mobile composer composition (X · waveform
 /// + label · send arrow).
 @MainActor
-final class VoiceController {
+final class VoiceController: ObservableObject {
     static let shared = VoiceController()
     private init() {}
+
+    @Published private(set) var isListening = false
 
     private let recorder = MicRecorder()
     private var player: AVAudioPlayer?
     private weak var container: ModelContainer?
     private weak var agentLoop: AgentLoop?
     private var indicator: NSWindow?
+    private var isStarting = false
 
     func configure(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
         self.agentLoop = agentLoop
     }
 
-    func start() {
-        Task {
-            let ok = await recorder.requestPermission()
-            guard ok else { return }
-            do {
-                try recorder.start()
-                showIndicator()
-                SoundPlayer.shared.play(.summon, volume: 0.3)
-            } catch {
-                Log.error("MicRecorder start failed: \(error)")
-            }
+    /// Starts recording. Returns false if permission or hardware setup failed.
+    @discardableResult
+    func start() async -> Bool {
+        guard !isListening, !isStarting else { return isListening }
+        isStarting = true
+        defer { isStarting = false }
+
+        let ok = await recorder.requestPermission()
+        guard ok else {
+            showVoiceError(NSLocalizedString("voice.error.permission", comment: ""))
+            return false
+        }
+        do {
+            try recorder.start()
+            isListening = true
+            showIndicator()
+            SoundPlayer.shared.play(.summon, volume: 0.3)
+            return true
+        } catch {
+            isListening = false
+            Log.error("MicRecorder start failed: \(error)")
+            showVoiceError(error.localizedDescription)
+            return false
         }
     }
 
+    /// Hotkey release — transcribe and hand the text straight to the agent.
     func stopAndSubmit() {
-        let data = recorder.stop()
-        hideIndicator()
-        SoundPlayer.shared.play(.submit, volume: 0.5)
-        guard !data.isEmpty,
-              let container = container,
-              let loop = agentLoop else { return }
-        Task {
-            let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
-            guard let text = await Self.transcribe(pcm16: data, prefs: prefs), !text.isEmpty else {
-                Log.error("STT: no key configured or all backends failed.")
-                return
-            }
-            Log.info("STT: \(text)")
+        Task { @MainActor in
+            SoundPlayer.shared.play(.submit, volume: 0.5)
+            guard let text = await stopAndTranscribe(showErrors: false), !text.isEmpty,
+                  let loop = agentLoop else { return }
             await loop.run(task: text)
         }
     }
 
     /// Cancels an in-flight recording without transcribing or submitting.
-    /// Hides the pill and plays the dismiss sound.
     func cancel() {
+        guard isListening else { return }
         _ = recorder.stop()
         hideIndicator()
+        isListening = false
         SoundPlayer.shared.play(.dismiss, volume: 0.4)
     }
 
-    /// Two-tier STT. Primary: OpenAI Whisper. Fallback: Google Cloud Speech.
-    private static func transcribe(pcm16: Data, prefs: UserPrefs) async -> String? {
-        if !prefs.openAIAPIKey.isEmpty {
-            do {
-                return try await OpenAISpeech.transcribe(pcm16: pcm16, apiKey: prefs.openAIAPIKey)
-            } catch {
-                Log.info("OpenAI Whisper unavailable (\(error)) — trying Google STT")
+    /// Composer mic — stop recording and return transcribed text via Whisper.
+    func stopAndTranscribe(showErrors: Bool = true) async -> String? {
+        let data = stopRecording()
+        guard data.count > 512 else {
+            if showErrors {
+                showVoiceError(NSLocalizedString("voice.error.empty", comment: ""))
             }
+            return nil
         }
-        let googleKey = prefs.googleCloudAPIKey.isEmpty ? prefs.geminiApiKey : prefs.googleCloudAPIKey
-        guard !googleKey.isEmpty else { return nil }
+        guard let container else { return nil }
+        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let apiKey = prefs.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !apiKey.isEmpty else {
+            if showErrors {
+                showVoiceError(NSLocalizedString("voice.error.noOpenAIKey", comment: ""))
+            }
+            return nil
+        }
         do {
-            return try await GoogleSpeech.transcribe(pcm16: pcm16, apiKey: googleKey)
+            let text = try await OpenAISpeech.transcribe(audioFile: data, apiKey: apiKey)
+            guard !text.isEmpty else {
+                if showErrors {
+                    showVoiceError(NSLocalizedString("voice.error.empty", comment: ""))
+                }
+                return nil
+            }
+            Log.info("Whisper: \(text)")
+            return text
         } catch {
-            Log.error("All STT backends failed: \(error)")
+            Log.error("Whisper failed: \(error)")
+            if showErrors {
+                let detail = (error as? OpenAISpeech.Failure).map(\.description) ?? error.localizedDescription
+                showVoiceError(String(format: NSLocalizedString("voice.error.whisper", comment: ""), detail))
+            }
             return nil
         }
     }
 
-    private func speak(_ text: String, apiKey: String) async throws {
-        let audio = try await GoogleSpeech.synthesize(text: text, apiKey: apiKey)
-        try await MainActor.run {
-            let p = try AVAudioPlayer(data: audio)
-            p.prepareToPlay()
-            p.volume = 0.8
-            p.play()
-            self.player = p
-        }
+    @discardableResult
+    private func stopRecording() -> Data {
+        guard isListening else { return Data() }
+        let data = recorder.stop()
+        hideIndicator()
+        isListening = false
+        return data
+    }
+
+    private func showVoiceError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("voice.error.title", comment: "")
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.runModal()
     }
 
     // MARK: - Listening pill
@@ -109,7 +143,6 @@ final class VoiceController {
         w.backgroundColor = .clear
         w.hasShadow = true
         w.level = .floating
-        // Need mouse events for the X / send buttons.
         w.ignoresMouseEvents = false
         let host = NSHostingView(rootView: ListeningPill())
         w.contentView = host
@@ -122,14 +155,11 @@ final class VoiceController {
         indicator = nil
     }
 
-    /// Anchor the pill to the chat window's bottom (full width minus 24pt
-    /// padding). Falls back to bottom-centre of the main screen, ~720pt wide.
     private func pillFrame() -> NSRect {
         let height = Self.pillHeight
         let sidePad = Self.sidePadding
         let bottomPad = Self.bottomOffset
 
-        // Try to find the chat window first.
         if let chat = NSApp.windows.first(where: { $0.title == "Ithuriel" && $0.isVisible }) {
             let f = chat.frame
             let width = max(320, f.width - sidePad * 2)
@@ -148,8 +178,6 @@ final class VoiceController {
 
 import SwiftUI
 
-/// Full-width "Listening" pill: leading X (cancel), centred animated waveform
-/// + label, trailing dark send button. Matches the ChatGPT mobile composer.
 private struct ListeningPill: View {
     var body: some View {
         HStack(spacing: 14) {
@@ -218,7 +246,6 @@ private struct SendButton: View {
     }
 }
 
-/// Centred set of pulsing bars + bold "Listening" label.
 private struct WaveformLabel: View {
     var body: some View {
         HStack(spacing: 10) {

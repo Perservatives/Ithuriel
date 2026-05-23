@@ -217,13 +217,20 @@ struct SettingsView: View {
 
     private var voiceSection: some View {
         sectionShell(title: section.title) {
+            card(NSLocalizedString("settings.voice.openai", comment: "")) {
+                labelledField(NSLocalizedString("settings.voice.openaiKey", comment: "")) {
+                    SecureField("sk-…", text: binding(\.openAIAPIKey)).textFieldStyle(.roundedBorder)
+                }
+                Text(NSLocalizedString("settings.voice.openaiHelp", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(NSLocalizedString("settings.voice.shortcut", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             card(NSLocalizedString("settings.voice.cloud", comment: "")) {
                 labelledField(NSLocalizedString("settings.voice.key", comment: "")) {
                     SecureField("AIza…", text: binding(\.googleCloudAPIKey)).textFieldStyle(.roundedBorder)
                 }
                 Text(NSLocalizedString("settings.voice.help", comment: ""))
-                    .font(.caption).foregroundStyle(.secondary)
-                Text(NSLocalizedString("settings.voice.shortcut", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
             }
             card(NSLocalizedString("settings.voice.spoken", comment: "")) {

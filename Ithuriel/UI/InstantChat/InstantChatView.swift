@@ -8,6 +8,7 @@ import AppKit
 struct InstantChatView: View {
     @ObservedObject var agent: AgentLoop
     @ObservedObject private var bus = AgentStatusBus.shared
+    @ObservedObject private var voice = VoiceController.shared
 
     let onDismiss: () -> Void
     let onEscalate: () -> Void
@@ -109,17 +110,15 @@ struct InstantChatView: View {
     }
 
     private var micButton: some View {
-        Button {
-            VoiceController.shared.start()
-        } label: {
-            Image(systemName: "mic.fill")
+        Button(action: toggleVoice) {
+            Image(systemName: voice.isListening ? "stop.circle.fill" : "mic.fill")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(voice.isListening ? Color.red.opacity(0.85) : .secondary)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(Color.primary.opacity(0.06)))
+                .background(Circle().fill(Color.primary.opacity(voice.isListening ? 0.12 : 0.06)))
         }
         .buttonStyle(.pressable(scale: 0.94))
-        .help("Voice input")
+        .help(voice.isListening ? "Stop and submit" : "Voice input")
     }
 
     private var sendButton: some View {
@@ -286,6 +285,19 @@ struct InstantChatView: View {
         prompt = ""
         attachmentName = nil
         Task { await agent.run(task: task) }
+    }
+
+    private func toggleVoice() {
+        Task { @MainActor in
+            if voice.isListening {
+                if let text = await voice.stopAndTranscribe(showErrors: true), !text.isEmpty {
+                    prompt = text
+                    submit()
+                }
+            } else {
+                _ = await voice.start()
+            }
+        }
     }
 
     private func pickAttachment() {

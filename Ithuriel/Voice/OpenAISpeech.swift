@@ -58,22 +58,23 @@ enum OpenAISpeech {
 
     // MARK: - Speech-to-text (Whisper)
 
-    /// Transcribes 16 kHz mono PCM-16 audio via Whisper.
-    /// Wraps the raw PCM in a WAV header and posts as multipart form-data
-    /// so the upload looks like a normal audio file.
-    static func transcribe(pcm16: Data,
+    /// Transcribes a WAV (or other supported) audio file via Whisper.
+    static func transcribe(audioFile: Data,
                            apiKey: String,
+                           filename: String = "audio.wav",
+                           mimeType: String = "audio/wav",
                            model: String = "whisper-1",
                            language: String = "en") async throws -> String {
         guard !apiKey.isEmpty else { throw Failure.missingKey }
+        guard !audioFile.isEmpty else { throw Failure.empty }
         guard let url = URL(string: "https://api.openai.com/v1/audio/transcriptions") else { throw Failure.empty }
-        let wav = wrapPCMAsWAV(pcm: pcm16, sampleRate: 16_000, channels: 1, bitsPerSample: 16)
 
         let boundary = "----IthurielBoundary\(UUID().uuidString)"
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        req.timeoutInterval = 60
 
         var body = Data()
         func field(_ name: String, _ value: String) {
@@ -86,9 +87,9 @@ enum OpenAISpeech {
         field("response_format", "text")
 
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
-        body.append(wav)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(audioFile)
         body.append("\r\n".data(using: .utf8)!)
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         req.httpBody = body
@@ -100,6 +101,15 @@ enum OpenAISpeech {
         }
         let text = String(data: data, encoding: .utf8) ?? ""
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Transcribes 16 kHz mono PCM-16 audio via Whisper (wraps PCM in WAV).
+    static func transcribe(pcm16: Data,
+                           apiKey: String,
+                           model: String = "whisper-1",
+                           language: String = "en") async throws -> String {
+        let wav = wrapPCMAsWAV(pcm: pcm16, sampleRate: 16_000, channels: 1, bitsPerSample: 16)
+        return try await transcribe(audioFile: wav, apiKey: apiKey, model: model, language: language)
     }
 
     // MARK: - WAV header helper

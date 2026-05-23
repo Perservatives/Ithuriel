@@ -46,6 +46,17 @@ final class GeminiClient {
     struct Content: Codable {
         let role: String  // "user" | "model"
         var parts: [Part]
+
+        init(role: String, parts: [Part]) {
+            self.role = role
+            self.parts = parts
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            role = try c.decodeIfPresent(String.self, forKey: .role) ?? "model"
+            parts = try c.decodeIfPresent([Part].self, forKey: .parts) ?? []
+        }
     }
 
     struct Tool: Codable {
@@ -85,8 +96,15 @@ final class GeminiClient {
     }
 
     struct GenerateResponse: Codable {
-        struct Candidate: Codable { let content: Content }
+        struct PromptFeedback: Codable {
+            let blockReason: String?
+        }
+        struct Candidate: Codable {
+            let content: Content?
+            let finishReason: String?
+        }
         let candidates: [Candidate]?
+        let promptFeedback: PromptFeedback?
     }
 
     private let apiKey: String
@@ -114,15 +132,55 @@ final class GeminiClient {
         req.httpBody = try JSONEncoder().encode(body)
 
         let (data, resp) = try await session.data(for: req)
-        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            let snippet = String(data: data, encoding: .utf8) ?? ""
-            throw GeminiError.http((resp as? HTTPURLResponse)?.statusCode ?? -1, snippet)
+        guard let http = resp as? HTTPURLResponse else {
+            throw GeminiError.http(-1, "No HTTP response")
         }
-        let decoded = try JSONDecoder().decode(GenerateResponse.self, from: data)
-        guard let first = decoded.candidates?.first?.content else {
+        guard (200..<300).contains(http.statusCode) else {
+            let snippet = Self.apiErrorMessage(from: data) ?? String(data: data, encoding: .utf8) ?? ""
+            throw GeminiError.http(http.statusCode, snippet)
+        }
+
+        let decoded: GenerateResponse
+        do {
+            decoded = try JSONDecoder().decode(GenerateResponse.self, from: data)
+        } catch {
+            let snippet = Self.apiErrorMessage(from: data) ?? String(data: data, encoding: .utf8)?.prefix(240).description ?? "\(error)"
+            throw GeminiError.decode(snippet)
+        }
+
+        if let block = decoded.promptFeedback?.blockReason, !block.isEmpty {
+            throw GeminiError.blocked(block)
+        }
+
+        guard let candidate = decoded.candidates?.first else {
             throw GeminiError.noCandidate
         }
-        return first
+
+        guard let content = candidate.content else {
+            if let reason = candidate.finishReason, !reason.isEmpty {
+                throw GeminiError.finishReason(reason)
+            }
+            throw GeminiError.noCandidate
+        }
+
+        guard !content.parts.isEmpty else {
+            if let reason = candidate.finishReason, !reason.isEmpty {
+                throw GeminiError.finishReason(reason)
+            }
+            throw GeminiError.emptyResponse
+        }
+
+        return content
+    }
+
+    /// Pull a human-readable message out of a Google API error envelope.
+    private static func apiErrorMessage(from data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        if let error = json["error"] as? [String: Any],
+           let message = error["message"] as? String, !message.isEmpty {
+            return message
+        }
+        return nil
     }
 }
 
@@ -158,12 +216,20 @@ enum GeminiModels {
 enum GeminiError: Error, CustomStringConvertible {
     case missingKey
     case http(Int, String)
+    case decode(String)
     case noCandidate
+    case emptyResponse
+    case blocked(String)
+    case finishReason(String)
     var description: String {
         switch self {
         case .missingKey: return "Gemini API key not set (Settings → Agent)."
         case .http(let code, let body): return "Gemini HTTP \(code): \(body.prefix(200))"
+        case .decode(let detail): return "Gemini response parse error: \(detail.prefix(200))"
         case .noCandidate: return "Gemini returned no candidates."
+        case .emptyResponse: return "Gemini returned an empty response. Try again or switch models."
+        case .blocked(let reason): return "Gemini blocked the request (\(reason))."
+        case .finishReason(let reason): return "Gemini stopped early (\(reason))."
         }
     }
 }

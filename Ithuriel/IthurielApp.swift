@@ -177,7 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 InstantChatController.shared.toggle()
             }
         }
-        monitor.onVoiceStart = { Task { @MainActor in VoiceController.shared.start() } }
+        monitor.onVoiceStart = { Task { @MainActor in _ = await VoiceController.shared.start() } }
         monitor.onVoiceEnd   = { Task { @MainActor in VoiceController.shared.stopAndSubmit() } }
         monitor.install()
 

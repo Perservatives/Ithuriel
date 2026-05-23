@@ -57,6 +57,9 @@
 "settings.tab.permissions"     = "Permissions";
 
 /* Voice tab */
+"settings.voice.openai"        = "OpenAI";
+"settings.voice.openaiKey"     = "OpenAI API key (Whisper + TTS)";
+"settings.voice.openaiHelp"    = "Required for the mic button and hold-to-talk. Get a key at platform.openai.com/api-keys.";
 "settings.voice.cloud"         = "Google Cloud";
 "settings.voice.key"           = "Google Cloud API key (Speech-to-Text + Text-to-Speech)";
 "settings.voice.help"          = "Enable the Cloud Speech-to-Text and Text-to-Speech APIs on the project tied to this key. Leave blank to reuse your Gemini API key.";
@@ -65,6 +68,15 @@
 "settings.voice.spokenEnabled" = "Speak the agent's final answer";
 "settings.voice.ttsVoice"      = "Voice";
 "settings.voice.ttsRate"       = "Speaking rate";
+
+/* Voice input errors */
+"voice.error.title"            = "Voice input unavailable";
+"voice.error.permission"       = "Microphone access is denied. Enable Ithuriel in System Settings → Privacy & Security → Microphone.";
+"voice.error.noOpenAIKey"      = "Add your OpenAI API key (sk-…) in Settings → Voice or Integrations.";
+"voice.error.noKey"            = "Add your OpenAI API key in Settings → Integrations.";
+"voice.error.empty"            = "Couldn't hear anything. Try speaking again.";
+"voice.error.failed"           = "Transcription failed. Check your API key and try again.";
+"voice.error.whisper"          = "Whisper error: %@";
 
 /* Workspace picker */
 "settings.agent.workspacePick" = "Choose…";
