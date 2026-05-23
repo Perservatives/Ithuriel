@@ -41,7 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let loop = AgentLoop(container: container)
         agentLoop = loop
-        menuBarManager = MenuBarManager(container: container, agentLoop: loop)
+        let menuBar = MenuBarManager(container: container)
+        menuBarManager = menuBar
+        AppRouter.shared.wire(menuBarManager: menuBar, container: container, agentLoop: loop)
         MainActor.assumeIsolated {
             menuBarManager?.install()
         }

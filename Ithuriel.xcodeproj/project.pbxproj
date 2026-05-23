@@ -40,8 +40,8 @@
 		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
 		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
-		A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */; };
 		A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */; };
+		B1BORDER001AGENTOVERLAY01 /* AgentControlBorderOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */; };
 		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
 		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
 		B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */; };
@@ -120,8 +120,8 @@
 		CE83920959D844A29A8407BB /* InjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionEngine.swift; sourceTree = "<group>"; };
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
+		B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentControlBorderOverlay.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
-		E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
 		EA63356B176A586DBB19722B /* AgentStatusBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusBus.swift; sourceTree = "<group>"; };
 		EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
 		EAAF5B9943A1B66D6FF4FB3C /* VoiceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceController.swift; sourceTree = "<group>"; };
@@ -180,6 +180,7 @@
 				14408B6A22B80B8942E8FC62 /* Motion.swift */,
 				5CEBCABAF164410E96E13023 /* SoundPlayer.swift */,
 				D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */,
+				B1BORDER002AGENTOVERLAY02 /* AgentControlBorderOverlay.swift */,
 				8A850458E38A42D3EC0AC36E /* SpotlightView.swift */,
 				EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */,
 			);
@@ -212,7 +213,6 @@
 				87214B17B39813C77E861A0E /* HowToView.swift */,
 				204BCCE55881BB7B32DFDA95 /* PermissionsSettingsSection.swift */,
 				6C1F917DEA75F51337BC698C /* SettingsView.swift */,
-				E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -438,8 +438,8 @@
 				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
 				29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */,
 				A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */,
+				B1BORDER001AGENTOVERLAY01 /* AgentControlBorderOverlay.swift in Sources */,
 				50349A6F36C24EDB38724B12 /* SpotlightView.swift in Sources */,
-				A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */,
 				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
 				0A5836A5A1F3DA8300E3D733 /* UILayout.swift in Sources */,
 				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,

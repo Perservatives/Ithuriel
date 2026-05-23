@@ -1,6 +1,25 @@
 import SwiftUI
 import AppKit
 
+/// Shared NSVisualEffectView wrapper for Settings, Chat, and Spotlight.
+struct VisualEffectBlur: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .menu
+    var blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+    }
+}
+
 /// Apple's `.glassEffect` modifier ships in macOS 26+. We wrap it so the rest
 /// of the app calls a single API and the system picks the highest fidelity
 /// material available at runtime: native Liquid Glass on macOS 26+, layered
