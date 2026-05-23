@@ -31,12 +31,12 @@ struct LaunchOrbView: View {
                     RadialGradient(
                         colors: [tint.opacity(0.35), tint.opacity(0.06), .clear],
                         center: .center,
-                        startRadius: 6,
-                        endRadius: 260
+                        startRadius: 2,
+                        endRadius: 75
                     )
                 )
-                .frame(width: 520, height: 520)
-                .blur(radius: 24)
+                .frame(width: 150, height: 150)
+                .blur(radius: 7)
                 .scaleEffect(snapHaloScale)
                 .opacity(snapHaloOpacity)
 
@@ -45,27 +45,25 @@ struct LaunchOrbView: View {
                 shard(index: i)
             }
         }
-        .frame(width: 700, height: 700)
+        .frame(width: 200, height: 200)
         .task { await runSequence() }
     }
 
     private func shard(index i: Int) -> some View {
         let angle: Double = Double(i) * 45.0
         let invert: Double = 1.0 - convergence
-        // Travel from well off-screen so the inward drift reads.
-        let travel: CGFloat = 720
+        let travel: CGFloat = 110
         let dx: CGFloat = CGFloat(cos(angle * .pi / 180)) * travel * CGFloat(invert)
         let dy: CGFloat = CGFloat(sin(angle * .pi / 180)) * travel * CGFloat(invert)
         let fill: Color = i.isMultiple(of: 2) ? tint : tint.opacity(0.65)
-        // A tiny amount of extra rotation while travelling, settled to 0.
         let extraRot: Double = -90.0 * invert
         let scale: CGFloat = CGFloat(0.78 + 0.22 * convergence) + (petalScale - 1) * 0.2
         let alpha: Double = coreOpacity * (0.25 + 0.75 * convergence)
 
         return Petal()
             .fill(fill)
-            .frame(width: 56, height: 200)
-            .offset(y: -100 * petalScale)
+            .frame(width: 16, height: 58)
+            .offset(y: -29 * petalScale)
             .rotationEffect(.degrees(angle - 90))
             .offset(x: dx, y: dy)
             .rotationEffect(.degrees(rotation + extraRot))

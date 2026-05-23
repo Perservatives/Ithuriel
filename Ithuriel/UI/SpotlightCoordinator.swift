@@ -38,29 +38,9 @@ final class SpotlightCoordinator {
     func playLaunchThenSummon() {
         guard launchWindow == nil else { return }
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        let tint = resolveLaunchColor()
 
-        // Full-screen backdrop — Arc-style fuzzy color blobs over black.
-        // Snapped on at full alpha (no fade) so the desktop never flashes
-        // through while the bloom is ramping up.
-        let backdrop = TransparentWindow(
-            contentRect: screen.frame,
-            styleMask: [.borderless],
-            backing: .buffered, defer: false
-        )
-        backdrop.isOpaque = false
-        backdrop.backgroundColor = .clear
-        backdrop.hasShadow = false
-        backdrop.level = .screenSaver - 1
-        backdrop.ignoresMouseEvents = true
-        backdrop.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        backdrop.contentView = NSHostingView(rootView: LaunchBackdropView(baseColor: tint))
-        backdrop.alphaValue = 1
-        backdrop.orderFrontRegardless()
-        launchBackdropWindow = backdrop
-
-        // Bigger orb window — covers a generous swath of the screen.
-        let size = NSSize(width: 720, height: 720)
+        // Small floating square — no full-screen backdrop, no screen blur.
+        let size = NSSize(width: 220, height: 220)
         let frame = NSRect(
             x: screen.frame.midX - size.width / 2,
             y: screen.frame.midY - size.height / 2,
@@ -78,7 +58,7 @@ final class SpotlightCoordinator {
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView:
-            LaunchOrbView(tint: tint, onComplete: { [weak self] in
+            LaunchOrbView(tint: Color(white: 0.82), onComplete: { [weak self] in
                 self?.dismissLaunch()
             })
         )
@@ -176,18 +156,6 @@ final class SpotlightCoordinator {
     // MARK: - Internals
 
     private func dismissLaunch() {
-        if let backdrop = launchBackdropWindow {
-            NSAnimationContext.runAnimationGroup({ ctx in
-                ctx.duration = 0.40
-                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
-                backdrop.animator().alphaValue = 0
-            }, completionHandler: { [weak self] in
-                Task { @MainActor in
-                    self?.launchBackdropWindow?.orderOut(nil)
-                    self?.launchBackdropWindow = nil
-                }
-            })
-        }
         launchWindow?.orderOut(nil)
         launchWindow = nil
     }

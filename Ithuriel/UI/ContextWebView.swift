@@ -24,6 +24,19 @@ struct ContextWebView: View {
                 drawEdges(simulation.edges, nodes: simulation.nodes, context: context)
                 drawNodes(simulation.nodes, context: context)
             }
+            .gesture(
+                DragGesture(minimumDistance: 2)
+                    .onChanged { value in
+                        if simulation.draggedID == nil {
+                            if let node = simulation.nearestNode(to: value.startLocation) {
+                                simulation.beginDrag(id: node.id, at: value.location)
+                            }
+                        } else {
+                            simulation.updateDrag(to: value.location)
+                        }
+                    }
+                    .onEnded { _ in simulation.endDrag() }
+            )
             .background(
                 RadialGradient(
                     colors: [Color.accentColor.opacity(0.08), .clear],
@@ -173,8 +186,32 @@ struct WebEdge: Equatable {
 final class WebSimulation: ObservableObject {
     var nodes: [WebNode] = []
     var edges: [WebEdge] = []
+    var draggedID: String? = nil
     private var initialised = false
     private var lastTick: Date = Date()
+
+    func nearestNode(to point: CGPoint) -> WebNode? {
+        nodes.filter { !$0.pinned }.min(by: {
+            hypot($0.position.x - point.x, $0.position.y - point.y) <
+            hypot($1.position.x - point.x, $1.position.y - point.y)
+        })
+    }
+
+    func beginDrag(id: String, at point: CGPoint) {
+        guard let i = nodes.firstIndex(where: { $0.id == id && !$0.pinned }) else { return }
+        draggedID = id
+        nodes[i].position = point
+        nodes[i].velocity = .zero
+    }
+
+    func updateDrag(to point: CGPoint) {
+        guard let id = draggedID,
+              let i = nodes.firstIndex(where: { $0.id == id }) else { return }
+        nodes[i].position = point
+        nodes[i].velocity = .zero
+    }
+
+    func endDrag() { draggedID = nil }
 
     func replace(nodes: [WebNode], edges: [WebEdge]) {
         let existingPositions = Dictionary(uniqueKeysWithValues: self.nodes.map { ($0.id, $0.position) })
@@ -202,6 +239,11 @@ final class WebSimulation: ObservableObject {
                 nodes[i].velocity = .zero
                 continue
             }
+            // Skip physics for the node being dragged.
+            if nodes[i].id == draggedID {
+                nodes[i].velocity = .zero
+                continue
+            }
 
             var fx: CGFloat = 0, fy: CGFloat = 0
 
@@ -210,16 +252,16 @@ final class WebSimulation: ObservableObject {
                 let dx = nodes[i].position.x - nodes[j].position.x
                 let dy = nodes[i].position.y - nodes[j].position.y
                 let d2 = max(40, dx * dx + dy * dy)
-                let f: CGFloat = 1800.0 / d2
+                let f: CGFloat = 1200.0 / d2
                 fx += f * dx
                 fy += f * dy
             }
 
-            // Centre spring.
+            // Centre spring — stronger pull keeps nodes clustered near the hub.
             let cx = center.x - nodes[i].position.x
             let cy = center.y - nodes[i].position.y
-            fx += cx * 0.012
-            fy += cy * 0.012
+            fx += cx * 0.045
+            fy += cy * 0.045
 
             // Edge springs.
             for edge in edges where edge.a == nodes[i].id || edge.b == nodes[i].id {
@@ -227,8 +269,8 @@ final class WebSimulation: ObservableObject {
                 guard let other = nodes.first(where: { $0.id == otherID }) else { continue }
                 let ex = other.position.x - nodes[i].position.x
                 let ey = other.position.y - nodes[i].position.y
-                fx += ex * 0.025 * edge.weight
-                fy += ey * 0.025 * edge.weight
+                fx += ex * 0.045 * edge.weight
+                fy += ey * 0.045 * edge.weight
             }
 
             // Integrate with heavy damping.
@@ -253,7 +295,7 @@ final class WebSimulation: ObservableObject {
             }
             if nodes[i].position == .zero {
                 let angle = Double(i) / Double(nodes.count) * .pi * 2
-                let radius = min(size.width, size.height) * 0.32
+                let radius = min(size.width, size.height) * 0.15
                 nodes[i].position = CGPoint(
                     x: center.x + cos(angle) * radius,
                     y: center.y + sin(angle) * radius
