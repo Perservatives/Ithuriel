@@ -58,8 +58,8 @@ struct SettingsView: View {
 
             ScrollView {
                 content
-                    .padding(28)
-                    .frame(maxWidth: 520, alignment: .leading)
+                    .padding(UILayout.spacingXL)
+                    .frame(maxWidth: 540, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))

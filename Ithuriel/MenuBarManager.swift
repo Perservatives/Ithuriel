@@ -52,7 +52,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         let popover = NSPopover()
         popover.behavior = .transient
         popover.animates = true
-        popover.contentSize = NSSize(width: 380, height: 480)
+        popover.contentSize = NSSize(width: UILayout.popoverWidth, height: UILayout.popoverMinHeight)
         popover.delegate = self
         self.popover = popover
 
@@ -75,7 +75,8 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
             let window = NSWindow(contentViewController: hosting)
             window.title = NSLocalizedString("settings.window.title", comment: "")
             window.styleMask = [.titled, .closable]
-            window.setContentSize(NSSize(width: 560, height: 440))
+            window.setContentSize(NSSize(width: 760, height: 540))
+            window.minSize = NSSize(width: 760, height: 540)
             window.center()
             settingsWindow = window
         }

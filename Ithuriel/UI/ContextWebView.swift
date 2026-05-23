@@ -30,15 +30,21 @@ struct ContextWebView: View {
                     center: .center, startRadius: 8, endRadius: 280
                 )
             )
-            .overlay(alignment: .topLeading) {
-                VStack(alignment: .leading, spacing: 4) {
+            .overlay(alignment: .bottomLeading) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Context Web")
-                        .font(.system(.headline, design: .rounded))
+                        .font(.system(.caption, design: .rounded).weight(.semibold))
                     Text("\(simulation.nodes.count) nodes · \(simulation.edges.count) edges")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
-                .padding(14)
+                .padding(.horizontal, UILayout.spacingM)
+                .padding(.vertical, UILayout.spacingS)
+                .background(
+                    RoundedRectangle(cornerRadius: UILayout.radiusS, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                )
+                .padding(UILayout.spacingM)
             }
             .onAppear { rebuild() }
             .onChange(of: runs.count) { _, _ in rebuild() }

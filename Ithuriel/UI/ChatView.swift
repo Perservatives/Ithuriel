@@ -18,7 +18,7 @@ struct ChatView: View {
 
     @State private var selectedRunID: UUID?
     @State private var prompt: String = ""
-    @State private var showInspector: Bool = true
+    @State private var showInspector: Bool = false
     @State private var searchQuery: String = ""
     @State private var isFullScreen: Bool = false
     @FocusState private var inputFocused: Bool
@@ -31,12 +31,16 @@ struct ChatView: View {
             sidebar.frame(minWidth: 200, idealWidth: 240)
         } detail: {
             HSplitView {
-                conversation.frame(minWidth: 380)
+                conversation
+                    .frame(minWidth: 420)
+                    .layoutPriority(1)
                 if showInspector {
                     ContextWebView()
-                        .frame(minWidth: isFullScreen ? 240 : 160,
-                               idealWidth: isFullScreen ? 320 : 200)
+                        .frame(minWidth: isFullScreen ? 220 : 180,
+                               idealWidth: isFullScreen ? 300 : 240,
+                               maxWidth: isFullScreen ? 360 : 280)
                         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+                        .layoutPriority(0)
                 }
             }
         }
@@ -45,7 +49,7 @@ struct ChatView: View {
         .toolbarBackground(.regularMaterial, for: .windowToolbar)
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-        .frame(minWidth: 720, minHeight: 480)
+        .frame(minWidth: 840, minHeight: 560)
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
             isFullScreen = true
         }
@@ -82,13 +86,13 @@ struct ChatView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(Color.primary.opacity(0.06))
             )
-            .padding(.horizontal, 10)
-            .padding(.bottom, 8)
+            .padding(.horizontal, UILayout.spacingM)
+            .padding(.bottom, UILayout.spacingS)
 
-            Divider().opacity(0.3)
+            Divider().opacity(0.25).padding(.horizontal, UILayout.spacingS)
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(alignment: .leading, spacing: UILayout.spacingS) {
                     let groups = groupRuns(filteredRuns)
                     if groups.isEmpty {
                         emptySidebar
@@ -139,9 +143,9 @@ struct ChatView: View {
             .help("New conversation (⌘N)")
             .keyboardShortcut("n", modifiers: .command)
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
+        .padding(.horizontal, UILayout.spacingL)
+        .padding(.top, UILayout.spacingL)
+        .padding(.bottom, UILayout.spacingM)
     }
 
     private var emptySidebar: some View {
@@ -184,9 +188,13 @@ struct ChatView: View {
 
     private var conversation: some View {
         VStack(spacing: 0) {
+            PermissionsBanner()
+                .padding(.horizontal, UILayout.spacingXL)
+                .padding(.top, UILayout.spacingS)
+
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 22) {
+                    LazyVStack(alignment: .leading, spacing: UILayout.spacingL) {
                         if let selected = selectedRun {
                             renderMessages(transcript: selected.transcript, header: selected.task)
                         } else if agent.isRunning || !agent.transcript.isEmpty {
@@ -194,16 +202,27 @@ struct ChatView: View {
                         } else {
                             emptyConversation
                         }
-                        Color.clear.frame(height: 60).id("bottom")
+                        Color.clear.frame(height: 48).id("bottom")
                     }
-                    .padding(.horizontal, 32)
-                    .padding(.top, 32)
+                    .frame(maxWidth: UILayout.chatContentMaxWidth)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, UILayout.spacingXL)
+                    .padding(.top, UILayout.spacingM)
+                    .padding(.bottom, UILayout.spacingS)
                 }
                 .onChange(of: agent.transcript.count) { _, _ in
                     withAnimation(Motion.easeOut) { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
             }
-            composer.padding(20)
+            .layoutPriority(1)
+
+            composer
+                .padding(.horizontal, UILayout.spacingXL)
+                .padding(.top, UILayout.spacingS)
+
+            AppChromeBar()
+                .padding(.horizontal, UILayout.spacingXL)
+                .padding(.bottom, UILayout.spacingM)
         }
     }
 
@@ -260,14 +279,14 @@ struct ChatView: View {
                 .font(.system(.largeTitle, design: .rounded).weight(.semibold))
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 80)
+        .padding(.top, 48)
     }
 
     // MARK: - Composer
 
     private var composer: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .bottom, spacing: 10) {
+        VStack(alignment: .leading, spacing: UILayout.spacingS) {
+            HStack(alignment: .bottom, spacing: UILayout.spacingM) {
                 ZStack(alignment: .topLeading) {
                     if prompt.isEmpty {
                         Text(keyMissing
@@ -275,8 +294,8 @@ struct ChatView: View {
                              : "Message Ithuriel…")
                             .font(.system(size: 15))
                             .foregroundStyle(.tertiary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 12)
+                            .padding(.horizontal, UILayout.spacingL)
+                            .padding(.vertical, UILayout.spacingM)
                             .allowsHitTesting(false)
                     }
                     TextField("", text: $prompt, axis: .vertical)
@@ -284,15 +303,17 @@ struct ChatView: View {
                         .textFieldStyle(.plain)
                         .font(.system(size: 15))
                         .focused($inputFocused)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, UILayout.spacingL)
+                        .padding(.vertical, UILayout.spacingM)
                         .onSubmit(runAgent)
                 }
                 .frame(minHeight: 44)
                 .frame(maxWidth: .infinity)
+
+                sendOrStopButton
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: UILayout.spacingS) {
                 ModelPicker(selection: Binding(
                     get: { prefs?.geminiModel ?? "gemini-2.5-flash" },
                     set: { newValue in
@@ -301,25 +322,27 @@ struct ChatView: View {
                     }
                 ))
 
+                if keyMissing {
+                    Text("API key required")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+
                 Spacer()
-
-                Text(keyMissing ? "no key" : "ready")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(keyMissing ? Color.orange : Color.secondary.opacity(0.6))
-
-                sendOrStopButton
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
+            .padding(.horizontal, UILayout.spacingS)
         }
+        .padding(UILayout.spacingM)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: UILayout.radiusL, style: .continuous)
                 .fill(Color.primary.opacity(inputFocused ? 0.08 : 0.05))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: UILayout.radiusL, style: .continuous)
                 .strokeBorder(Color.primary.opacity(inputFocused ? 0.18 : 0.10), lineWidth: 0.5)
         )
+        .frame(maxWidth: UILayout.chatContentMaxWidth)
+        .frame(maxWidth: .infinity)
         .animation(Motion.easeOut, value: inputFocused)
     }
 
@@ -375,13 +398,25 @@ struct ChatView: View {
             Button { newConversation() } label: { Label("New", systemImage: "square.and.pencil") }
                 .help("New conversation (⌘N)")
         }
-        ToolbarItem(placement: .primaryAction) {
+        ToolbarItemGroup(placement: .primaryAction) {
+            Button { AppRouter.shared.summonSpotlight() } label: {
+                Label(NSLocalizedString("menubar.menu.summon", comment: ""), systemImage: "sparkles")
+            }
+            Button { copyContextFromToolbar() } label: {
+                Label(NSLocalizedString("status.copy", comment: ""), systemImage: "doc.on.doc")
+            }
+            Button { SoundPlayer.shared.muted.toggle() } label: {
+                Image(systemName: SoundPlayer.shared.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+            }
+            Button { AppRouter.shared.openSettings() } label: {
+                Label(NSLocalizedString("status.settings", comment: ""), systemImage: "gearshape.fill")
+            }
             Button {
                 withAnimation(Motion.easeOut) { showInspector.toggle() }
             } label: {
                 Label("Context Web", systemImage: showInspector ? "circle.grid.hex.fill" : "circle.grid.hex")
             }
-            .help("Toggle context graph")
+            .help("Toggle context graph (off by default for a wider chat)")
         }
     }
 
@@ -404,6 +439,13 @@ struct ChatView: View {
         prompt = ""
         selectedRunID = nil
         Task { await agent.run(task: task) }
+    }
+
+    private func copyContextFromToolbar() {
+        Task {
+            let userPrefs = prefs ?? UserPrefs.defaults()
+            _ = await AppRouter.shared.copyContext(modelContext: modelContext, prefs: userPrefs)
+        }
     }
 }
 
@@ -570,14 +612,18 @@ private struct ToolUseCard: View {
     }
 
     private var headline: String {
-        if !call.isEmpty { return call }
+        if !call.isEmpty { return call.components(separatedBy: "\n").first ?? call }
         if let result, !result.isEmpty { return result }
         return "tool"
     }
 
     private var detail: String {
-        if !call.isEmpty, let result, !result.isEmpty { return "\(call)\n\n→ \(result)" }
-        return call.isEmpty ? (result ?? "") : call
+        if !call.isEmpty {
+            let parts = call.components(separatedBy: "\n")
+            if parts.count > 1 { return parts.dropFirst().joined(separator: "\n") }
+        }
+        if let result, !result.isEmpty { return result }
+        return ""
     }
 }
 

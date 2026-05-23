@@ -185,7 +185,7 @@ final class SpotlightCoordinator {
         host.translatesAutoresizingMaskIntoConstraints = false
 
         let window = SpotlightWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 80),
+            contentRect: NSRect(x: 0, y: 0, width: UILayout.spotlightWidth, height: 96),
             styleMask: [.borderless, .fullSizeContentView],
             backing: .buffered, defer: false
         )
@@ -202,13 +202,15 @@ final class SpotlightCoordinator {
 
     private func positionWindows() {
         let screen = NSScreen.main ?? NSScreen.screens.first!
+        let visible = screen.visibleFrame
         if let spot = spotlightWindow {
-            let size = spot.contentView?.fittingSize ?? NSSize(width: 640, height: 80)
-            let w: CGFloat = 640
-            let h = max(size.height, 80)
+            let w = UILayout.spotlightWidth + UILayout.spacingM * 2
+            let fitted = spot.contentView?.fittingSize ?? NSSize(width: w, height: 96)
+            let maxH = visible.height * UILayout.spotlightMaxHeightRatio
+            let h = min(max(fitted.height, 96), maxH)
             let origin = NSPoint(
-                x: screen.frame.midX - w / 2,
-                y: screen.frame.midY - h / 2 + 60   // a touch above visual centre
+                x: visible.midX - w / 2,
+                y: visible.midY - h / 2 + visible.height * 0.06
             )
             spot.setFrame(NSRect(origin: origin, size: NSSize(width: w, height: h)), display: false)
         }

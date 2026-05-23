@@ -22,9 +22,18 @@ struct SpotlightView: View {
         !prompt.trimmingCharacters(in: .whitespaces).isEmpty && !agent.isRunning && !keyMissing
     }
     private var showsTranscript: Bool { agent.isRunning || !agent.transcript.isEmpty || agent.lastError != nil }
+    @ObservedObject private var permissions = PermissionsManager.shared
+
+    private var spotlightMaxHeight: CGFloat {
+        let screen = NSScreen.main?.visibleFrame.height ?? 800
+        return screen * UILayout.spotlightMaxHeightRatio
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: UILayout.spacingM) {
+            if permissions.hasRefreshed && permissions.needsRequired {
+                PermissionsBanner()
+            }
             promptPill
             if showsTranscript {
                 transcriptPanel
@@ -33,8 +42,12 @@ struct SpotlightView: View {
                         removal: .opacity
                     ))
             }
+            AppChromeBar(compact: true)
+                .padding(.horizontal, UILayout.spacingXS)
         }
-        .frame(width: 620)
+        .padding(UILayout.spacingM)
+        .frame(width: UILayout.spotlightWidth)
+        .frame(maxHeight: spotlightMaxHeight)
         .scaleEffect(0.96 + 0.04 * enterProgress, anchor: .center)
         .opacity(enterProgress)
         .blur(radius: (1 - enterProgress) * 6)
@@ -48,6 +61,10 @@ struct SpotlightView: View {
                 iconRotation = 360
             }
             fieldFocus = true
+        }
+        .task { await PermissionsManager.shared.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await PermissionsManager.shared.refresh() }
         }
         .background(
             KeyEventCatcher { event in
@@ -94,8 +111,8 @@ struct SpotlightView: View {
             Spacer(minLength: 0)
 
             HStack(spacing: 10) {
-                Button(action: newConversation) {
-                    Text(NSLocalizedString("spotlight.newChat", comment: ""))
+                Button(action: openFullChat) {
+                    Text(NSLocalizedString("spotlight.openChat", comment: ""))
                         .font(.callout.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
@@ -105,9 +122,9 @@ struct SpotlightView: View {
                 submitButton
             }
         }
-        .padding(.leading, 18)
-        .padding(.trailing, 12)
-        .padding(.vertical, 12)
+        .padding(.leading, UILayout.spacingL)
+        .padding(.trailing, UILayout.spacingM)
+        .padding(.vertical, UILayout.spacingM)
         .frame(maxWidth: .infinity)
         .background(pillBackground)
     }
@@ -172,35 +189,34 @@ struct SpotlightView: View {
     // MARK: - Transcript
 
     private var transcriptPanel: some View {
-        VStack(spacing: 8) {
-            Rectangle().fill(.clear).frame(height: 8)
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(Array(agent.transcript.suffix(8).enumerated()), id: \.offset) { idx, line in
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: UILayout.spacingS) {
+                ForEach(Array(agent.transcript.enumerated()), id: \.offset) { idx, line in
                     SpotlightTranscriptLine(line: line)
                         .staggered(idx)
                 }
                 if let err = agent.lastError {
                     Text(err)
-                        .font(.system(.caption, design: .monospaced))
+                        .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.red)
+                        .padding(.top, UILayout.spacingXS)
                 }
             }
-            .padding(14)
+            .padding(UILayout.spacingL)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                ZStack {
-                    VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                    LinearGradient(colors: [Color.white.opacity(0.03), .clear],
-                                   startPoint: .top, endPoint: .bottom)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.35), radius: 24, y: 10)
         }
+        .frame(maxHeight: 280)
+        .background(
+            ZStack {
+                Color(nsColor: .windowBackgroundColor).opacity(0.65)
+                VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: UILayout.radiusM, style: .continuous))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: UILayout.radiusM, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
+        )
     }
 
     // MARK: - Helpers
@@ -222,9 +238,9 @@ struct SpotlightView: View {
         Task { await agent.run(task: task) }
     }
 
-    private func newConversation() {
-        prompt = ""
-        fieldFocus = true
+    private func openFullChat() {
+        requestDismiss()
+        AppRouter.shared.openChat()
     }
 
     private func requestDismiss() {
