@@ -11,7 +11,14 @@ final class UserPrefs {
     var targetToolsRaw: String
     var apiBaseURL: String
     var apiToken: String
-    var agentControlEnabled: Bool
+
+    // Agent (primary feature)
+    var agentEnabled: Bool
+    var geminiApiKey: String
+    var geminiModel: String
+    var activeWorkspace: String
+    var confirmEveryAction: Bool
+    var autoApproveSafeOnly: Bool
 
     init(id: String = "default",
          redactKeys: Bool = true,
@@ -21,7 +28,12 @@ final class UserPrefs {
          targetToolsRaw: String = "claude-code,cursor,chatgpt,claude-desktop",
          apiBaseURL: String = "https://api.ithuriel.dev",
          apiToken: String = "",
-         agentControlEnabled: Bool = false) {
+         agentEnabled: Bool = true,
+         geminiApiKey: String = "",
+         geminiModel: String = "gemini-2.0-flash-exp",
+         activeWorkspace: String = "",
+         confirmEveryAction: Bool = false,
+         autoApproveSafeOnly: Bool = true) {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -30,7 +42,12 @@ final class UserPrefs {
         self.targetToolsRaw = targetToolsRaw
         self.apiBaseURL = apiBaseURL
         self.apiToken = apiToken
-        self.agentControlEnabled = agentControlEnabled
+        self.agentEnabled = agentEnabled
+        self.geminiApiKey = geminiApiKey
+        self.geminiModel = geminiModel
+        self.activeWorkspace = activeWorkspace
+        self.confirmEveryAction = confirmEveryAction
+        self.autoApproveSafeOnly = autoApproveSafeOnly
     }
 
     var excludePaths: [String] {
@@ -49,8 +66,16 @@ final class UserPrefs {
     static func load(in container: ModelContainer) throws -> UserPrefs {
         let context = container.mainContext
         let descriptor = FetchDescriptor<UserPrefs>()
-        if let existing = try context.fetch(descriptor).first { return existing }
-        let prefs = UserPrefs()
+        if let existing = try context.fetch(descriptor).first {
+            // Lazily backfill the active workspace if empty.
+            if existing.activeWorkspace.isEmpty,
+               let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
+                existing.activeWorkspace = path
+                try? context.save()
+            }
+            return existing
+        }
+        let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
         context.insert(prefs)
         try context.save()
         return prefs

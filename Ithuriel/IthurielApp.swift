@@ -15,8 +15,12 @@ struct IthurielApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView()
-                .modelContainer(for: [UserPrefs.self, CachedSnapshot.self])
+            if let container = appDelegate.modelContainer {
+                SettingsView()
+                    .modelContainer(container)
+            } else {
+                SettingsView()
+            }
         }
     }
 }
@@ -27,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var fileWatcher: FileWatcher?
     private var captureTimer: Timer?
     private(set) var modelContainer: ModelContainer?
+    private(set) var agentLoop: AgentLoop?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -37,9 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Log.error("Failed to initialize SwiftData container: \(error)")
         }
 
-        menuBarManager = MenuBarManager(container: modelContainer)
+        agentLoop = AgentLoop(container: modelContainer)
+        menuBarManager = MenuBarManager(container: modelContainer, agentLoop: agentLoop)
         menuBarManager?.install()
 
+        KillSwitch.shared.install()
         requestAccessibilityIfNeeded()
 
         let monitor = WorkspaceMonitor(container: modelContainer)

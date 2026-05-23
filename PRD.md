@@ -1,16 +1,16 @@
 # Ithuriel
 
-> *"Your AI never starts cold again."*
+> *"Open palm, sees what is hidden. Your computer, on your behalf."*
 
 **Product Requirements Document & Technical Architecture**
 
 | | |
 |---|---|
 | Product | Ithuriel |
-| Version | 1.0 — PRD |
+| Version | 2.0 — PRD (agent-first pivot) |
 | Author | Rishith |
-| Platform | macOS + Cloud |
-| Cloud | Google Cloud Platform |
+| Platform | macOS (primary), GCP (optional backend) |
+| Agent brain | Google Gemini (function-calling, vision) |
 | Status | Pre-build / Draft |
 | Date | May 23, 2026 |
 
@@ -34,40 +34,47 @@
 
 ## 1. Executive Summary
 
-Ithuriel is a macOS-native AI context orchestration platform that silently monitors a developer's active workspace and automatically injects rich, structured context into any AI coding tool the moment they switch to it — eliminating the cold-start problem that costs developers 45–75 minutes of re-explanation every single day.
+Ithuriel is a macOS-native computer-use agent that runs on your Mac with **full project context already loaded**. You type a task into a menu bar prompt — "refactor this file", "run the tests and fix what fails", "draft a PR description from my recent commits" — and Ithuriel uses Google Gemini to drive your keyboard, mouse, file system, and apps to get it done.
 
-The problem is structural: every AI coding tool (Claude Code, Cursor, GitHub Copilot, Gemini Code Assist) starts each session with zero knowledge of what the developer has been doing. Every switch between tools requires a manual, imperfect re-explanation. Ithuriel sits one layer above all of these tools, maintaining a living context graph that any tool can consume instantly.
+Unlike browser-based or sandboxed agents, Ithuriel **lives on the same machine you work on**, with continuous knowledge of your active workspace, git state, recent edits, open files, and terminal history. The agent never starts cold. It picks up where you left off and acts as you would.
 
-> **Core value proposition:** Open any AI tool. Ithuriel has already told it what you're working on, what decisions you've made, and what your codebase looks like. You start working, not explaining.
+> **Core value proposition:** A computer-use agent (openclaw-style) that already knows what you've been doing. One prompt, full execution.
 
 ### 1.1 Key differentiators
 
-- **Zero friction** — fully passive, no commands, no configuration after setup
-- **macOS-native** — menu bar agent built in Swift, not a CLI script
-- **Multi-tool aware** — formats context differently for Claude Code, Cursor, Copilot, and ChatGPT
-- **Privacy-first** — all context processing is opt-in; sensitive paths are redacted by default
-- **Google Cloud backend** — Vertex AI for summarization, Firestore for persistence, Pub/Sub for real-time sync
+- **Agent-first, not chat-first** — the headline surface is a single text field that triggers real keyboard/mouse/file actions
+- **Full local context** — fed by a passive workspace monitor (FSEvents, NSWorkspace, git, terminal) so prompts don't need re-explaining
+- **Gemini brain** — function-calling + vision; screenshots feed back into the loop for true GUI control
+- **macOS-native** — pure Swift / SwiftUI, zero third-party dependencies, menu bar app with `LSUIElement`
+- **Hard safety gates** — destructive actions (write_file, delete_file, run_shell, quit_app) require modal confirmation; non-destructive actions (type/click/screenshot/read) are fast and silent
+- **Global kill switch** — ⌃⌥⌘. instantly halts the agent mid-loop
 
 ---
 
 ## 2. Problem Statement
 
-### 2.1 The cold-start tax
+### 2.1 Computer-use agents don't know what you're doing
 
-According to Stack Overflow's 2025 Developer Survey, 76% of developers now use two or more AI coding tools concurrently. Each tool operates in a hermetically sealed context silo — switching between Claude Code and Cursor mid-session means re-pasting file contents, re-explaining architecture decisions, and re-describing what you're trying to build. At 3–5 switches per day, this amounts to **45–75 minutes of pure waste daily** per developer.
+Today's computer-use agents (Claude computer-use, Anthropic Claude desktop, OpenAI Operator, openclaw, browser-based Devin clones) start every session cold. They see a screenshot, guess at the task, and grope around with mouse clicks. They have no memory of your project, your branch, your recent edits, or what you tried five minutes ago.
 
-### 2.2 Existing solutions fall short
+This means:
+- Every prompt has to over-specify ("the file I was just editing", "the test that just failed", "the function I added yesterday")
+- The agent burns turns running `ls`, opening files, re-discovering basic state
+- Multi-step tasks compound the cost: every step re-explores the same project
 
-| Tool | Limitation |
+### 2.2 Existing computer-use products
+
+| Product | Limitation |
 |---|---|
-| ai-context-bridge | CLI tool, requires manual init on each project, only runs on commit hooks. No passive capture, no native UI. |
-| CLAUDE.md / .cursorrules | Static config files. Must be manually maintained. Don't capture runtime state or recent edits. |
-| Copilot context | Single-tool only. No cross-tool portability. Passive file reader, not an active context agent. |
-| Copy-paste | What most developers do today. Fragile, incomplete, and completely manual. |
+| openclaw | Strong action surface but no continuous context — every session starts blank |
+| Claude computer-use | Cloud-hosted in a VM, can't touch your real workspace, expensive per action |
+| Anthropic Claude desktop | Chat-first, not action-first; no native filesystem or app control |
+| OpenAI Operator | Browser-only, no local file or app access |
+| Cursor / Claude Code | Code-editing focus, not general computer use; locked to a single editor |
 
 ### 2.3 The gap Ithuriel fills
 
-No existing product is a fully passive, always-on, native macOS agent that monitors workspace state and proactively formats it for multiple AI tools simultaneously. That is the precise gap Ithuriel fills.
+A computer-use agent that lives natively on macOS **and** carries continuous project context — git state, open files, recent edits, terminal history — into every action it takes. The agent doesn't need to be told what you're working on; it already knows.
 
 ---
 
@@ -91,17 +98,64 @@ No existing product is a fully passive, always-on, native macOS agent that monit
 
 ### 3.3 User stories
 
-1. As a developer, I want Ithuriel to silently watch my VS Code workspace so that when I open Claude Code it already knows my project structure, recent edits, and active branch.
-2. As a developer, I want Ithuriel to detect when I hit a rate limit and automatically prepare a resume prompt for the next tool I open.
-3. As a student, I want Ithuriel to redact file paths containing personal info or API keys before sending context anywhere.
-4. As a developer, I want to see a history of context snapshots so I can recover what I was working on after a crash.
-5. As a developer, I want Ithuriel to format context differently depending on the target tool — CLAUDE.md format for Claude Code, system message for ChatGPT, .cursorrules for Cursor.
+1. As a developer, I want to type "run the failing test, find the bug, fix it" into Ithuriel and have it execute end-to-end without me describing the project.
+2. As a developer, I want Ithuriel to know my active git branch and recent edits without my having to mention them in the prompt.
+3. As a developer, I want a global kill switch I can hit if the agent does something I didn't intend.
+4. As a developer, I want destructive actions (file writes, shell commands, app quits) to ask before they fire.
+5. As a developer, I want all file operations sandboxed to my current workspace so the agent can't accidentally touch `.ssh/` or `~/`.
 
 ---
 
 ## 4. Core Features
 
-### 4.1 Passive workspace monitor `[MVP]`
+### 4.1 Agent control loop `[MVP — headline feature]`
+
+The primary surface. A menu bar popover with a single prompt field. The user types a task; the agent runs.
+
+**Loop:**
+
+```
+1. User types task into menu bar prompt
+2. AgentLoop gathers:
+     - latest CachedSnapshot (workspace, git, recent edits, terminal)
+     - optionally: screenshot of main display
+3. POST to Gemini with task + context + tool declarations
+4. Parse functionCall(s) from response
+5. For each call:
+     - if destructive (write_file / delete_file / run_shell / quit_app) → NSAlert
+     - else → execute silently via AgentController
+     - feed result back as functionResponse
+6. Repeat until Gemini calls done() or step budget (25) hits, or kill switch fires
+```
+
+**Brain:** Google Gemini (`gemini-2.0-flash-exp` default). User supplies their own API key in Settings → Agent. Stored locally in SwiftData; never uploaded.
+
+**Tool surface (all available to the agent):**
+
+| Tool | Action | Destructive |
+|---|---|---|
+| `type(text)` | Type literal text via CGEvent | No |
+| `press_keys(keys)` | Send a chord like `["cmd","shift","p"]` | No |
+| `click(x, y)` | Mouse click at screen coordinates | No |
+| `move_cursor(x, y)` | Move the cursor | No |
+| `screenshot()` | Capture main display, return base64 JPEG to Gemini for vision | No |
+| `focus_app(bundle_id)` | Bring app to front (launch if needed) | No |
+| `launch_app(bundle_id)` | Launch app | No |
+| `quit_app(bundle_id)` | Terminate app | **Yes** |
+| `read_file(path)` | Read UTF-8 file inside workspace sandbox | No |
+| `write_file(path, content)` | Write/overwrite file inside workspace sandbox | **Yes** |
+| `delete_file(path)` | Delete file inside workspace sandbox | **Yes** |
+| `run_shell(command)` | Run zsh command, return stdout+stderr | **Yes** |
+| `done(summary)` | Signal task complete | No |
+
+**Safety:**
+
+- Destructive actions raise an `NSAlert` synchronously; agent waits for the modal response before continuing.
+- File operations are hard-sandboxed to `UserPrefs.activeWorkspace`. Paths matching the Redactor's sensitive list (`.env`, `.ssh/`, `secrets/`, `private/`) are refused even inside the sandbox.
+- Global hotkey **⌃⌥⌘.** (`KillSwitch`) sets `AgentController.killed = true`; the loop checks before every step.
+- Accessibility permission is mandatory for any keyboard/mouse action.
+
+### 4.2 Passive workspace monitor `[MVP — context feedstock]`
 
 A background macOS agent (Swift, NSWorkspace + FSEvents) that continuously captures:
 
@@ -111,62 +165,38 @@ A background macOS agent (Swift, NSWorkspace + FSEvents) that continuously captu
 - Terminal command history (last 20 commands, configurable)
 - Recent clipboard contents when they contain code (opt-in)
 
-### 4.2 Context summarization engine `[MVP]`
+### 4.3 Context-aware system prompt `[MVP]`
 
-Vertex AI (Gemini 1.5 Pro) processes each raw context snapshot and produces a structured summary in three formats:
+Before each Gemini turn, the AgentLoop assembles a system prompt that includes:
 
-| Format | Length | Used for |
-|---|---|---|
-| Short | ~100 tokens | Clipboard injection, status bar |
-| Medium | ~500 tokens | Cursor system messages, ChatGPT |
-| Full | ~2000 tokens | Claude Code CLAUDE.md, deep sessions |
+- Active workspace path
+- Git branch, last commit, uncommitted files
+- Recently edited files (last 5)
+- Recent terminal commands (last 5)
+- Hard safety rules (sandbox, destructive-action policy)
 
-### 4.3 Tool-aware injection `[MVP]`
+This means the user's prompt does not need to repeat any of that — "fix the test" is enough because Gemini already knows which tests, on which branch, in which workspace.
 
-When the user switches focus to a supported AI tool, Ithuriel detects the application activation event (via Accessibility API) and places the appropriate formatted context on the clipboard automatically.
+### 4.4 Context-bridge injection `[v1.1 — secondary feature]`
 
-**Supported injection targets v1.0:** Claude Code CLI, Cursor, ChatGPT (web + desktop), GitHub Copilot Chat, Gemini Code Assist, any custom Claude API app.
+The original Ithuriel use case is preserved as a secondary feature. When the user focuses a supported external AI tool (Claude Code, Cursor, ChatGPT, Claude desktop), Ithuriel formats the current context for that tool and copies it to the pasteboard.
 
-### 4.4 Rate-limit resume `[MVP]`
+**Supported injection targets:** Claude Code CLI, Cursor, ChatGPT (web + desktop), GitHub Copilot Chat, Claude desktop. Format per target (CLAUDE.md / `.cursorrules` / system message) is selected automatically.
 
-Ithuriel listens for error patterns that indicate rate limit hits. On detection, it instantly generates a "resume prompt" — a compact context packet that tells the next tool exactly where you were, what was in progress, and what the next step is.
+### 4.5 Privacy controls `[MVP]`
 
-### 4.5 Context history & snapshots `[v1.1]`
+- **Sensitive path redaction:** the Redactor scrubs API-key patterns (`sk-`, `ghp_`, `AIza`, `xoxb-`, `api_key=…`) from anything sent to Gemini or any cloud backend.
+- **Path filter:** paths containing `.env`, `.ssh/`, `secrets/`, `private/` are excluded from context snapshots AND refused by the agent file sandbox.
+- **Local-only mode:** disables the optional cloud backend (§6). The Gemini API call still happens — disclose this clearly in onboarding.
+- **Workspace sandbox:** all `read_file` / `write_file` / `delete_file` calls are pinned to `UserPrefs.activeWorkspace`.
 
-Every context snapshot is persisted to Firestore with a timestamp. The web dashboard shows a timeline of snapshots, lets you restore any previous context, and shows which tools received which snapshots.
+### 4.6 Context history & snapshots `[v1.1]`
 
-### 4.6 Privacy controls `[MVP]`
-
-- **Sensitive path redaction:** paths matching `.env`, `secrets/`, `private/`, `api_key` automatically scrubbed
-- **Local-only mode:** all processing on-device, no data leaves the machine
-- **Per-project rules:** exclude specific folders or file types from monitoring
-- **On-screen indicator:** menu bar icon shows real-time capture status
+Every captured `ContextSnapshot` is persisted to SwiftData locally (last 50 entries kept). Optional Firestore sync for cross-device. The popover shows the latest workspace and lets the user copy the formatted context manually.
 
 ### 4.7 Team context sync `[v2.0]`
 
-Developers on the same Git repository can opt-in to a shared context channel. When one developer makes an architectural decision or resolves a complex bug, the context is broadcast to teammates.
-
-### 4.8 Agent control (opt-in computer-use hand-off) `[v1.1]`
-
-> Inspired by openclaw — but scoped strictly to context hand-off. Off by default.
-
-When the user explicitly invokes a "hand off to <tool>" command from the menu bar (or a registered URL scheme), Ithuriel can take three narrowly-defined actions on the user's behalf:
-
-| Action | Description | Confirmation |
-|---|---|---|
-| `focusTool` | Bring the target AI tool to the foreground via `NSRunningApplication.activate` | Silent (feature gate covers consent) |
-| `pasteContext` | Post `⌘V` to the frontmost app via `CGEvent` | Silent |
-| `submitPrompt` | Post `Return` to send the prompt | **Modal NSAlert confirmation required** |
-
-**Hard constraints:**
-
-- Disabled until the user toggles **Settings → Advanced → Enable agent control**.
-- Requires Accessibility permission; refuses with `AgentControlError.accessibilityDenied` otherwise.
-- Never triggered from background monitoring. Only fires on explicit user invocation.
-- The `submitPrompt` action always shows an `NSAlert` for one-shot consent.
-- Implemented in `Ithuriel/AgentControl/AgentController.swift`. No third-party agent framework is bundled — this remains a pure Mac app.
-
-This feature exists so a user can press one hotkey and have their freshly-prepared context automatically land in the right tool, ready to send — without giving up control of their machine.
+Developers on the same Git repository can opt-in to a shared context channel. When one developer's agent solves a tricky bug, the resulting reasoning + diff is broadcast to teammates.
 
 ---
 
@@ -174,34 +204,60 @@ This feature exists so a user can press one hotkey and have their freshly-prepar
 
 ### 5.1 System overview
 
-Ithuriel is composed of five layers: a native macOS agent, a Google Cloud backend, a context processing pipeline, a storage layer, and a web dashboard. All layers communicate over HTTPS/gRPC with Firebase Auth JWTs.
+The app runs entirely on macOS. The agent loop is the centre; the workspace monitor feeds it context; Gemini drives decision-making; AgentController executes actions on the real machine. Cloud backend (§6) is optional.
 
 ```
-Data flow:
+Agent loop:
 
-macOS Agent
-    │
-    │  POST /v1/context/snapshot
-    ▼
-Cloud Run API  ──────────────────────────────────► WebSocket push back to agent
-    │
-    │  Publish to Pub/Sub topic: ithuriel-snapshots
-    ▼
-Cloud Function (Python)
-    │
-    ├──► Vertex AI Gemini 1.5 Flash  → short + medium summaries
-    ├──► Vertex AI Gemini 1.5 Pro    → full summary
-    ├──► Vertex AI text-embedding-005 → 1536-dim embedding
-    │
-    ├──► Firestore  (metadata, summaries)
-    └──► Cloud Storage  (raw blob, embedding vector)
+  ┌──────────── menu bar prompt ────────────┐
+  │   "fix the failing test and re-run"      │
+  └──────────────────┬───────────────────────┘
+                     ▼
+              AgentLoop.run(task)
+                     │
+                     │  1. gather context (CachedSnapshot)
+                     │  2. build system prompt
+                     │  3. POST to Gemini /v1beta/generateContent
+                     ▼
+              ┌──────────────┐
+              │  Gemini API  │  (function-calling, vision)
+              └──────┬───────┘
+                     │  functionCall(s)
+                     ▼
+              AgentController
+                ├── type / press_keys / click / move_cursor
+                ├── screenshot          → base64 JPEG back to Gemini
+                ├── focus / launch / quit app
+                ├── read_file / write_file / delete_file  (sandboxed)
+                └── run_shell                            (destructive → NSAlert)
+                     │  functionResponse
+                     ▼
+              loop until done() OR kill switch OR step budget
+
+Background, continuous:
+
+  FSEvents / NSWorkspace / git / terminal
+                     │
+                     ▼
+              ContextSnapshot
+                     │  (Redactor)
+                     ▼
+              SwiftData CachedSnapshot   ← read by AgentLoop on every run
+
+Optional cloud (§6):
+  ContextSnapshot ──► Cloud Run API ──► Pub/Sub ──► Firestore / GCS
 ```
 
 ### 5.2 Component breakdown
 
 | Component | Technology | Responsibility |
 |---|---|---|
-| macOS Agent | Swift 5.9 / SwiftUI | Menu bar app. Monitors FSEvents, NSWorkspace, terminal. Captures context, sends to API, injects into AI tools. Optional `AgentControl` module for explicit, user-invoked computer-use hand-off (opt-in, see 4.8). |
+| macOS Agent (host) | Swift 5.9 / SwiftUI | Menu bar app. Hosts the agent loop. Monitors FSEvents, NSWorkspace, terminal. |
+| AgentLoop | Swift, `@MainActor` | Drives Gemini turn-by-turn. Parses function calls, dispatches to AgentController, feeds responses back. Step budget 25. |
+| AgentController | Swift + CGEvent + NSWorkspace | Executes type / click / hotkey / screenshot / launch / file / shell actions. Hard-sandboxed file ops. NSAlert on destructive actions. |
+| KillSwitch | Carbon RegisterEventHotKey | Global ⌃⌥⌘. hotkey. Sets `AgentController.killed`. |
+| GeminiClient | URLSession + JSON | v1beta `generateContent` with function-calling + inlineData (vision). |
+| ContextSnapshot store | SwiftData | Local persistence of last 50 snapshots. Feeds the agent system prompt. |
 | VS Code Extension | TypeScript / VS Code API | Captures open file tree, cursor position, recent edits, workspace config. Posts to API on change events. |
 | Ithuriel API | Node.js + TypeScript / Cloud Run | REST + WebSocket API. Receives snapshots, triggers processing pipeline, serves formatted context. |
 | Context Processor | Python / Cloud Functions gen2 | Subscribes to Pub/Sub. Calls Vertex AI. Writes to Firestore + GCS. |
@@ -446,12 +502,12 @@ Cloud Build trigger
 
 ## 10. Open Questions
 
-1. Should Ithuriel support Windows / Linux in v1.0, or remain macOS-only to leverage native APIs and ship faster?
-2. Should the VS Code extension be the primary capture mechanism with the macOS agent as enhancement?
-3. What is the right pricing model — free tier with limited history, $5/mo pro, $15/mo team?
-4. Should team context sync require a shared Git remote, or allow manual team codes?
-5. Is on-device CoreML summarization good enough for local-only mode vs. Vertex AI quality?
-6. Should Ithuriel integrate with Coven (multi-agent macOS orchestrator) as a built-in context layer, or remain a standalone product?
+1. Should the workspace sandbox be strict (one directory) or allow multiple allowlisted roots (e.g. `~/Developer/*`)?
+2. Should we offer an "autonomous mode" toggle that suppresses destructive-action prompts after N confirmations on similar actions in the same session?
+3. Is Gemini 2.0 Flash sufficient for multi-step reasoning, or should Pro be the default with Flash as a fast-path?
+4. How should we expose recent agent runs — a transcript log in the popover only, or a full timeline view in Settings?
+5. Should Ithuriel support a no-screenshot mode for users who don't want screen captures sent to Google?
+6. What is the right pricing model — bring-your-own-Gemini-key free tier, $10/mo for managed Gemini quota?
 
 ---
 

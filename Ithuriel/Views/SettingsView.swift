@@ -7,7 +7,7 @@ struct SettingsView: View {
 
     private var prefs: UserPrefs {
         if let existing = prefsList.first { return existing }
-        let new = UserPrefs()
+        let new = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
         context.insert(new)
         try? context.save()
         return new
@@ -15,20 +15,57 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            generalTab
-                .tabItem { Label(NSLocalizedString("settings.tab.general", comment: ""), systemImage: "gear") }
+            agentTab
+                .tabItem { Label(NSLocalizedString("settings.tab.agent", comment: ""), systemImage: "wand.and.stars") }
+            captureTab
+                .tabItem { Label(NSLocalizedString("settings.tab.capture", comment: ""), systemImage: "eye") }
             privacyTab
                 .tabItem { Label(NSLocalizedString("settings.tab.privacy", comment: ""), systemImage: "lock.shield") }
             integrationsTab
                 .tabItem { Label(NSLocalizedString("settings.tab.integrations", comment: ""), systemImage: "link") }
-            advancedTab
-                .tabItem { Label(NSLocalizedString("settings.tab.advanced", comment: ""), systemImage: "wrench.and.screwdriver") }
         }
-        .frame(width: 520, height: 380)
+        .frame(width: 560, height: 440)
         .padding(20)
     }
 
-    private var generalTab: some View {
+    // MARK: - Agent (primary)
+
+    private var agentTab: some View {
+        Form {
+            Toggle(NSLocalizedString("settings.agent.enabled", comment: ""), isOn: binding(\.agentEnabled))
+
+            Section(NSLocalizedString("settings.agent.brain", comment: "")) {
+                SecureField(NSLocalizedString("settings.agent.geminiKey", comment: ""),
+                            text: binding(\.geminiApiKey))
+                TextField(NSLocalizedString("settings.agent.geminiModel", comment: ""),
+                          text: binding(\.geminiModel))
+                Text(NSLocalizedString("settings.agent.geminiHelp", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section(NSLocalizedString("settings.agent.workspace", comment: "")) {
+                TextField(NSLocalizedString("settings.agent.workspacePath", comment: ""),
+                          text: binding(\.activeWorkspace))
+                Text(NSLocalizedString("settings.agent.workspaceHelp", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section(NSLocalizedString("settings.agent.safety", comment: "")) {
+                Toggle(NSLocalizedString("settings.agent.confirmEvery", comment: ""),
+                       isOn: binding(\.confirmEveryAction))
+                Text(NSLocalizedString("settings.agent.killSwitch", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            if !AppDetector.isAccessibilityTrusted {
+                accessibilityWarning
+            }
+        }
+    }
+
+    // MARK: - Capture (context feedstock)
+
+    private var captureTab: some View {
         Form {
             Toggle(NSLocalizedString("settings.capturing", comment: ""), isOn: binding(\.capturingEnabled))
             Toggle(NSLocalizedString("settings.localOnly", comment: ""), isOn: binding(\.localOnly))
@@ -36,6 +73,8 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
+
+    // MARK: - Privacy
 
     private var privacyTab: some View {
         Form {
@@ -49,11 +88,10 @@ struct SettingsView: View {
                 Text(NSLocalizedString("settings.excludePaths.help", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            if !AppDetector.isAccessibilityTrusted {
-                accessibilityWarning
-            }
         }
     }
+
+    // MARK: - Integrations (context-bridge backend)
 
     private var integrationsTab: some View {
         Form {
@@ -66,18 +104,6 @@ struct SettingsView: View {
             Section(NSLocalizedString("settings.api", comment: "")) {
                 TextField(NSLocalizedString("settings.api.baseURL", comment: ""), text: binding(\.apiBaseURL))
                 SecureField(NSLocalizedString("settings.api.token", comment: ""), text: binding(\.apiToken))
-            }
-        }
-    }
-
-    private var advancedTab: some View {
-        Form {
-            Toggle(isOn: binding(\.agentControlEnabled)) {
-                VStack(alignment: .leading) {
-                    Text(NSLocalizedString("settings.agentControl", comment: ""))
-                    Text(NSLocalizedString("settings.agentControl.help", comment: ""))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
             }
         }
     }

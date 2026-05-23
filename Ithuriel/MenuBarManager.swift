@@ -12,9 +12,11 @@ final class MenuBarManager {
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
     private weak var container: ModelContainer?
+    private weak var agentLoop: AgentLoop?
 
-    init(container: ModelContainer?) {
+    init(container: ModelContainer?, agentLoop: AgentLoop?) {
         self.container = container
+        self.agentLoop = agentLoop
     }
 
     func install() {
@@ -29,9 +31,9 @@ final class MenuBarManager {
 
         let popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 320, height: 360)
-        if let container = container {
-            let root = StatusBarView(onQuit: { NSApp.terminate(nil) })
+        popover.contentSize = NSSize(width: 380, height: 460)
+        if let container = container, let loop = agentLoop {
+            let root = StatusBarView(agent: loop, onQuit: { NSApp.terminate(nil) })
                 .modelContainer(container)
             popover.contentViewController = NSHostingController(rootView: root)
         }

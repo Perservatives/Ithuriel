@@ -2,56 +2,76 @@
 "menubar.icon.a11y" = "Ithuriel status";
 
 /* Status popover */
-"status.capturing"             = "Capturing";
-"status.workspace"             = "Active workspace";
 "status.workspace.none"        = "No workspace detected";
-"status.lastSnapshot"          = "Last snapshot";
-"status.lastSnapshot.none"     = "No snapshots yet";
+"status.prompt.label"          = "Ask Ithuriel to do something";
+"status.prompt.placeholder"    = "e.g. refactor this file, run the tests, open Cursor and paste context…";
+"status.transcript.empty"      = "Idle. Type a task above and press return.";
+"status.stop"                  = "Stop";
 "status.copy"                  = "Copy context";
+"status.killSwitch"            = "Kill: ⌃⌥⌘.";
 "status.settings"              = "Settings…";
-"status.quit"                  = "Quit Ithuriel";
-"status.agentControl.armed"    = "Agent control armed";
+"status.quit"                  = "Quit";
+
+/* Missing-key banner */
+"status.needKey.title"         = "Gemini API key required";
+"status.needKey.body"          = "Set your key in Settings → Agent to enable computer-use.";
+"status.needKey.open"          = "Open Settings";
 
 /* Settings tabs */
-"settings.tab.general"         = "General";
+"settings.tab.agent"           = "Agent";
+"settings.tab.capture"         = "Capture";
 "settings.tab.privacy"         = "Privacy";
 "settings.tab.integrations"    = "Integrations";
-"settings.tab.advanced"        = "Advanced";
 
-/* General */
-"settings.capturing"           = "Enable passive capture";
+/* Agent tab */
+"settings.agent.enabled"       = "Agent control enabled";
+"settings.agent.brain"         = "Gemini";
+"settings.agent.geminiKey"     = "Gemini API key";
+"settings.agent.geminiModel"   = "Model (e.g. gemini-2.0-flash-exp)";
+"settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
+"settings.agent.workspace"     = "Workspace sandbox";
+"settings.agent.workspacePath" = "Workspace path";
+"settings.agent.workspaceHelp" = "File operations are restricted to this directory tree. Auto-filled from your most recent VS Code/Cursor workspace.";
+"settings.agent.safety"        = "Safety";
+"settings.agent.confirmEvery"  = "Confirm every action (slower, safer)";
+"settings.agent.killSwitch"    = "Global kill switch: ⌃⌥⌘. (control-option-command-period) stops the agent instantly.";
+
+/* Capture */
+"settings.capturing"           = "Enable passive context capture";
 "settings.localOnly"           = "Local-only mode";
-"settings.localOnly.detail"    = "When on, no context leaves this Mac. SwiftData stores snapshots locally and on-device summarization is used.";
+"settings.localOnly.detail"    = "When on, no context leaves this Mac except calls to the Gemini API you configured.";
 
 /* Privacy */
-"settings.redactKeys"          = "Redact API keys and secrets before upload";
+"settings.redactKeys"          = "Redact API keys and secrets";
 "settings.excludePaths"        = "Exclude paths (comma-separated)";
-"settings.excludePaths.help"   = "Any file whose path contains one of these fragments is skipped entirely.";
+"settings.excludePaths.help"   = "Any file whose path contains one of these fragments is skipped entirely. The agent's file sandbox refuses to touch them.";
 "settings.accessibility.title" = "Accessibility permission required";
-"settings.accessibility.body"  = "Without Accessibility, Ithuriel can still capture context but cannot type-inject into AI tools. Clipboard injection will still work.";
+"settings.accessibility.body"  = "The agent needs Accessibility access to type, click, and send keyboard shortcuts. Grant it in System Settings.";
 "settings.accessibility.open"  = "Open System Settings";
 
 /* Integrations */
-"settings.targets"             = "Target AI tools";
+"settings.targets"             = "Context-bridge targets";
 "settings.targets.field"       = "Tool list";
-"settings.targets.help"        = "Comma-separated list. Supported: claude-code, cursor, chatgpt, claude-desktop, copilot-chat, gemini.";
-"settings.api"                 = "Ithuriel API";
+"settings.targets.help"        = "AI tools that Ithuriel can format context for when you hand off (claude-code, cursor, chatgpt, claude-desktop, copilot-chat, gemini).";
+"settings.api"                 = "Ithuriel cloud (optional)";
 "settings.api.baseURL"         = "Base URL";
 "settings.api.token"           = "Bearer token";
-
-/* Advanced — agent control */
-"settings.agentControl"        = "Enable agent control (opt-in)";
-"settings.agentControl.help"   = "Lets Ithuriel focus a target AI tool and paste context on your behalf — only when you explicitly invoke a hand-off from the menu bar. Off by default.";
 
 /* Injection notifications */
 "inject.ready.title"           = "Context ready";
 "inject.ready.body"            = "Paste with ⌘V into %@.";
 
-/* Agent control confirmations */
-"agent.confirm.title"          = "Ithuriel wants to take an action";
-"agent.confirm.body"           = "Submit the prepared context now? Reason: %@";
+/* Agent control confirmations (destructive actions) */
 "agent.confirm.allow"          = "Allow";
 "agent.confirm.cancel"         = "Cancel";
-"agent.reason.focus"           = "bring target AI tool to the front";
-"agent.reason.paste"           = "paste the prepared context";
-"agent.reason.submit"          = "press Return to submit";
+"agent.confirm.write.title"    = "Write file?";
+"agent.confirm.write.body"     = "The agent wants to write to:\n%@";
+"agent.confirm.delete.title"   = "Delete file?";
+"agent.confirm.delete.body"    = "The agent wants to delete:\n%@";
+"agent.confirm.shell.title"    = "Run shell command?";
+"agent.confirm.shell.body"     = "The agent wants to run:\n%@";
+"agent.confirm.quit.title"     = "Quit app?";
+"agent.confirm.quit.body"      = "The agent wants to quit:\n%@";
+
+/* Agent loop */
+"agent.err.noKey"              = "Set your Gemini API key in Settings → Agent before running the agent.";

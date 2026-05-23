@@ -6,10 +6,16 @@ Agent guidance for anyone (human or AI) working in this repo. Read this first.
 
 ## 1. What this project is
 
-Ithuriel is a macOS-native AI context orchestration tool. A menu bar agent
-silently captures workspace state (open files, git, terminal, recent edits)
-and injects formatted context into the active AI coding tool (Claude Code,
-Cursor, ChatGPT, Claude desktop, Copilot, Gemini) the moment it gains focus.
+Ithuriel is a macOS-native **computer-use agent** (openclaw-style) that
+runs locally on your Mac with full project context already loaded. The
+user types a task into the menu bar; the agent uses Google Gemini's
+function-calling + vision to drive the keyboard, mouse, file system, and
+apps until the task is done.
+
+A passive workspace monitor (FSEvents, NSWorkspace, git, terminal) feeds
+the agent's system prompt continuously, so prompts don't need to
+re-explain the project. A context-bridge into other AI tools is a
+**secondary** feature, not the headline.
 
 The product spec lives in [PRD.md](./PRD.md). Read it before making
 architectural decisions.
@@ -43,13 +49,14 @@ Ithuriel/
 └── Ithuriel/                       # Swift app source
     ├── IthurielApp.swift           # entry point, AppDelegate, timer loop
     ├── MenuBarManager.swift        # NSStatusItem + popover
+    ├── Agent/                      # AgentLoop, GeminiClient, ScreenCapture, KillSwitch
+    ├── AgentControl/               # AgentController (full action surface)
     ├── Capture/                    # FSEvents, NSWorkspace, git, terminal
     ├── Privacy/                    # Redactor (regex + path filter)
-    ├── Injection/                  # Pasteboard + CGEvent type-inject
-    ├── API/                        # IthurielClient (REST + WebSocket)
+    ├── Injection/                  # secondary: pasteboard hand-off into other AI tools
+    ├── API/                        # optional cloud backend client
     ├── Models/                     # ContextSnapshot, UserPrefs (SwiftData)
-    ├── Views/                      # StatusBarView, SettingsView
-    ├── AgentControl/               # opt-in computer-use hand-off
+    ├── Views/                      # StatusBarView (prompt-first), SettingsView
     └── Resources/                  # Info.plist, Localizable.strings
 ```
 
@@ -78,12 +85,30 @@ Ithuriel/
 
 ---
 
-## 6. Agent control (opt-in feature)
+## 6. Agent control (the headline feature)
 
-`Ithuriel/AgentControl/AgentController.swift` can focus a target AI tool,
-paste context, and press Return on the user's behalf. It is **off by default**
-and only fires on explicit user invocation. The `submitPrompt` action always
-shows an `NSAlert` for one-shot consent. See PRD §4.8.
+The agent is **the product**. `Ithuriel/AgentControl/AgentController.swift`
+exposes a full openclaw-style action surface — type, press_keys, click,
+move_cursor, screenshot, focus_app, launch_app, quit_app, read_file,
+write_file, delete_file, run_shell.
+
+`Ithuriel/Agent/AgentLoop.swift` orchestrates: gather context → POST to
+Gemini → execute function calls → feed results back → loop until `done()`
+or kill switch or step budget.
+
+**Hard rules** (do not relax without explicit owner approval):
+
+- **Destructive actions** (write_file, delete_file, run_shell, quit_app)
+  *always* show an `NSAlert` synchronously. No silent destructive ops.
+- **File ops are sandboxed** to `UserPrefs.activeWorkspace`. Outside that
+  tree → throw `AgentControlError.fileOutsideSandbox`.
+- **Redactor sensitive paths** are refused even inside the sandbox.
+- **Kill switch ⌃⌥⌘.** must work mid-action. Check `AgentController.killed`
+  at every step boundary.
+- **Accessibility** is mandatory for any keyboard/mouse action; if denied,
+  agent still loads but actions throw `.accessibilityDenied`.
+
+See PRD §4.1 for the full table of tools.
 
 ---
 
