@@ -109,7 +109,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     }
 
     @objc private func statusItemLeftClicked(_ sender: Any?) {
-        togglePopover()
+        menuOpenChat()
     }
 
     private func togglePopover() {

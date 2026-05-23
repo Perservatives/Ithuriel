@@ -60,9 +60,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshPermissionState()
         }
 
-        // Boot animation only — menubar popover is the primary surface.
+        // Boot animation, then open chat window as the primary surface.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            Task { @MainActor in SpotlightCoordinator.shared.playLaunchThenSummon() }
+            Task { @MainActor in
+                SpotlightCoordinator.shared.playLaunchThenSummon()
+                ChatWindowController.shared.show(container: container, agent: loop)
+            }
         }
 
         let monitor = WorkspaceMonitor(container: container)
