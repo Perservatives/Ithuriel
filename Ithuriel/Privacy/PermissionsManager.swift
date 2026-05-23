@@ -14,7 +14,7 @@ final class PermissionsManager: ObservableObject {
     @Published private(set) var accessibilityGranted = false
     @Published private(set) var screenRecordingGranted = false
     @Published private(set) var notificationsGranted = false
-    /// False until the first `refresh()` finishes — avoids flashing “missing” UI on launch.
+    /// False until the first `refresh()` finishes — avoids flashing "missing" UI on launch.
     @Published private(set) var hasRefreshed = false
 
     /// Accessibility + screen recording — required for computer-use.
@@ -23,13 +23,13 @@ final class PermissionsManager: ObservableObject {
     }
 
     private enum CacheKey {
-        static let accessibility    = “perm.accessibility”
-        static let screenRecording  = “perm.screenRecording”
-        static let notifications    = “perm.notifications”
+        static let accessibility    = "perm.accessibility"
+        static let screenRecording  = "perm.screenRecording"
+        static let notifications    = "perm.notifications"
     }
 
     private init() {
-        // Seed from last-known state so the UI never flashes “missing” on cold launch.
+        // Seed from last-known state so the UI never flashes "missing" on cold launch.
         let ud = UserDefaults.standard
         accessibilityGranted   = ud.bool(forKey: CacheKey.accessibility)
         screenRecordingGranted = ud.bool(forKey: CacheKey.screenRecording)

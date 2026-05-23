@@ -69,7 +69,7 @@
 "settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
 "settings.agent.workspace"     = "Workspace sandbox";
 "settings.agent.workspacePath" = "Workspace path";
-"settings.agent.workspaceHelp" = "Default cwd for shell commands and context. When “Restrict to workspace” is off, file ops may use any path.";
+"settings.agent.workspaceHelp" = "Default cwd for shell commands and context. When \"Restrict to workspace\" is off, file ops may use any path.";
 "settings.agent.safety"        = "Safety";
 "settings.agent.confirmEvery"  = "Confirm destructive actions before running";
 "settings.agent.restrictWorkspace" = "Restrict file access to workspace";
@@ -146,7 +146,7 @@
 "agent.transcript.outcome.ok"        = "Done";
 "agent.transcript.outcome.screenshot"= "Screenshot ready";
 "agent.transcript.outcome.long"      = "Returned %d characters";
-"agent.transcript.action.type"       = "Typing “%@”";
+"agent.transcript.action.type"       = "Typing \"%@\"";
 "agent.transcript.action.pressKeys"  = "Pressing %@";
 "agent.transcript.action.click"      = "Clicking at (%d, %d)";
 "agent.transcript.action.moveCursor" = "Moving cursor to (%d, %d)";
