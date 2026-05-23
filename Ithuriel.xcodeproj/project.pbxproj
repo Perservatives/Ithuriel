@@ -23,6 +23,8 @@
 		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
 		98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */; };
 		9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5C15C17AE947AC0627405D /* Persistence.swift */; };
+		A1PERM001PERMISSIONSMGR01 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1PERM002PERMISSIONSMGR02 /* PermissionsManager.swift */; };
+		A1PERM003PERMSSETTINGS01 /* PermissionsSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1PERM004PERMSSETTINGS02 /* PermissionsSettingsSection.swift */; };
 		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
 		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
@@ -79,6 +81,8 @@
 		7605591CD999D43F7A2A8EDB /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
 		798888136F3708A12FED1754 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		896FE25EBB3002E071FDB502 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		A1PERM002PERMISSIONSMGR02 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
+		A1PERM004PERMSSETTINGS02 /* PermissionsSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsSection.swift; sourceTree = "<group>"; };
 		8A850458E38A42D3EC0AC36E /* SpotlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightView.swift; sourceTree = "<group>"; };
 		966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
 		9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentRunRecord.swift; sourceTree = "<group>"; };
@@ -155,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				6C1F917DEA75F51337BC698C /* SettingsView.swift */,
+				A1PERM004PERMSSETTINGS02 /* PermissionsSettingsSection.swift */,
 				E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */,
 			);
 			path = Views;
@@ -184,6 +189,7 @@
 		BBD50167FBA53D9AD5E01A21 /* Privacy */ = {
 			isa = PBXGroup;
 			children = (
+				A1PERM002PERMISSIONSMGR02 /* PermissionsManager.swift */,
 				B429B1D7864246CC84E65365 /* Redactor.swift */,
 			);
 			path = Privacy;
@@ -354,6 +360,8 @@
 				D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */,
 				F5390D45F895BA4FCA73E957 /* Motion.swift in Sources */,
 				9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */,
+				A1PERM001PERMISSIONSMGR01 /* PermissionsManager.swift in Sources */,
+				A1PERM003PERMSSETTINGS01 /* PermissionsSettingsSection.swift in Sources */,
 				BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */,
 				D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */,
 				D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */,
