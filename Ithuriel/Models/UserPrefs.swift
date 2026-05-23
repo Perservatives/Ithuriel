@@ -62,7 +62,7 @@ final class UserPrefs {
          targetToolsRaw: String = "claude-code,cursor,chatgpt,claude-desktop",
          apiBaseURL: String = FirebaseConfig.defaultAPIBaseURL,
          apiToken: String = "",
-         firebaseWebAPIKey: String = "",
+         firebaseWebAPIKey: String = FirebaseConfig.defaultWebAPIKey,
          agentEnabled: Bool = true,
          geminiApiKey: String = "",
          geminiModel: String = "gemini-3.5-flash",

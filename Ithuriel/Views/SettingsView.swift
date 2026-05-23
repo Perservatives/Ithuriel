@@ -337,7 +337,6 @@ struct SettingsView: View {
                             AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
                             AuthService.shared.beginGoogleSignIn()
                         }
-                        .disabled(prefs.firebaseWebAPIKey.isEmpty)
                     }
                 }
                 Text(NSLocalizedString("settings.api.help", comment: ""))

@@ -79,6 +79,7 @@
 		F659D4D08DAA44F4DA843FC1 /* eshop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A53B4709739097B5B90B9F2A /* eshop.mp3 */; };
 		F71825B6A0F4DCCB026790AC /* ChatWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D44D95499CACE7017FC62EF /* ChatWindowController.swift */; };
 		FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1F917DEA75F51337BC698C /* SettingsView.swift */; };
+		FBE37626E8F8D7BB0137C14B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EA3D60E690647FAA6DCB97CD /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -144,6 +145,7 @@
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
 		DEF405A92594796F12FBC14E /* TranscriptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptChip.swift; sourceTree = "<group>"; };
+		EA3D60E690647FAA6DCB97CD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EA63356B176A586DBB19722B /* AgentStatusBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusBus.swift; sourceTree = "<group>"; };
 		EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
 		EAAF5B9943A1B66D6FF4FB3C /* VoiceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceController.swift; sourceTree = "<group>"; };
@@ -296,6 +298,7 @@
 		C19CFC7FE32FF09C9C80BB2D /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				EA3D60E690647FAA6DCB97CD /* Assets.xcassets */,
 				536821083CCDFD430569FFB9 /* GoogleService-Info.plist */,
 				213FC4849EF6E0119C1C147D /* Localizable.strings */,
 				F9AD1299F3AA11A67D3EACA8 /* Sounds */,
@@ -430,6 +433,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBE37626E8F8D7BB0137C14B /* Assets.xcassets in Resources */,
 				EE849D83425F247F6F47AA9D /* GoogleService-Info.plist in Resources */,
 				C271D9DEF081B17832502493 /* Localizable.strings in Resources */,
 				F4E7879AA8C9815E2F84B2DD /* agent-done.mp3 in Resources */,

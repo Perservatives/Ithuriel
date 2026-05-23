@@ -24,30 +24,35 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Decorative top: the 8-point mark, always present, slowly orbiting.
-            VStack(spacing: 14) {
-                AsteriskMark(size: 64, tint: .accentColor)
-                    .rotationEffect(.degrees(iconRotation))
+            // Header slot — reserved for the launch orb, which is hosted in
+            // a separate window that animates into this region after the
+            // boot animation completes. We leave just the wordmark below it,
+            // so the visual handoff lands on a clean composition.
+            VStack(spacing: 0) {
+                Color.clear.frame(height: 150) // orb lives here, in its own window
                 Text("Ithuriel")
-                    .font(.system(.title2, design: .rounded).weight(.semibold))
-                    .tracking(2)
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                    .tracking(3)
+                    .foregroundStyle(.primary.opacity(0.92))
+                    .padding(.top, 6)
             }
-            .padding(.top, 56)
-            .padding(.bottom, 32)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
 
-            Divider().opacity(0.25)
+            Divider().opacity(0.18)
 
             ScrollView {
                 content
-                    .padding(40)
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 28)
                     .frame(maxWidth: 480, alignment: .leading)
                     .frame(maxWidth: .infinity)
             }
 
             footer
         }
-        .frame(width: 540, height: 600)
-        .background(VisualEffectBlur(material: .popover, blendingMode: .behindWindow))
+        .frame(width: 540, height: 640)
+        .background(Color.clear)
         .onAppear {
             withAnimation(.linear(duration: 64).repeatForever(autoreverses: false)) {
                 iconRotation = 360

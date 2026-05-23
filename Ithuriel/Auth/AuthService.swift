@@ -1,19 +1,31 @@
 import Foundation
 import AppKit
+import AuthenticationServices
+import CryptoKit
 
-/// Handles the OAuth dance against the Ithuriel Cloud Run API and the
-/// subsequent Firebase custom-token → ID-token exchange. Stores tokens
-/// in the Keychain. All purely Foundation/URLSession — no Firebase SDK.
+/// Client-only Google sign-in for the macOS app.
+///
+/// Flow:
+///   1. `beginGoogleSignIn()` opens Google's OAuth consent page in an
+///      `ASWebAuthenticationSession` using PKCE + the iOS OAuth client id
+///      from `GoogleService-Info.plist` (no client secret needed).
+///   2. Google redirects to `<REVERSED_CLIENT_ID>:/oauth2callback?code=…`.
+///   3. The session returns the code; we exchange it at
+///      `https://oauth2.googleapis.com/token` for a Google `id_token`.
+///   4. We POST that id_token to Identity Toolkit `signInWithIdp` to mint
+///      Firebase `idToken` + `refreshToken`.
+///   5. Tokens land in the Keychain; `refreshIfNeeded()` uses the existing
+///      `securetoken.googleapis.com` exchange.
 final class AuthService {
     static let shared = AuthService()
     private init() {}
 
-    /// Set by the user in Settings → Integrations (Cloud Run public URL).
-    var apiBaseURL: String = "https://api.ithuriel.dev"
+    /// Cloud Run API base URL. Kept on the singleton because other code
+    /// (e.g. `IthurielClient`) writes through this on prefs change.
+    var apiBaseURL: String = FirebaseConfig.defaultAPIBaseURL
 
-    /// Firebase web API key (lives in Settings; can be read from the
-    /// Firebase console). Required to exchange custom token → ID token
-    /// via the Identity Toolkit REST endpoint.
+    /// Firebase web API key for Identity Toolkit. Plumbed from `UserPrefs`;
+    /// falls back to `GoogleService-Info.plist` (`resolvedWebAPIKey`).
     var firebaseWebAPIKey: String = ""
 
     // MARK: - Token storage
@@ -21,60 +33,158 @@ final class AuthService {
     private let idTokenKey      = "firebase.idToken"
     private let refreshTokenKey = "firebase.refreshToken"
     private let idTokenExpiry   = "firebase.idToken.expiry"
+    private let uidKey          = "firebase.uid"
 
     var idToken: String? { Keychain.get(idTokenKey) }
     var refreshToken: String? { Keychain.get(refreshTokenKey) }
+    var uid: String? { Keychain.get(uidKey) }
     var isSignedIn: Bool { idToken != nil }
 
     func signOut() {
         Keychain.remove(idTokenKey)
         Keychain.remove(refreshTokenKey)
         Keychain.remove(idTokenExpiry)
+        Keychain.remove(uidKey)
     }
 
-    // MARK: - Sign-in via system browser
+    // MARK: - Sign-in (ASWebAuthenticationSession + PKCE + signInWithIdp)
 
-    /// Step 1: open `<api>/auth/google?redirect=ithuriel://auth/callback` in
-    /// the user's default browser. The browser bounces to Google, then
-    /// back to our API, which redirects to `ithuriel://auth/callback?token=`.
-    /// `URLSchemeHandler.handle(_:)` finishes the flow.
+    /// Holds the in-flight session so it isn't deallocated mid-flow.
+    private var pendingSession: ASWebAuthenticationSession?
+    private var presentationProvider: WebAuthPresentationProvider?
+
     func beginGoogleSignIn() {
-        var components = URLComponents(string: "\(apiBaseURL)/auth/google")!
-        components.queryItems = [URLQueryItem(name: "redirect", value: "ithuriel://auth/callback")]
-        if let url = components.url {
-            NSWorkspace.shared.open(url)
+        Task { @MainActor in
+            do {
+                try await runGoogleSignIn()
+                Log.info("Google sign-in complete uid=\(uid ?? "?")")
+            } catch {
+                Log.error("Google sign-in failed: \(error)")
+            }
         }
     }
 
-    /// Step 2: API hands us a Firebase *custom token* via deep link. Exchange
-    /// it for an ID token using Identity Toolkit `signInWithCustomToken`.
-    func completeSignIn(customToken: String) async throws {
-        guard !firebaseWebAPIKey.isEmpty else { throw AuthError.missingWebAPIKey }
-        let url = URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=\(firebaseWebAPIKey)")!
+    @MainActor
+    private func runGoogleSignIn() async throws {
+        let apiKey = resolvedWebAPIKey()
+        guard !apiKey.isEmpty else { throw AuthError.missingWebAPIKey }
+
+        // PKCE
+        let verifier = Self.randomCodeVerifier()
+        let challenge = Self.codeChallenge(for: verifier)
+
+        let redirectScheme = FirebaseConfig.reversedClientId
+        let redirectURI = "\(redirectScheme):/oauth2callback"
+
+        var auth = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
+        auth.queryItems = [
+            URLQueryItem(name: "client_id",             value: FirebaseConfig.iosOAuthClientId),
+            URLQueryItem(name: "redirect_uri",          value: redirectURI),
+            URLQueryItem(name: "response_type",         value: "code"),
+            URLQueryItem(name: "scope",                 value: "openid email profile"),
+            URLQueryItem(name: "code_challenge",        value: challenge),
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
+            URLQueryItem(name: "prompt",                value: "select_account"),
+        ]
+        guard let authURL = auth.url else { throw AuthError.exchangeFailed("bad auth URL") }
+
+        // 1) Run the browser dance.
+        let callback = try await presentWebAuth(url: authURL, scheme: redirectScheme)
+        guard let code = URLComponents(url: callback, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "code" })?.value
+        else { throw AuthError.exchangeFailed("no code in callback: \(callback)") }
+
+        // 2) Code -> Google tokens (no client secret for iOS clients).
+        let googleIdToken = try await exchangeCodeForGoogleIdToken(
+            code: code, verifier: verifier, redirectURI: redirectURI
+        )
+
+        // 3) Google id_token -> Firebase tokens via Identity Toolkit.
+        try await signInWithGoogleIdToken(googleIdToken, apiKey: apiKey)
+    }
+
+    @MainActor
+    private func presentWebAuth(url: URL, scheme: String) async throws -> URL {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<URL, Error>) in
+            let session = ASWebAuthenticationSession(url: url, callbackURLScheme: scheme) { callbackURL, error in
+                if let error { cont.resume(throwing: error); return }
+                guard let callbackURL else {
+                    cont.resume(throwing: AuthError.exchangeFailed("empty callback"))
+                    return
+                }
+                cont.resume(returning: callbackURL)
+            }
+            let provider = WebAuthPresentationProvider()
+            self.presentationProvider = provider
+            session.presentationContextProvider = provider
+            session.prefersEphemeralWebBrowserSession = false
+            self.pendingSession = session
+            if !session.start() {
+                cont.resume(throwing: AuthError.exchangeFailed("session.start() returned false"))
+            }
+        }
+    }
+
+    private func exchangeCodeForGoogleIdToken(code: String, verifier: String, redirectURI: String) async throws -> String {
+        var req = URLRequest(url: URL(string: "https://oauth2.googleapis.com/token")!)
+        req.httpMethod = "POST"
+        req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let body = [
+            "code": code,
+            "client_id": FirebaseConfig.iosOAuthClientId,
+            "redirect_uri": redirectURI,
+            "grant_type": "authorization_code",
+            "code_verifier": verifier,
+        ]
+        req.httpBody = body
+            .map { "\($0.key)=\(Self.formEncode($0.value))" }
+            .joined(separator: "&")
+            .data(using: .utf8)
+
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw AuthError.exchangeFailed("google token exchange: \(String(data: data, encoding: .utf8) ?? "")")
+        }
+        struct TokenResp: Decodable { let id_token: String }
+        return try JSONDecoder().decode(TokenResp.self, from: data).id_token
+    }
+
+    private func signInWithGoogleIdToken(_ googleIdToken: String, apiKey: String) async throws {
+        let url = URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=\(apiKey)")!
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: [
-            "token": customToken,
-            "returnSecureToken": true
-        ])
+        let body: [String: Any] = [
+            "postBody": "id_token=\(googleIdToken)&providerId=google.com",
+            "requestUri": "http://localhost",
+            "returnIdpCredential": true,
+            "returnSecureToken": true,
+        ]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw AuthError.exchangeFailed(String(data: data, encoding: .utf8) ?? "")
+            throw AuthError.exchangeFailed("signInWithIdp: \(String(data: data, encoding: .utf8) ?? "")")
         }
         let decoded = try JSONDecoder().decode(SignInResponse.self, from: data)
         try Keychain.set(decoded.idToken, key: idTokenKey)
         try Keychain.set(decoded.refreshToken, key: refreshTokenKey)
-        try Keychain.set(String(Int(Date().timeIntervalSince1970) + (Int(decoded.expiresIn) ?? 3600)), key: idTokenExpiry)
+        try Keychain.set(decoded.localId, key: uidKey)
+        try Keychain.set(
+            String(Int(Date().timeIntervalSince1970) + (Int(decoded.expiresIn) ?? 3600)),
+            key: idTokenExpiry
+        )
     }
+
+    // MARK: - Refresh
 
     /// Refresh an expired ID token using the stored refresh token.
     func refreshIfNeeded() async throws -> String {
         if let token = idToken, !isExpired() { return token }
         guard let rt = refreshToken else { throw AuthError.notSignedIn }
-        guard !firebaseWebAPIKey.isEmpty else { throw AuthError.missingWebAPIKey }
+        let apiKey = resolvedWebAPIKey()
+        guard !apiKey.isEmpty else { throw AuthError.missingWebAPIKey }
 
-        let url = URL(string: "https://securetoken.googleapis.com/v1/token?key=\(firebaseWebAPIKey)")!
+        let url = URL(string: "https://securetoken.googleapis.com/v1/token?key=\(apiKey)")!
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
@@ -86,7 +196,10 @@ final class AuthService {
         let refreshed = try JSONDecoder().decode(RefreshResponse.self, from: data)
         try Keychain.set(refreshed.idToken, key: idTokenKey)
         try Keychain.set(refreshed.refreshToken, key: refreshTokenKey)
-        try Keychain.set(String(Int(Date().timeIntervalSince1970) + (Int(refreshed.expiresIn) ?? 3600)), key: idTokenExpiry)
+        try Keychain.set(
+            String(Int(Date().timeIntervalSince1970) + (Int(refreshed.expiresIn) ?? 3600)),
+            key: idTokenExpiry
+        )
         return refreshed.idToken
     }
 
@@ -95,12 +208,45 @@ final class AuthService {
         return Date().timeIntervalSince1970 >= Double(ts) - 60
     }
 
+    // MARK: - Helpers
+
+    /// Use the user-configured key if present; otherwise fall back to the
+    /// bundled `GoogleService-Info.plist`.
+    private func resolvedWebAPIKey() -> String {
+        if !firebaseWebAPIKey.isEmpty { return firebaseWebAPIKey }
+        if let url = Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist"),
+           let data = try? Data(contentsOf: url),
+           let dict = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+           let key = dict["API_KEY"] as? String {
+            return key
+        }
+        return FirebaseConfig.defaultWebAPIKey
+    }
+
+    private static func randomCodeVerifier() -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return Data(bytes).base64URLEncodedString()
+    }
+
+    private static func codeChallenge(for verifier: String) -> String {
+        let hash = SHA256.hash(data: Data(verifier.utf8))
+        return Data(hash).base64URLEncodedString()
+    }
+
+    private static func formEncode(_ s: String) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s
+    }
+
     // MARK: - Responses
 
     private struct SignInResponse: Decodable {
         let idToken: String
         let refreshToken: String
         let expiresIn: String
+        let localId: String
     }
     private struct RefreshResponse: Decodable {
         let idToken: String
@@ -114,6 +260,25 @@ final class AuthService {
     }
 }
 
+/// macOS needs a presentation anchor (an `NSWindow`) for
+/// `ASWebAuthenticationSession`. The key window works; falling back to the
+/// first window covers `LSUIElement` agent apps with no key window.
+private final class WebAuthPresentationProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+    }
+}
+
+private extension Data {
+    /// RFC 7636 base64url: standard base64 with `+/` → `-_` and stripped `=`.
+    func base64URLEncodedString() -> String {
+        base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+}
+
 enum AuthError: Error, CustomStringConvertible {
     case missingWebAPIKey
     case notSignedIn
@@ -121,9 +286,9 @@ enum AuthError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .missingWebAPIKey: return "Firebase web API key not configured (Settings → Integrations)."
+        case .missingWebAPIKey: return "Firebase web API key not configured."
         case .notSignedIn:      return "Not signed in."
-        case .exchangeFailed(let body): return "Auth exchange failed: \(body.prefix(200))"
+        case .exchangeFailed(let body): return "Auth exchange failed: \(body.prefix(300))"
         }
     }
 }

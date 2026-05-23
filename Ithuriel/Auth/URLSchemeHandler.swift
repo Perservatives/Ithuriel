@@ -32,17 +32,12 @@ final class URLSchemeHandler {
         }
     }
 
+    /// Sign-in now runs entirely inside `ASWebAuthenticationSession` (see
+    /// `AuthService.beginGoogleSignIn`); the Google redirect goes to the
+    /// `com.googleusercontent.apps.…` scheme, not `ithuriel://`. This stub
+    /// stays so old deep links don't crash and so we can add other auth
+    /// callbacks here later.
     private func handleAuth(_ url: URL) {
-        guard url.path == "/callback",
-              let token = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                  .queryItems?.first(where: { $0.name == "token" })?.value else { return }
-        Task {
-            do {
-                try await AuthService.shared.completeSignIn(customToken: token)
-                Log.info("Sign-in complete")
-            } catch {
-                Log.error("Sign-in failed: \(error)")
-            }
-        }
+        Log.info("Ignoring legacy ithuriel://auth deep link: \(url)")
     }
 }

@@ -42,6 +42,14 @@
                 <string>ithuriel</string>
             </array>
         </dict>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>dev.ithuriel.agent.google</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.596592790807-d0eupdlaklbf415hajn3omigag0dvlsi</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>

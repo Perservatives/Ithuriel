@@ -109,14 +109,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshPermissionState()
         }
 
-        // Sequence: launch animation → onboarding (only on first run) →
-        // chat window. The chat window is the primary surface, but we keep
-        // it off-screen until onboarding completes so the user isn't seeing
-        // two windows fight for focus.
+        // Sequence: blob backdrop blooms in → orb assembles centre-screen →
+        // if first run, the orb shrinks into the onboarding header while the
+        // backdrop dims and the onboarding glass fades in over it; on
+        // onboarding finish, both launch surfaces fade out and the chat
+        // window appears. Otherwise the orb fades and the chat window opens.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             Task { @MainActor in
-                SpotlightCoordinator.shared.playLaunchThenSummon()
-
                 let needsOnboarding: Bool = {
                     if let prefs = try? UserPrefs.load(in: container) {
                         return prefs.onboardingComplete == false
@@ -124,19 +123,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     return true
                 }()
 
-                // Wait for the orb sequence to finish before opening any
-                // window so the animation isn't covered.
-                try? await Task.sleep(nanoseconds: 1_900_000_000)
-
                 if needsOnboarding {
                     OnboardingCoordinator.shared.onFinish = {
                         Task { @MainActor in
-                            ChatWindowController.shared.show(container: container, agent: loop)
+                            SpotlightCoordinator.shared.fadeOutLaunchSurfaces {
+                                ChatWindowController.shared.show(container: container, agent: loop)
+                            }
                         }
                     }
-                    OnboardingCoordinator.shared.present(container: container)
+                    SpotlightCoordinator.shared.playLaunchThenSummon(onAssembled: {
+                        Task { @MainActor in
+                            SpotlightCoordinator.shared.handoffToOnboarding(container: container)
+                        }
+                    })
                 } else {
-                    ChatWindowController.shared.show(container: container, agent: loop)
+                    // No onboarding: orb fades into the chat window as before.
+                    SpotlightCoordinator.shared.playLaunchThenSummon()
+                    // playLaunchThenSummon's default path opens the chat
+                    // window via dismissLaunch → ChatWindowController.toggle.
+                    // We don't need an explicit show() here.
                 }
             }
         }

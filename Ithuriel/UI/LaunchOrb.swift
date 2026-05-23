@@ -25,33 +25,54 @@ struct LaunchOrbView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let tint: Color
+    /// When true, skip the closing fade-out and call `onComplete` with the
+    /// orb still fully visible — so the launch surface can be handed off to
+    /// another window (e.g. shrunken to become the onboarding header mark).
+    let holdAfterAssembly: Bool
     let onComplete: () -> Void
 
-    init(tint: Color = .accentColor, onComplete: @escaping () -> Void) {
+    init(tint: Color = .accentColor,
+         holdAfterAssembly: Bool = false,
+         onComplete: @escaping () -> Void) {
         self.tint = tint
+        self.holdAfterAssembly = holdAfterAssembly
         self.onComplete = onComplete
     }
 
-    var body: some View {
-        ZStack {
-            // Halo — parallel pulse layer behind the petals.
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [tint.opacity(0.35), tint.opacity(0.06), .clear],
-                        center: .center, startRadius: 6, endRadius: 240
-                    )
-                )
-                .frame(width: 480, height: 480)
-                .blur(radius: 24)
-                .scaleEffect(haloScale)
-                .opacity(haloOpacity)
+    /// Base design canvas the shard geometry was tuned against. The view
+    /// renders at any host size by uniformly scaling around this reference.
+    private static let designSide: CGFloat = 700
 
-            ForEach(0..<8) { i in
-                shard(index: i)
+    var body: some View {
+        GeometryReader { geo in
+            // Uniform scale so the entire mark — halo, shards, travel
+            // distances — fits whatever frame the window hands us. Lets the
+            // coordinator animate the window from 720pt down to ~180pt and
+            // have the orb shrink with it as one continuous object.
+            let scale = min(geo.size.width, geo.size.height) / Self.designSide
+
+            ZStack {
+                // Halo — parallel pulse layer behind the petals.
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [tint.opacity(0.35), tint.opacity(0.06), .clear],
+                            center: .center, startRadius: 6, endRadius: 240
+                        )
+                    )
+                    .frame(width: 480, height: 480)
+                    .blur(radius: 24)
+                    .scaleEffect(haloScale)
+                    .opacity(haloOpacity)
+
+                ForEach(0..<8) { i in
+                    shard(index: i)
+                }
             }
+            .frame(width: Self.designSide, height: Self.designSide)
+            .scaleEffect(scale)
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
         }
-        .frame(width: 700, height: 700)
         .opacity(coreOpacity)
         .task { await runSequence() }
     }
@@ -99,6 +120,11 @@ struct LaunchOrbView: View {
                 haloOpacity = 0.25
             }
             try? await Task.sleep(nanoseconds: 700_000_000)
+            if holdAfterAssembly {
+                // Hand off to the coordinator with the mark still on screen.
+                onComplete()
+                return
+            }
             withAnimation(.easeOut(duration: 0.28)) {
                 coreOpacity = 0
                 haloOpacity = 0
@@ -135,8 +161,17 @@ struct LaunchOrbView: View {
             petalScale = 1.0
         }
 
-        // T=0.95 → 1.10 — hold for a beat, then fade for handoff.
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        // T=0.95 — short hold so the assembled mark gets its beat.
+        try? await Task.sleep(nanoseconds: 250_000_000)
+
+        if holdAfterAssembly {
+            // Coordinator owns the next moment (e.g. shrink into onboarding
+            // header). Leave the mark fully visible.
+            onComplete()
+            return
+        }
+
+        // Default path: fade for handoff to Spotlight prompt.
         withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.28)) {
             coreOpacity = 0
         }
