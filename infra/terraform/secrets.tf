@@ -1,6 +1,8 @@
 resource "google_secret_manager_secret" "gemini_key" {
   secret_id  = "ithuriel-gemini-key"
-  replication { auto {} }
+  replication {
+    auto {}
+  }
   depends_on = [google_project_service.enabled]
 }
 
@@ -12,7 +14,9 @@ resource "google_secret_manager_secret_version" "gemini_key" {
 
 resource "google_secret_manager_secret" "oauth_client_id" {
   secret_id  = "ithuriel-oauth-client-id"
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "oauth_client_id" {
@@ -22,7 +26,9 @@ resource "google_secret_manager_secret_version" "oauth_client_id" {
 
 resource "google_secret_manager_secret" "oauth_client_secret" {
   secret_id  = "ithuriel-oauth-client-secret"
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "oauth_client_secret" {

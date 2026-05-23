@@ -32,32 +32,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var captureTimer: Timer?
     private(set) var modelContainer: ModelContainer?
     private(set) var agentLoop: AgentLoop?
-    private var chatWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        do {
-            modelContainer = try ModelContainer(
-                for: UserPrefs.self, CachedSnapshot.self, Conversation.self, ChatMessage.self
-            )
-        } catch {
-            Log.error("Failed to initialize SwiftData container: \(error)")
-        }
+        let container = Persistence.makeContainer()
+        modelContainer = container
 
-        agentLoop = AgentLoop(container: modelContainer)
-        menuBarManager = MenuBarManager(container: modelContainer, agentLoop: agentLoop)
-        menuBarManager?.install()
+        let loop = AgentLoop(container: container)
+        agentLoop = loop
+        menuBarManager = MenuBarManager(container: container, agentLoop: loop)
+        MainActor.assumeIsolated {
+            menuBarManager?.install()
+        }
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
+        SpotlightCoordinator.shared.configure(container: container, agentLoop: loop)
+        SpotlightCoordinator.shared.installSummonHotkey()
         requestAccessibilityIfNeeded()
 
-        NotificationCenter.default.addObserver(
-            forName: .ithurielOpenChat, object: nil, queue: .main
-        ) { [weak self] _ in self?.openChatWindow() }
+        // Boot animation only — menubar popover is the primary surface.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            Task { @MainActor in SpotlightCoordinator.shared.playLaunchThenSummon() }
+        }
 
-        let monitor = WorkspaceMonitor(container: modelContainer)
+        let monitor = WorkspaceMonitor(container: container)
         monitor.start()
         workspaceMonitor = monitor
 
@@ -76,35 +76,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    func openChatWindow() {
-        if let wc = chatWindowController, let win = wc.window, win.isVisible {
-            win.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-        guard let container = modelContainer, let loop = agentLoop else { return }
-
-        let chatView = ChatWindowView(agent: loop).modelContainer(container)
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 960, height: 660),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "Ithuriel"
-        window.setFrameAutosaveName("IthurielChatWindow")
-        window.minSize = NSSize(width: 700, height: 500)
-        window.contentView = NSHostingView(rootView: chatView)
-        window.center()
-        window.delegate = self
-
-        let wc = NSWindowController(window: window)
-        chatWindowController = wc
-        wc.showWindow(nil)
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
         captureTimer?.invalidate()
         Task { await fileWatcher?.stop() }
@@ -116,10 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let trusted = AXIsProcessTrustedWithOptions(opts as CFDictionary)
         if !trusted {
             Log.info("Accessibility permission not yet granted. Injection features disabled until granted.")
-            menuBarManager?.setAccessibilityState(granted: false)
-        } else {
-            menuBarManager?.setAccessibilityState(granted: true)
         }
+        Task { @MainActor in menuBarManager?.setAccessibilityState(granted: trusted) }
     }
 
     private func handleFileChanges(_ changed: [String]) {
@@ -177,18 +146,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Log.error("Snapshot upload failed: \(error). Will retry on next capture.")
         }
     }
-}
-
-extension AppDelegate: NSWindowDelegate {
-    func windowWillClose(_ notification: Notification) {
-        guard notification.object as? NSWindow === chatWindowController?.window else { return }
-        chatWindowController = nil
-        NSApp.setActivationPolicy(.accessory)
-    }
-}
-
-extension Notification.Name {
-    static let ithurielOpenChat = Notification.Name("IthurielOpenChat")
 }
 
 enum Log {

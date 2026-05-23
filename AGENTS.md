@@ -64,6 +64,7 @@ Ithuriel/
 │   └── Resources/                  # Info.plist, Ithuriel.entitlements, Localizable.strings
 ├── services/
 │   ├── api/                        # Cloud Run API (Node 20 + Fastify + TS)
+│   ├── mcp/                        # MCP connector — Claude/ChatGPT/Cursor talk to Ithuriel
 │   └── functions/processor/        # Pub/Sub-triggered Python function
 └── infra/
     ├── terraform/                  # Full GCP stack as code

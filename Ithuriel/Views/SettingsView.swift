@@ -53,6 +53,10 @@ struct SettingsView: View {
             Section(NSLocalizedString("settings.agent.safety", comment: "")) {
                 Toggle(NSLocalizedString("settings.agent.confirmEvery", comment: ""),
                        isOn: binding(\.confirmEveryAction))
+                Toggle(NSLocalizedString("settings.agent.restrictWorkspace", comment: ""),
+                       isOn: binding(\.restrictToWorkspace))
+                Text(NSLocalizedString("settings.agent.safetyHelp", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
                 Text(NSLocalizedString("settings.agent.killSwitch", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
             }

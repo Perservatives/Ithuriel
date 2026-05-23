@@ -128,7 +128,7 @@ The primary surface. A menu bar popover with a single prompt field. The user typ
 6. Repeat until Gemini calls done() or step budget (25) hits, or kill switch fires
 ```
 
-**Brain:** Google Gemini (`gemini-2.0-flash-exp` default). User supplies their own API key in Settings → Agent. Stored locally in SwiftData; never uploaded.
+**Brain:** Google Gemini (`gemini-3.5-flash` default). User supplies their own API key in Settings → Agent. Stored locally in SwiftData; never uploaded.
 
 **Tool surface (all available to the agent):**
 

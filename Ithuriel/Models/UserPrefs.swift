@@ -20,6 +20,8 @@ final class UserPrefs {
     var activeWorkspace: String
     var confirmEveryAction: Bool
     var autoApproveSafeOnly: Bool
+    /// When false, file ops may touch any path (except Redactor-blocked secrets paths).
+    var restrictToWorkspace: Bool
 
     init(id: String = "default",
          redactKeys: Bool = true,
@@ -32,10 +34,11 @@ final class UserPrefs {
          firebaseWebAPIKey: String = "",
          agentEnabled: Bool = true,
          geminiApiKey: String = "",
-         geminiModel: String = "gemini-2.0-flash-exp",
+         geminiModel: String = "gemini-3.5-flash",
          activeWorkspace: String = "",
          confirmEveryAction: Bool = false,
-         autoApproveSafeOnly: Bool = true) {
+         autoApproveSafeOnly: Bool = false,
+         restrictToWorkspace: Bool = false) {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -51,6 +54,7 @@ final class UserPrefs {
         self.activeWorkspace = activeWorkspace
         self.confirmEveryAction = confirmEveryAction
         self.autoApproveSafeOnly = autoApproveSafeOnly
+        self.restrictToWorkspace = restrictToWorkspace
     }
 
     var excludePaths: [String] {
@@ -65,22 +69,21 @@ final class UserPrefs {
 
     static func defaults() -> UserPrefs { UserPrefs() }
 
-    static func load(in container: ModelContainer) async throws -> UserPrefs {
-        try await MainActor.run {
-            let context = container.mainContext
-            let descriptor = FetchDescriptor<UserPrefs>()
-            if let existing = try context.fetch(descriptor).first {
-                if existing.activeWorkspace.isEmpty,
-                   let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
-                    existing.activeWorkspace = path
-                    try? context.save()
-                }
-                return existing
+    @MainActor
+    static func load(in container: ModelContainer) throws -> UserPrefs {
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<UserPrefs>()
+        if let existing = try context.fetch(descriptor).first {
+            if existing.activeWorkspace.isEmpty,
+               let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
+                existing.activeWorkspace = path
+                try? context.save()
             }
-            let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
-            context.insert(prefs)
-            try context.save()
-            return prefs
+            return existing
         }
+        let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
+        context.insert(prefs)
+        try context.save()
+        return prefs
     }
 }

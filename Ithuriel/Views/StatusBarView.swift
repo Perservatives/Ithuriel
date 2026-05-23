@@ -9,8 +9,10 @@ struct StatusBarView: View {
     @State private var prompt: String = ""
     @State private var workspacePath: String = ""
     @State private var promptFieldFocused: Bool = false
+    @State private var copyStatus: String?
     @FocusState private var fieldFocus: Bool
 
+    let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     private var prefs: UserPrefs? { prefsList.first }
@@ -32,6 +34,12 @@ struct StatusBarView: View {
             transcriptPane
 
             footer
+
+            if let copyStatus {
+                Text(copyStatus)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(16)
         .frame(width: 380, height: 480, alignment: .topLeading)
@@ -97,7 +105,7 @@ struct StatusBarView: View {
                 Text(NSLocalizedString("status.needKey.title", comment: "")).font(.subheadline.bold())
                 Text(NSLocalizedString("status.needKey.body", comment: "")).font(.caption)
                     .foregroundStyle(.secondary)
-                Button(NSLocalizedString("status.needKey.open", comment: ""), action: openSettings)
+                Button(NSLocalizedString("status.needKey.open", comment: ""), action: onOpenSettings)
                     .buttonStyle(.pressable(sound: .tool))
                     .controlSize(.small)
             }
@@ -226,7 +234,7 @@ struct StatusBarView: View {
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(.tertiary)
 
-            Button(NSLocalizedString("status.settings", comment: ""), action: openSettings)
+            Button(NSLocalizedString("status.settings", comment: ""), action: onOpenSettings)
                 .buttonStyle(.pressable(sound: .tool))
                 .controlSize(.small)
 
@@ -252,26 +260,34 @@ struct StatusBarView: View {
 
     private func copyContext() {
         Task {
-            if let snap = await CachedSnapshot.latest(in: context.container) {
-                let tool = AppDetector.currentFrontmostTool()
-                let formatted = ContextFormatter.format(snapshot: snap, for: tool == .unknown ? .claudeCodeTerminal : tool)
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(formatted, forType: .string)
+            let userPrefs = prefs ?? UserPrefs.defaults()
+            let snap: ContextSnapshot?
+            if let cached = await CachedSnapshot.latest(in: context.container) {
+                snap = cached
+            } else {
+                snap = await ContextSnapshot.captureFresh(prefs: userPrefs)
+                if let snap {
+                    await CachedSnapshot.persist(snap, in: context.container)
+                }
             }
+
+            guard let snap else {
+                copyStatus = NSLocalizedString("status.copy.empty", comment: "")
+                return
+            }
+
+            let tool = AppDetector.currentFrontmostTool()
+            let target = tool == .unknown ? AITool.claudeCodeTerminal : tool
+            let formatted = ContextFormatter.format(snapshot: snap, for: target)
+            InjectionEngine.shared.primaryInject(text: formatted, target: target)
+            SoundPlayer.shared.play(.done, volume: 0.45)
+            copyStatus = NSLocalizedString("status.copy.done", comment: "")
+            workspacePath = snap.workspacePath
         }
     }
 
     private func toggleMute() {
         SoundPlayer.shared.muted.toggle()
-    }
-
-    private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
     }
 
     private func refresh() async {

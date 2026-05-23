@@ -46,7 +46,25 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
+        let containerRef = container
+        let workspacePath = prefs.activeWorkspace
+        let modelName = prefs.geminiModel
+        await SavedAgentRun.persist(
+            id: runId, task: userTask, status: .running,
+            startedAt: startedAt, finishedAt: nil,
+            transcript: [], errorText: nil,
+            workspacePath: workspacePath, modelName: modelName,
+            in: containerRef
+        )
+
         func uploadFinalState(_ status: AgentRunRecord.Status) async {
+            await SavedAgentRun.persist(
+                id: runId, task: userTask, status: status,
+                startedAt: startedAt, finishedAt: Date(),
+                transcript: transcript, errorText: lastError,
+                workspacePath: workspacePath, modelName: modelName,
+                in: containerRef
+            )
             guard cloudSyncEnabled else { return }
             try? await apiClient.postAgentRun(.init(
                 id: runId, task: userTask, status: status,
@@ -55,13 +73,13 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
-        let client = GeminiClient(apiKey: prefs.geminiApiKey)
+        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
         let tools = AgentTools.declarations
         let snapshot = await CachedSnapshot.latest(in: container)
         let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs)
 
         var convo: [GeminiClient.Content] = [
-            .init(role: "user", parts: [.init(text: userTask, inlineData: nil, functionCall: nil, functionResponse: nil)])
+            .init(role: "user", parts: [.init(text: userTask)])
         ]
         log("▶ task: \(userTask)")
 
@@ -101,9 +119,6 @@ final class AgentLoop: ObservableObject {
                 log("→ \(call.name): \(result.prefix(120))")
                 SoundPlayer.shared.play(.tool, volume: 0.4)
                 let resp = GeminiClient.Part(
-                    text: nil,
-                    inlineData: nil,
-                    functionCall: nil,
                     functionResponse: GeminiClient.Part.FunctionResponse(
                         name: call.name,
                         response: ["result": .string(result)]
@@ -121,7 +136,7 @@ final class AgentLoop: ObservableObject {
                 await uploadFinalState(.completed)
                 return
             }
-            convo.append(.init(role: "function", parts: functionResponses))
+            convo.append(.init(role: "user", parts: functionResponses))
             log("step \(step)/\(maxSteps) complete")
         }
 
@@ -147,9 +162,11 @@ final class AgentLoop: ObservableObject {
         task is complete, call the `done` function with a one-line summary.
 
         Hard rules:
-          - File operations are sandboxed to the active workspace.
-          - Destructive actions (write_file, delete_file, run_shell, quit_app)
-            will prompt the user — that is expected, do not be deterred.
+          - File paths under .env, .ssh/, secrets/, and private/ are refused.
+          - \(prefs.restrictToWorkspace
+              ? "File operations are restricted to the active workspace."
+              : "File operations may use any path on this Mac (except blocked secret paths).")
+          - Shell commands run in the user's login zsh with full environment.
           - If a screenshot would help, call `screenshot` first.
         """
 
@@ -255,16 +272,16 @@ enum AgentTools {
                  ["bundle_id": .string("e.g. com.apple.Terminal")]),
             decl("launch_app", "Launch an app by bundle identifier.",
                  ["bundle_id": .string("bundle id")]),
-            decl("quit_app", "Quit an app by bundle identifier. Destructive — user will confirm.",
-                 ["bundle_id": .string("bundle id")]),
-            decl("read_file", "Read a UTF-8 file inside the workspace sandbox.",
+            decl("read_file", "Read a UTF-8 file (absolute or ~ path).",
                  ["path": .string("absolute or workspace-relative path")]),
-            decl("write_file", "Write/overwrite a UTF-8 file. Destructive — user will confirm.",
+            decl("write_file", "Write/overwrite a UTF-8 file.",
                  ["path": .string("path"), "content": .string("full file contents")]),
-            decl("delete_file", "Delete a file. Destructive — user will confirm.",
+            decl("delete_file", "Delete a file.",
                  ["path": .string("path")]),
-            decl("run_shell", "Run a zsh command. Destructive — user will confirm. Returns stdout+stderr.",
+            decl("run_shell", "Run a zsh login-shell command. Returns stdout+stderr and exit code on failure.",
                  ["command": .string("shell command")]),
+            decl("quit_app", "Quit an app by bundle identifier.",
+                 ["bundle_id": .string("bundle id")]),
             decl("done", "Signal task complete with a one-line summary.",
                  ["summary": .string("what you accomplished")])
         ])

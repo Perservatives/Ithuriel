@@ -1,5 +1,17 @@
 /* Menu bar */
-"menubar.icon.a11y" = "Ithuriel status";
+"menubar.icon.a11y"    = "Ithuriel status";
+"menubar.menu.summon"  = "Summon Ithuriel";
+"menubar.menu.mute"    = "Mute sounds";
+"menubar.menu.unmute"  = "Unmute sounds";
+"menubar.menu.settings"= "Settings…";
+"menubar.menu.quit"    = "Quit Ithuriel";
+
+/* Spotlight (center-screen prompt) */
+"spotlight.headline.idle"      = "What can I help you with today?";
+"spotlight.headline.running"   = "Working on it…";
+"spotlight.subhead.needsKey"   = "Add your Gemini API key in Settings to begin";
+"spotlight.newChat"            = "New Chat";
+"spotlight.hotkey"             = "⌘⇧Space to summon · ⎋ to dismiss · ⌃⌥⌘. to kill";
 
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";
@@ -8,6 +20,8 @@
 "status.transcript.empty"      = "Idle. Type a task above and press return.";
 "status.stop"                  = "Stop";
 "status.copy"                  = "Copy context";
+"status.copy.done"             = "Context copied to clipboard.";
+"status.copy.empty"            = "No workspace context to copy yet.";
 "status.killSwitch"            = "Kill: ⌃⌥⌘.";
 "status.settings"              = "Settings…";
 "status.quit"                  = "Quit";
@@ -18,6 +32,7 @@
 "status.needKey.open"          = "Open Settings";
 
 /* Settings tabs */
+"settings.window.title"        = "Ithuriel Settings";
 "settings.tab.agent"           = "Agent";
 "settings.tab.capture"         = "Capture";
 "settings.tab.privacy"         = "Privacy";
@@ -27,13 +42,15 @@
 "settings.agent.enabled"       = "Agent control enabled";
 "settings.agent.brain"         = "Gemini";
 "settings.agent.geminiKey"     = "Gemini API key";
-"settings.agent.geminiModel"   = "Model (e.g. gemini-2.0-flash-exp)";
+"settings.agent.geminiModel"   = "Model (e.g. gemini-3.5-flash)";
 "settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
 "settings.agent.workspace"     = "Workspace sandbox";
 "settings.agent.workspacePath" = "Workspace path";
-"settings.agent.workspaceHelp" = "File operations are restricted to this directory tree. Auto-filled from your most recent VS Code/Cursor workspace.";
+"settings.agent.workspaceHelp" = "Default cwd for shell commands and context. When “Restrict to workspace” is off, file ops may use any path.";
 "settings.agent.safety"        = "Safety";
-"settings.agent.confirmEvery"  = "Confirm every action (slower, safer)";
+"settings.agent.confirmEvery"  = "Confirm destructive actions before running";
+"settings.agent.restrictWorkspace" = "Restrict file access to workspace";
+"settings.agent.safetyHelp"    = "Off by default: shell, file writes, deletes, and app quits run immediately. Turn on confirmation for a slower, safer mode.";
 "settings.agent.killSwitch"    = "Global kill switch: ⌃⌥⌘. (control-option-command-period) stops the agent instantly.";
 
 /* Capture */

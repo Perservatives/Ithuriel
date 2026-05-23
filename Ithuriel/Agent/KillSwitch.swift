@@ -9,7 +9,7 @@ final class KillSwitch {
     private var handlerRef: EventHandlerRef?
 
     func install() {
-        var hotKeyID = EventHotKeyID(signature: OSType(0x49544855 /* 'ITHU' */), id: 1)
+        let hotKeyID = EventHotKeyID(signature: OSType(0x49544855 /* 'ITHU' */), id: 1)
 
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                                  eventKind: UInt32(kEventHotKeyPressed))
