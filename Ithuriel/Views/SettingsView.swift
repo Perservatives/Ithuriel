@@ -366,7 +366,9 @@ struct SettingsView: View {
         )
     }
 
-    /// API keys group rendered as a native macOS settings list.
+    /// API keys group — read-only status view. Keys are pulled from Google
+    /// Cloud Secret Manager on launch; editing happens in the developer
+    /// override disclosure below.
     private var keysGroup: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("API KEYS")
@@ -377,24 +379,20 @@ struct SettingsView: View {
                 .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
-                keyRow(
+                keyStatusRow(
                     icon: "waveform.circle.fill",
                     tint: Color(red: 0.10, green: 0.65, blue: 0.45),
-                    title: "OpenAI",
-                    subtitle: "Whisper + TTS — drives voice in and out.",
-                    binding: binding(\.openAIAPIKey),
-                    placeholder: "sk-…",
-                    helpURL: "platform.openai.com/api-keys"
+                    title: "OpenAI · Whisper + TTS",
+                    subtitle: "Drives voice in and out.",
+                    key: prefs.openAIAPIKey
                 )
                 Divider().padding(.leading, 60).opacity(0.4)
-                keyRow(
+                keyStatusRow(
                     icon: "sparkles",
                     tint: Color(red: 0.36, green: 0.50, blue: 0.95),
-                    title: "Gemini",
-                    subtitle: "Planning loop, tool calls, vector search.",
-                    binding: binding(\.geminiApiKey),
-                    placeholder: "AIza…",
-                    helpURL: "aistudio.google.com/apikey — free"
+                    title: "Gemini · planning loop",
+                    subtitle: "Tool calls, vector search.",
+                    key: prefs.geminiApiKey
                 )
             }
             .background(
@@ -406,23 +404,21 @@ struct SettingsView: View {
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
             )
 
-            Text(AuthService.shared.isSignedIn
-                 ? "Keys are stored in Google Cloud Secret Manager and pulled into this Mac on launch. Pasting here overrides for this device."
-                 : "Keys live locally on this Mac. Sign in above to sync them across devices via Secret Manager.")
+            Text("Keys live in Google Cloud Secret Manager (project synthesis-hack26svl-121). Sign in with Google to pull them onto this Mac. Pasting a key under Developer overrides skips Secret Manager for this device.")
                 .font(.caption).foregroundStyle(.tertiary)
                 .padding(.top, 6).padding(.horizontal, 4)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    private func keyRow(
+    /// Read-only status row: icon + title + cloud-synced pill + masked
+    /// last-4 of the key + "Rotate in Secret Manager" link.
+    private func keyStatusRow(
         icon: String,
         tint: Color,
         title: String,
         subtitle: String,
-        binding: Binding<String>,
-        placeholder: String,
-        helpURL: String
+        key: String
     ) -> some View {
         HStack(alignment: .center, spacing: 14) {
             Image(systemName: icon)
@@ -432,25 +428,25 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(title).font(.system(size: 13, weight: .medium))
-                    if !binding.wrappedValue.isEmpty {
-                        statusBadge(text: AuthService.shared.isSignedIn ? "Cloud-synced" : "Set",
-                                    color: AuthService.shared.isSignedIn ? .blue : .green)
+                    if key.isEmpty {
+                        statusBadge(text: "Not yet synced — sign in to fetch", color: .orange)
                     } else {
-                        statusBadge(text: "Empty", color: .orange)
+                        statusBadge(text: "Cloud-synced", color: .green)
                     }
                 }
                 Text(subtitle)
                     .font(.caption).foregroundStyle(.secondary)
-                SecureField(placeholder, text: binding)
-                    .textFieldStyle(.plain)
+                Text(key.isEmpty ? "—" : "•••• \(String(key.suffix(4)))")
                     .font(.system(.callout, design: .monospaced))
+                    .foregroundStyle(.primary.opacity(0.85))
                     .padding(.horizontal, 8).padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(Color.primary.opacity(0.05))
                     )
-                Text(helpURL)
-                    .font(.caption2).foregroundStyle(.tertiary)
+                Link("Rotate in Secret Manager",
+                     destination: URL(string: "https://console.cloud.google.com/security/secret-manager?project=synthesis-hack26svl-121")!)
+                    .font(.caption2)
             }
             Spacer()
         }
@@ -539,11 +535,18 @@ struct SettingsView: View {
         .padding(.horizontal, 14).padding(.vertical, 10)
     }
 
-    /// Developer disclosure — only the Cloud Run URL + Firebase web API key
-    /// + static bearer. Most users never see this open.
+    /// Developer disclosure — power-user overrides. Pasting an API key here
+    /// skips Secret Manager for this device. Also exposes the Cloud Run URL,
+    /// Firebase web API key, and static bearer.
     private var developerDisclosure: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 12) {
+                labelledField("OpenAI API key (local override)") {
+                    SecureField("sk-…", text: binding(\.openAIAPIKey)).textFieldStyle(.roundedBorder)
+                }
+                labelledField("Gemini API key (local override)") {
+                    SecureField("AIza…", text: binding(\.geminiApiKey)).textFieldStyle(.roundedBorder)
+                }
                 labelledField("Cloud Run URL") {
                     TextField("https://api.ithuriel.dev", text: binding(\.apiBaseURL))
                         .textFieldStyle(.roundedBorder)
