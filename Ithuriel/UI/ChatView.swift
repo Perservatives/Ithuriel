@@ -40,8 +40,8 @@ struct ChatView: View {
         }
         .navigationTitle("Ithuriel")
         .toolbar { toolbarContent }
-        .toolbarBackground(.ultraThinMaterial, for: .windowToolbar)
-        .toolbarBackground(.visible, for: .windowToolbar)
+        .toolbarBackground(.regularMaterial, for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
         .frame(minWidth: 720, minHeight: 480)
     }

@@ -153,10 +153,10 @@ struct SpotlightView: View {
     @ViewBuilder
     private var pillBackground: some View {
         ZStack {
+            Color(nsColor: .windowBackgroundColor).opacity(0.72)
             VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-            // Soft inner glow gradient
             LinearGradient(
-                colors: [Color.white.opacity(0.06), Color.white.opacity(0.0)],
+                colors: [Color.primary.opacity(0.06), Color.primary.opacity(0.02)],
                 startPoint: .top, endPoint: .bottom
             )
         }

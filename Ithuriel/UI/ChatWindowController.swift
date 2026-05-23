@@ -50,7 +50,7 @@ final class ChatWindowController {
         w.setContentSize(NSSize(width: 960, height: 640))
         w.center()
         w.minSize = NSSize(width: 720, height: 480)
-        w.backgroundColor = .clear
+        w.backgroundColor = NSColor.windowBackgroundColor
         window = w
     }
 }
