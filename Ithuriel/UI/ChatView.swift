@@ -27,21 +27,23 @@ struct ChatView: View {
 
     var body: some View {
         NavigationSplitView {
-            sidebar.frame(minWidth: 240, idealWidth: 280)
+            sidebar.frame(minWidth: 200, idealWidth: 240)
         } detail: {
             HSplitView {
-                conversation.frame(minWidth: 520)
+                conversation.frame(minWidth: 380)
                 if showInspector {
                     ContextWebView()
-                        .frame(minWidth: 280, idealWidth: 360)
+                        .frame(minWidth: 240, idealWidth: 320)
                         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
                 }
             }
         }
         .navigationTitle("Ithuriel")
         .toolbar { toolbarContent }
+        .toolbarBackground(.ultraThinMaterial, for: .windowToolbar)
+        .toolbarBackground(.visible, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-        .frame(minWidth: 1000, minHeight: 640)
+        .frame(minWidth: 720, minHeight: 480)
     }
 
     // MARK: - Sidebar

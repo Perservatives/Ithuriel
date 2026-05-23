@@ -47,9 +47,9 @@ final class ChatWindowController {
         w.titleVisibility = .hidden
         w.toolbarStyle = .unified
         w.isReleasedWhenClosed = false
-        w.setContentSize(NSSize(width: 1180, height: 720))
+        w.setContentSize(NSSize(width: 960, height: 640))
         w.center()
-        w.minSize = NSSize(width: 900, height: 560)
+        w.minSize = NSSize(width: 720, height: 480)
         w.backgroundColor = .clear
         window = w
     }
