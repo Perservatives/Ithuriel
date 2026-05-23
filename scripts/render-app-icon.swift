@@ -23,7 +23,6 @@ private struct Petal: Shape {
 
 private struct AppIconMark: View {
     let size: CGFloat
-    let tint: Color
 
     var body: some View {
         let petalLen = size * 0.46
@@ -31,36 +30,21 @@ private struct AppIconMark: View {
         ZStack {
             ForEach(0..<8, id: \.self) { i in
                 Petal()
-                    .fill(i.isMultiple(of: 2) ? tint : tint.opacity(0.62))
+                    .fill(i.isMultiple(of: 2) ? Color.white : Color.white.opacity(0.62))
                     .frame(width: petalWid, height: petalLen)
                     .offset(y: -petalLen / 2)
                     .rotationEffect(.degrees(Double(i) * 45))
             }
         }
         .frame(width: size, height: size)
-        .shadow(color: tint.opacity(0.45), radius: size * 0.06)
     }
 }
 
 private struct AppIconCanvas: View {
     var body: some View {
-        let tint = Color(red: 0.35, green: 0.62, blue: 1.0)
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.08, green: 0.10, blue: 0.16),
-                    Color(red: 0.04, green: 0.05, blue: 0.09)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            RadialGradient(
-                colors: [tint.opacity(0.22), .clear],
-                center: .center,
-                startRadius: 40,
-                endRadius: 420
-            )
-            AppIconMark(size: 520, tint: tint)
+            Color(red: 0.11, green: 0.11, blue: 0.12)
+            AppIconMark(size: 520)
         }
         .frame(width: 1024, height: 1024)
     }

@@ -37,7 +37,7 @@ struct ChatView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 720, minHeight: 480)
-        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+        .background(SplashWindowBackground())
         .background(
             Group {
                 Button("New", action: newConversation)
@@ -74,7 +74,10 @@ struct ChatView: View {
                         } else if agent.isRunning || !agent.transcript.isEmpty {
                             renderMessages(transcript: agent.transcript, header: nil)
                         } else {
-                            ChatEmptyState()
+                            ChatEmptyState(
+                                prompt: $prompt,
+                                onFocusComposer: { inputFocused = true }
+                            )
                                 .padding(.top, 80)
                         }
                         Color.clear.frame(height: 40).id("bottom")
@@ -101,7 +104,7 @@ struct ChatView: View {
             .padding(.bottom, 18)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
+        .background(SplashWindowBackground())
     }
 
     private var workspaceLabel: String? {
@@ -123,27 +126,32 @@ struct ChatView: View {
             ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
                 let role = ChatBubble.agentForLine(line)
                 if role == .assistant || role == .user || role == .error {
-                    messageRow(for: line, index: idx)
+                    messageRow(for: line, index: idx, transcript: transcript)
                 }
             }
             ThinkingSpinner(agent: agent).padding(.leading, 4)
         } else {
             ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
-                messageRow(for: line, index: idx)
+                messageRow(for: line, index: idx, transcript: transcript)
             }
             ThinkingSpinner(agent: agent).padding(.leading, 4)
         }
     }
 
     @ViewBuilder
-    private func messageRow(for line: String, index: Int) -> some View {
+    private func messageRow(for line: String, index: Int, transcript: [String]) -> some View {
         let role = ChatBubble.agentForLine(line)
         let clean = ChatBubble.cleanLine(line)
         switch role {
         case .user:
             ChatBubbleView(role: .user, text: stripTaskPrefix(clean), index: index)
         case .assistant:
-            ChatBubbleView(role: .assistant, text: clean, index: index)
+            ChatBubbleView(
+                role: .assistant,
+                text: clean,
+                index: index,
+                showHeader: showAssistantHeader(in: transcript, at: index)
+            )
         case .tool:
             ToolUseCard(call: clean, result: nil, index: index)
         case .toolResult:
@@ -160,6 +168,13 @@ struct ChatView: View {
     private func stripTaskPrefix(_ s: String) -> String {
         if s.hasPrefix("Task: ") { return String(s.dropFirst("Task: ".count)) }
         return s
+    }
+
+    /// Show the Ithuriel mark only at the start of a consecutive assistant run.
+    private func showAssistantHeader(in transcript: [String], at index: Int) -> Bool {
+        guard ChatBubble.agentForLine(transcript[index]) == .assistant else { return false }
+        if index == 0 { return true }
+        return ChatBubble.agentForLine(transcript[index - 1]) != .assistant
     }
 
     // MARK: - Actions
@@ -605,15 +620,45 @@ private struct ChatTopBar: View {
 // MARK: - Empty state
 
 private struct ChatEmptyState: View {
+    @Binding var prompt: String
+    let onFocusComposer: () -> Void
+
     var body: some View {
-        VStack(spacing: 18) {
-            AsteriskBurst(rotation: 0, petalScale: 1, tint: .accentColor, glowRadius: 14)
-                .frame(width: 80, height: 80)
-            Text("How can I help today?")
-                .font(.system(size: 26, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
+        VStack(spacing: 20) {
+            SpinningBrandMark(size: 80, showRing: true, duration: 24)
+
+            VStack(spacing: 8) {
+                Text(Greeting.headline())
+                    .font(.system(.largeTitle, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.94))
+                Text(Greeting.subtitle())
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.48))
+            }
+
+            HStack(spacing: 8) {
+                quickPromptChip(NSLocalizedString("chat.hint.git", comment: ""))
+                quickPromptChip(NSLocalizedString("chat.hint.summarize", comment: ""))
+                quickPromptChip(NSLocalizedString("chat.hint.open", comment: ""))
+            }
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func quickPromptChip(_ text: String) -> some View {
+        Button {
+            prompt = text
+            onFocusComposer()
+        } label: {
+            Text(text)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.72))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .splashChrome(cornerRadius: 20, strokeOpacity: 0.16)
     }
 }
 
@@ -625,6 +670,7 @@ private struct ChatBubbleView: View {
     let role: ChatRole
     let text: String
     let index: Int
+    var showHeader: Bool = true
 
     var body: some View {
         switch role {
@@ -637,7 +683,11 @@ private struct ChatBubbleView: View {
                     .padding(.vertical, 10)
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.primary.opacity(0.08))
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
                     )
                     .frame(maxWidth: 520, alignment: .trailing)
                     .textSelection(.enabled)
@@ -645,11 +695,23 @@ private struct ChatBubbleView: View {
             .staggered(index)
 
         case .assistant:
-            Text(text)
-                .font(.system(size: 15))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-                .staggered(index)
+            VStack(alignment: .leading, spacing: 4) {
+                if showHeader {
+                    HStack(spacing: 6) {
+                        SpinningBrandMark(size: 14, showRing: false, duration: 32)
+                        Text("Ithuriel")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .tracking(1)
+                            .foregroundStyle(.white.opacity(0.72))
+                    }
+                }
+                Text(text)
+                    .font(.system(size: 15))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .staggered(index)
         }
     }
 }
@@ -806,13 +868,12 @@ private struct ChatComposer: View {
         .background(
             ZStack {
                 VisualEffectBlur(material: .hudWindow, blendingMode: .withinWindow)
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color.primary.opacity(inputFocused ? 0.04 : 0.02))
+                Color.black.opacity(0.18)
             }
         )
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(Color.primary.opacity(inputFocused ? 0.18 : 0.10), lineWidth: 0.5)
+                .strokeBorder(Color.white.opacity(inputFocused ? 0.22 : 0.14), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .animation(Motion.easeOut, value: inputFocused)
@@ -828,7 +889,7 @@ private struct ChatComposer: View {
                     .frame(width: 30, height: 30)
                 Image(systemName: isRunning ? "square.fill" : "arrow.up")
                     .font(.system(size: isRunning ? 10 : 13, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(isRunning ? .white : .black.opacity(0.85))
             }
         }
         .buttonStyle(.pressable(scale: 0.92, sound: .submit))
@@ -839,15 +900,12 @@ private struct ChatComposer: View {
 
     private var buttonFill: AnyShapeStyle {
         if isRunning {
-            return AnyShapeStyle(Color.primary.opacity(0.85))
+            return AnyShapeStyle(Color.white.opacity(0.22))
         }
         if canSubmit {
-            return AnyShapeStyle(LinearGradient(
-                colors: [Color(red: 1, green: 0.45, blue: 0.32),
-                         Color(red: 0.94, green: 0.30, blue: 0.22)],
-                startPoint: .top, endPoint: .bottom))
+            return AnyShapeStyle(Color.white)
         }
-        return AnyShapeStyle(Color.secondary.opacity(0.30))
+        return AnyShapeStyle(Color.white.opacity(0.10))
     }
 }
 

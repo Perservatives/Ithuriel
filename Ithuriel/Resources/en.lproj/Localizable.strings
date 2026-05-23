@@ -1,6 +1,19 @@
 /* Launch animation */
 "launch.caption"               = "ITHURIEL";
 
+/* Greeting */
+"greeting.morning"             = "Good morning";
+"greeting.afternoon"           = "Good afternoon";
+"greeting.evening"             = "Good evening";
+"greeting.night"               = "Hello";
+"greeting.named"                 = "%@, %@";
+"greeting.subtitle"            = "What should we work on?";
+
+/* Chat hints */
+"chat.hint.git"                = "Check git status";
+"chat.hint.summarize"          = "Summarize this project";
+"chat.hint.open"               = "Focus my editor";
+
 /* App chrome (chat toolbar) */
 "chrome.mute"          = "Mute sounds";
 "chrome.unmute"        = "Unmute sounds";
@@ -119,7 +132,7 @@
 "settings.agent.enabled"       = "Agent control enabled";
 "settings.agent.brain"         = "Gemini";
 "settings.agent.geminiKey"     = "Gemini API key";
-"settings.agent.geminiModel"   = "Model (e.g. gemini-3.5-flash)";
+"settings.agent.geminiModel"   = "Model (e.g. gemini-2.5-flash)";
 "settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
 "settings.agent.workspace"     = "Workspace sandbox";
 "settings.agent.workspacePath" = "Workspace path";

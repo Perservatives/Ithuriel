@@ -63,7 +63,7 @@ final class AgentLoop: ObservableObject {
 
         let containerRef = container
         let workspacePath = prefs.activeWorkspace
-        let modelName = prefs.geminiModel
+        let modelName = GeminiModels.normalize(prefs.geminiModel)
         await SavedAgentRun.persist(
             id: runId, task: userTask, status: .running,
             startedAt: startedAt, finishedAt: nil,
@@ -88,7 +88,7 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
-        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
+        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: GeminiModels.normalize(prefs.geminiModel))
         let tools = AgentTools.declarations
         let snapshot = await CachedSnapshot.latest(in: container)
         let related: [IthurielClient.RelatedSnapshot]
@@ -204,7 +204,7 @@ final class AgentLoop: ObservableObject {
         }
 
         let workspacePath = prefs.activeWorkspace
-        let modelName = prefs.geminiModel
+        let modelName = GeminiModels.normalize(prefs.geminiModel)
         await SavedAgentRun.persist(
             id: runId, task: userTask, status: .running,
             startedAt: startedAt, finishedAt: nil,
@@ -229,7 +229,7 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
-        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
+        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: GeminiModels.normalize(prefs.geminiModel))
         let snapshot = await CachedSnapshot.latest(in: container)
         let systemPrompt = buildConversationalSystemPrompt(snapshot: snapshot, prefs: prefs)
         log(AgentTranscript.lineTaskStarted(userTask))

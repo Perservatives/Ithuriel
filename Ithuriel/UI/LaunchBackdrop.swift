@@ -9,14 +9,6 @@ struct LaunchBackdropView: View {
 
             Color.black.opacity(0.28)
                 .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [Color.white.opacity(0.06), .clear],
-                center: .center,
-                startRadius: 40,
-                endRadius: 480
-            )
-            .ignoresSafeArea()
         }
     }
 }

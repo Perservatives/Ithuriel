@@ -27,6 +27,7 @@
 		45421130BA0ED4B3EF4BB984 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 477C813D72FEC593E7B0627E /* FirebaseAuth */; };
 		486AF1900FDA6A9633F566DA /* enter.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1892B9DF8E09632A6C7AC14F /* enter.mp3 */; };
 		4AC3837394F405C8063AB853 /* NotchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808F0FD7E6ECE5718B4009A2 /* NotchDetector.swift */; };
+		BR4NDM4RK5W1FT1N50URC3ES /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */; };
 		4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82F492D381182E0EE2A44BA /* AppChromeBar.swift */; };
 		570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */; };
 		59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B951B012E95739BF6F355D /* LiquidGlass.swift */; };
@@ -179,6 +180,7 @@
 		F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
 		F82F492D381182E0EE2A44BA /* AppChromeBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeBar.swift; sourceTree = "<group>"; };
 		FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiEmbed.swift; sourceTree = "<group>"; };
+		BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,6 +234,7 @@
 			children = (
 				C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */,
 				EA63356B176A586DBB19722B /* AgentStatusBus.swift */,
+				BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */,
 				F82F492D381182E0EE2A44BA /* AppChromeBar.swift */,
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
 				5208EF87EDAF04F6AD87121B /* CapturePill.swift */,
@@ -497,6 +500,7 @@
 				CD6F7F71367B04A8F2EE3062 /* AgentSpeaker.swift in Sources */,
 				66A1A7C987ECF9B8642C12F5 /* AgentStatusBus.swift in Sources */,
 				6BCF97A573F34542C6C3E33E /* AgentTranscript.swift in Sources */,
+				BR4NDM4RK5W1FT1N50URC3ES /* BrandMark.swift in Sources */,
 				4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */,
 				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,
 				00EA6FB58CBBC50057F4A2E2 /* AppRouter.swift in Sources */,

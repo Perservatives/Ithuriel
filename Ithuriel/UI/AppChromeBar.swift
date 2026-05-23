@@ -20,14 +20,14 @@ struct AppChromeBar: View {
                         .labelStyle(.iconOnly)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
                 .help(NSLocalizedString("status.copy", comment: ""))
 
                 Button(action: { SoundPlayer.shared.muted.toggle() }) {
                     Image(systemName: SoundPlayer.shared.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
                 .help(SoundPlayer.shared.muted
                       ? NSLocalizedString("chrome.unmute", comment: "")
                       : NSLocalizedString("chrome.mute", comment: ""))
@@ -36,7 +36,7 @@ struct AppChromeBar: View {
 
                 Text(NSLocalizedString("status.killSwitch", comment: ""))
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.white.opacity(0.28))
 
                 Button(action: { AppRouter.shared.openSettings() }) {
                     if compact {
@@ -46,13 +46,13 @@ struct AppChromeBar: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
 
                 Button(action: { AppRouter.shared.quit() }) {
                     Text(NSLocalizedString("status.quit", comment: ""))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
                 .controlSize(.small)
             }
             .font(compact ? .caption : .callout)
@@ -60,7 +60,7 @@ struct AppChromeBar: View {
             if let copyStatus {
                 Text(copyStatus)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.45))
             }
         }
     }
@@ -86,7 +86,7 @@ struct PermissionsBanner: View {
                         .font(.subheadline.bold())
                     Text(missingDetail)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.45))
                         .fixedSize(horizontal: false, vertical: true)
                     Button(NSLocalizedString("status.needPermissions.open", comment: "")) {
                         AppRouter.shared.openSettings()

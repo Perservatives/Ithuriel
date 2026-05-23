@@ -19,7 +19,7 @@ enum AgentTranscript {
     // MARK: - Lines written by AgentLoop
 
     static func lineTaskStarted(_ task: String) -> String {
-        "\(taskPrefix) \(String(format: NSLocalizedString("agent.transcript.task", comment: ""), task))"
+        "\(taskPrefix) \(task)"
     }
 
     static func lineThinking(_ text: String) -> String {

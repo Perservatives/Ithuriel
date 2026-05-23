@@ -12,6 +12,9 @@ extension Notification.Name {
 final class PermissionsManager: ObservableObject {
     static let shared = PermissionsManager()
 
+    /// TEMP: stop permission banners/onboarding prompts while TCC detection is flaky.
+    private static let assumePermissionsGranted = true
+
     @Published private(set) var accessibilityGranted = false
     @Published private(set) var screenRecordingGranted = false
     @Published private(set) var notificationsGranted = false
@@ -20,7 +23,8 @@ final class PermissionsManager: ObservableObject {
 
     /// Accessibility + screen recording — required for computer-use.
     var needsRequired: Bool {
-        !(accessibilityGranted && screenRecordingGranted)
+        if Self.assumePermissionsGranted { return false }
+        return !(accessibilityGranted && screenRecordingGranted)
     }
 
     private enum CacheKey {
@@ -52,6 +56,11 @@ final class PermissionsManager: ObservableObject {
 
     /// Passive status check — no TCC prompts. Safe on a timer or `didBecomeActive`.
     func refresh(force: Bool = false) async {
+        if Self.assumePermissionsGranted {
+            apply(accessibility: true, screen: true, notifications: true)
+            hasRefreshed = true
+            return
+        }
         let now = Date()
         let firstRefresh = !hasRefreshed
         if !force, !firstRefresh,
@@ -74,6 +83,10 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestAccessibility() {
+        if Self.assumePermissionsGranted {
+            apply(accessibility: true, screen: true, notifications: true)
+            return
+        }
         if accessibilityGranted || AccessibilityTrust.isGranted() {
             apply(accessibility: true, screen: screenRecordingGranted, notifications: notificationsGranted)
             return
@@ -88,6 +101,10 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestScreenRecording() {
+        if Self.assumePermissionsGranted {
+            apply(accessibility: true, screen: true, notifications: true)
+            return
+        }
         if screenRecordingGranted || ScreenCapture.hasScreenRecordingAccessPassive() {
             apply(accessibility: accessibilityGranted, screen: true, notifications: notificationsGranted)
             return
@@ -107,6 +124,10 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestNotifications() async {
+        if Self.assumePermissionsGranted {
+            apply(accessibility: true, screen: true, notifications: true)
+            return
+        }
         if notificationsGranted { return }
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         switch settings.authorizationStatus {

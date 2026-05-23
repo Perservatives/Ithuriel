@@ -81,7 +81,7 @@ final class UserPrefs {
          firebaseWebAPIKey: String = FirebaseConfig.defaultWebAPIKey,
          agentEnabled: Bool = true,
          geminiApiKey: String = "",
-         geminiModel: String = "gemini-3.5-flash",
+         geminiModel: String = GeminiModels.defaultModel,
          activeWorkspace: String = "",
          confirmEveryAction: Bool = false,
          autoApproveSafeOnly: Bool = false,
@@ -164,6 +164,11 @@ final class UserPrefs {
             // ⌃Space users to ⌥Space — same finger, no conflict.
             if existing.hotkeyKeyCode == 49 && existing.hotkeyModifiers == 8 {
                 existing.hotkeyModifiers = 4   // option
+                try? context.save()
+            }
+            let normalizedModel = GeminiModels.normalize(existing.geminiModel)
+            if normalizedModel != existing.geminiModel {
+                existing.geminiModel = normalizedModel
                 try? context.save()
             }
             return existing

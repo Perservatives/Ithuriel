@@ -93,9 +93,9 @@ final class GeminiClient {
     private let model: String
     private let session: URLSession
 
-    init(apiKey: String, model: String = "gemini-3.5-flash", session: URLSession = .shared) {
+    init(apiKey: String, model: String = GeminiModels.defaultModel, session: URLSession = .shared) {
         self.apiKey = apiKey
-        self.model = model
+        self.model = GeminiModels.normalize(model)
         self.session = session
     }
 
@@ -123,6 +123,35 @@ final class GeminiClient {
             throw GeminiError.noCandidate
         }
         return first
+    }
+}
+
+// MARK: - Supported models (Google AI `generateContent` model IDs)
+
+enum GeminiModels {
+    static let pickerOptions: [(id: String, label: String)] = [
+        ("gemini-2.5-flash", "Flash 2.5 · fast"),
+        ("gemini-2.5-flash-lite", "Flash 2.5 · lite"),
+        ("gemini-2.5-pro", "Pro 2.5"),
+        ("gemini-3.5-flash", "Flash 3.5"),
+        ("gemini-3-flash-preview", "Flash 3 · preview"),
+        ("gemini-3.1-pro-preview", "Pro 3.1 · preview"),
+    ]
+
+    static let defaultModel = "gemini-2.5-flash"
+
+    private static let validIDs = Set(pickerOptions.map(\.id))
+
+    /// Maps saved prefs / legacy picker values to a real API model id.
+    static func normalize(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if validIDs.contains(trimmed) { return trimmed }
+        switch trimmed {
+        case "gemini-2.5-flash-thinking": return defaultModel
+        case "gemini-3.0-flash", "gemini-3-flash": return "gemini-3-flash-preview"
+        case "gemini-3.0-pro", "gemini-3-pro", "gemini-3-pro-preview": return "gemini-3.1-pro-preview"
+        default: return defaultModel
+        }
     }
 }
 
