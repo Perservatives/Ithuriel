@@ -193,15 +193,15 @@ final class AgentController {
             body: String(format: NSLocalizedString("agent.confirm.shell.body", comment: ""), command),
             prefs: prefs
         )
+        let cwd = prefs.activeWorkspace.isEmpty
+            ? FileManager.default.homeDirectoryForCurrentUser.path
+            : prefs.activeWorkspace
         return await withCheckedContinuation { (cont: CheckedContinuation<String, Never>) in
             DispatchQueue.global(qos: .utility).async {
                 let p = Process()
                 p.executableURL = URL(fileURLWithPath: "/bin/zsh")
                 p.arguments = ["-l", "-c", command]
                 p.environment = ProcessInfo.processInfo.environment
-                let cwd = prefs.activeWorkspace.isEmpty
-                    ? FileManager.default.homeDirectoryForCurrentUser.path
-                    : prefs.activeWorkspace
                 p.currentDirectoryURL = URL(fileURLWithPath: cwd)
                 let pipe = Pipe()
                 p.standardOutput = pipe

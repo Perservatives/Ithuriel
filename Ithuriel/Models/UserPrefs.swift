@@ -69,22 +69,21 @@ final class UserPrefs {
 
     static func defaults() -> UserPrefs { UserPrefs() }
 
-    static func load(in container: ModelContainer) async throws -> UserPrefs {
-        try await MainActor.run {
-            let context = container.mainContext
-            let descriptor = FetchDescriptor<UserPrefs>()
-            if let existing = try context.fetch(descriptor).first {
-                if existing.activeWorkspace.isEmpty,
-                   let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
-                    existing.activeWorkspace = path
-                    try? context.save()
-                }
-                return existing
+    @MainActor
+    static func load(in container: ModelContainer) throws -> UserPrefs {
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<UserPrefs>()
+        if let existing = try context.fetch(descriptor).first {
+            if existing.activeWorkspace.isEmpty,
+               let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
+                existing.activeWorkspace = path
+                try? context.save()
             }
-            let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
-            context.insert(prefs)
-            try context.save()
-            return prefs
+            return existing
         }
+        let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
+        context.insert(prefs)
+        try context.save()
+        return prefs
     }
 }

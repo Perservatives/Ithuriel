@@ -102,9 +102,11 @@ final class SpotlightCoordinator {
             dimmer.animator().alphaValue = 0
             spot.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
-            self?.dimmerWindow?.orderOut(nil)
-            self?.spotlightWindow?.orderOut(nil)
-            self?.spotlightWindow?.alphaValue = 1
+            Task { @MainActor in
+                self?.dimmerWindow?.orderOut(nil)
+                self?.spotlightWindow?.orderOut(nil)
+                self?.spotlightWindow?.alphaValue = 1
+            }
         })
     }
 
@@ -116,7 +118,7 @@ final class SpotlightCoordinator {
     // MARK: - Hotkey
 
     func installSummonHotkey() {
-        var hotKeyID = EventHotKeyID(signature: OSType(0x49544855 /* 'ITHU' */), id: 2)
+        let hotKeyID = EventHotKeyID(signature: OSType(0x49544855 /* 'ITHU' */), id: 2)
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                                  eventKind: UInt32(kEventHotKeyPressed))
         InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in

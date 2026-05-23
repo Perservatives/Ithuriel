@@ -21,7 +21,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
     private var container: ModelContainer?
     private var agentLoop: AgentLoop?
     /// Retained separately — NSPopover alone can drop the hosting controller.
-    private var popoverHost: NSHostingController<StatusBarView>?
+    private var popoverHost: NSViewController?
 
     init(container: ModelContainer?, agentLoop: AgentLoop?) {
         self.container = container
