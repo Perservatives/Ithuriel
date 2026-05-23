@@ -46,18 +46,32 @@ asking each time.
 Ithuriel/
 ├── PRD.md                          # product spec — source of truth
 ├── AGENTS.md                       # this file
-└── Ithuriel/                       # Swift app source
-    ├── IthurielApp.swift           # entry point, AppDelegate, timer loop
-    ├── MenuBarManager.swift        # NSStatusItem + popover
-    ├── Agent/                      # AgentLoop, GeminiClient, ScreenCapture, KillSwitch
-    ├── AgentControl/               # AgentController (full action surface)
-    ├── Capture/                    # FSEvents, NSWorkspace, git, terminal
-    ├── Privacy/                    # Redactor (regex + path filter)
-    ├── Injection/                  # secondary: pasteboard hand-off into other AI tools
-    ├── API/                        # optional cloud backend client
-    ├── Models/                     # ContextSnapshot, UserPrefs (SwiftData)
-    ├── Views/                      # StatusBarView (prompt-first), SettingsView
-    └── Resources/                  # Info.plist, Localizable.strings
+├── DEPLOY.md                       # end-to-end GCP bootstrap
+├── Ithuriel.xcodeproj/             # generated from project.yml via XcodeGen
+├── project.yml                     # XcodeGen spec — regenerate xcodeproj with `xcodegen generate`
+├── Ithuriel/                       # Swift app source
+│   ├── IthurielApp.swift           # entry point, AppDelegate
+│   ├── MenuBarManager.swift
+│   ├── Agent/                      # AgentLoop, GeminiClient, ScreenCapture, KillSwitch
+│   ├── AgentControl/               # AgentController (full action surface)
+│   ├── Auth/                       # Keychain, AuthService, URLSchemeHandler
+│   ├── Capture/                    # FSEvents, NSWorkspace, git, terminal
+│   ├── Privacy/                    # Redactor
+│   ├── Injection/                  # secondary: pasteboard hand-off
+│   ├── API/                        # IthurielClient (REST + WS)
+│   ├── Models/                     # ContextSnapshot, AgentRunRecord, UserPrefs
+│   ├── Views/                      # StatusBarView (prompt-first), SettingsView
+│   └── Resources/                  # Info.plist, Ithuriel.entitlements, Localizable.strings
+├── services/
+│   ├── api/                        # Cloud Run API (Node 20 + Fastify + TS)
+│   └── functions/processor/        # Pub/Sub-triggered Python function
+└── infra/
+    ├── terraform/                  # Full GCP stack as code
+    ├── cloudbuild.yaml             # CI/CD
+    ├── firebase.json
+    ├── firestore.rules
+    ├── firestore.indexes.json
+    └── storage.rules
 ```
 
 ---
