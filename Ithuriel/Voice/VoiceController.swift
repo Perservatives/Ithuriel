@@ -43,7 +43,7 @@ final class VoiceController {
               let container = container,
               let loop = agentLoop else { return }
         Task {
-            let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+            let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
             let key = prefs.googleCloudAPIKey.isEmpty ? prefs.geminiApiKey : prefs.googleCloudAPIKey
             guard !key.isEmpty else {
                 Log.error("No Google Cloud key for STT.")

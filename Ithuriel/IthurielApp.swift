@@ -57,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Seed the hotkey binding from saved prefs (defaults to ⌃Space).
         Task { @MainActor in
-            if let prefs = try? await UserPrefs.load(in: container) {
+            if let prefs = try? UserPrefs.load(in: container) {
                 HotkeyMonitor.shared.updateBinding(
                     keyCode: prefs.hotkeyKeyCode,
                     modifiers: prefs.hotkeyModifiers
