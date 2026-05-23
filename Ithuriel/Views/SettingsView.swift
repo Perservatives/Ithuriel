@@ -305,6 +305,18 @@ struct SettingsView: View {
 
     private var integrationsSection: some View {
         sectionShell(title: section.title) {
+            // 1. The only thing a consumer actually needs: a Gemini key.
+            card("Gemini API key") {
+                labelledField("API key") {
+                    SecureField("AIza…", text: binding(\.geminiApiKey))
+                        .textFieldStyle(.roundedBorder)
+                }
+                Text("Free at https://aistudio.google.com/apikey — pasted here, the agent works fully offline of any cloud backend. No account required.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // 2. Tool list — present, but not required.
             card(NSLocalizedString("settings.targets", comment: "")) {
                 labelledField(NSLocalizedString("settings.targets.field", comment: "")) {
                     TextField("claude-code,cursor,chatgpt", text: binding(\.targetToolsRaw))
@@ -314,34 +326,43 @@ struct SettingsView: View {
                 Text(NSLocalizedString("settings.targets.help", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            card(NSLocalizedString("settings.api", comment: "")) {
-                labelledField(NSLocalizedString("settings.api.baseURL", comment: "")) {
-                    TextField("https://api.ithuriel.dev", text: binding(\.apiBaseURL))
-                        .textFieldStyle(.roundedBorder)
-                }
-                labelledField(NSLocalizedString("settings.api.firebaseWebKey", comment: "")) {
-                    SecureField("AIza…", text: binding(\.firebaseWebAPIKey)).textFieldStyle(.roundedBorder)
-                }
-                labelledField(NSLocalizedString("settings.api.token", comment: "")) {
-                    SecureField("", text: binding(\.apiToken)).textFieldStyle(.roundedBorder)
-                }
-                HStack {
-                    if AuthService.shared.isSignedIn {
-                        Label(NSLocalizedString("settings.api.signedIn", comment: ""), systemImage: "checkmark.seal")
-                            .foregroundStyle(.green)
-                        Spacer()
-                        Button(NSLocalizedString("settings.api.signOut", comment: "")) { AuthService.shared.signOut() }
-                    } else {
-                        Button(NSLocalizedString("settings.api.signIn", comment: "")) {
-                            AuthService.shared.apiBaseURL = prefs.apiBaseURL
-                            AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
-                            AuthService.shared.beginGoogleSignIn()
+
+            // 3. Everything cloud-side hidden behind disclosure. Most users
+            // never need to touch it; the app is fully usable without it.
+            DisclosureGroup("Advanced — Ithuriel Cloud sync (optional)") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Skip this whole section unless you want cross-device sync. The agent runs entirely locally with just your Gemini key.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    labelledField(NSLocalizedString("settings.api.baseURL", comment: "")) {
+                        TextField("https://api.ithuriel.dev", text: binding(\.apiBaseURL))
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    labelledField(NSLocalizedString("settings.api.firebaseWebKey", comment: "")) {
+                        SecureField("AIza…", text: binding(\.firebaseWebAPIKey)).textFieldStyle(.roundedBorder)
+                    }
+                    labelledField(NSLocalizedString("settings.api.token", comment: "")) {
+                        SecureField("", text: binding(\.apiToken)).textFieldStyle(.roundedBorder)
+                    }
+                    HStack {
+                        if AuthService.shared.isSignedIn {
+                            Label(NSLocalizedString("settings.api.signedIn", comment: ""), systemImage: "checkmark.seal")
+                                .foregroundStyle(.green)
+                            Spacer()
+                            Button(NSLocalizedString("settings.api.signOut", comment: "")) { AuthService.shared.signOut() }
+                        } else {
+                            Button(NSLocalizedString("settings.api.signIn", comment: "")) {
+                                AuthService.shared.apiBaseURL = prefs.apiBaseURL
+                                AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
+                                AuthService.shared.beginGoogleSignIn()
+                            }
+                            .disabled(prefs.firebaseWebAPIKey.isEmpty)
                         }
                     }
                 }
-                Text(NSLocalizedString("settings.api.help", comment: ""))
-                    .font(.caption).foregroundStyle(.secondary)
+                .padding(.top, 8)
             }
+            .padding(.horizontal, 4)
         }
     }
 

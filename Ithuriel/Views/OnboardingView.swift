@@ -115,35 +115,25 @@ struct OnboardingView: View {
 
     private var signInStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(NSLocalizedString("onboarding.signIn.title", comment: ""))
+            Text("Paste your Gemini API key")
                 .font(.system(.title2, design: .rounded).weight(.semibold))
-            Text(NSLocalizedString("onboarding.signIn.body", comment: ""))
+            Text("That's the only thing Ithuriel needs to work. Free at aistudio.google.com/apikey — no signup beyond a Google account, no cloud setup, no Firebase. The key lives on this Mac only.")
                 .font(.body).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if AuthService.shared.isSignedIn {
-                Label(NSLocalizedString("onboarding.signIn.connected", comment: ""),
-                      systemImage: "checkmark.seal.fill")
-                    .foregroundStyle(.green)
-            } else {
-                Button {
-                    AuthService.shared.beginGoogleSignIn()
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "g.circle.fill")
-                            .font(.system(size: 17, weight: .semibold))
-                        Text(NSLocalizedString("onboarding.signIn.button", comment: ""))
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .padding(.horizontal, 18).padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.accentColor)
-                    )
-                    .foregroundStyle(.white)
+            if let prefs {
+                SecureField("AIza…", text: Binding(
+                    get: { prefs.geminiApiKey },
+                    set: { prefs.geminiApiKey = $0; try? context.save() }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+                if !prefs.geminiApiKey.isEmpty {
+                    Label("Key saved locally", systemImage: "checkmark.seal.fill")
+                        .foregroundStyle(.green).font(.caption)
+                } else {
+                    Text("You can also skip this step and paste it later in Settings → Integrations.")
+                        .font(.caption).foregroundStyle(.tertiary)
                 }
-                .buttonStyle(.plain)
-                Text(NSLocalizedString("onboarding.signIn.optional", comment: ""))
-                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }

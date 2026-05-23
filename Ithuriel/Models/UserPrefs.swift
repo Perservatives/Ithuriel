@@ -76,7 +76,7 @@ final class UserPrefs {
          ttsVoice: String = "en-US-Neural2-F",
          ttsRate: Double = 1.0,
          hotkeyKeyCode: Int = 49,        // kVK_Space
-         hotkeyModifiers: Int = 8,       // control
+         hotkeyModifiers: Int = 4,       // option — ⌃Space is reserved by macOS for input source
          onboardingComplete: Bool = false,
          transcriptVerbosity: Int = 1) {
         self.id = id
@@ -134,6 +134,13 @@ final class UserPrefs {
             if existing.geminiApiKey.isEmpty,
                let seed = Keychain.get("gemini.apiKey"), !seed.isEmpty {
                 existing.geminiApiKey = seed
+                try? context.save()
+            }
+            // One-time migration: ⌃Space is reserved by macOS for "Show next
+            // input source" and silently swallows our hotkey. Flip existing
+            // ⌃Space users to ⌥Space — same finger, no conflict.
+            if existing.hotkeyKeyCode == 49 && existing.hotkeyModifiers == 8 {
+                existing.hotkeyModifiers = 4   // option
                 try? context.save()
             }
             return existing
