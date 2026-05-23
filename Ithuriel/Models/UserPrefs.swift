@@ -23,6 +23,10 @@ final class UserPrefs {
     /// When false, file ops may touch any path (except Redactor-blocked secrets paths).
     var restrictToWorkspace: Bool
 
+    /// Hex color (e.g. "#7B5BFF") used as the seed for the launch animation's
+    /// fuzzy blobs and the orb halo. Independent of system accent color.
+    var launchColorHex: String
+
     init(id: String = "default",
          redactKeys: Bool = true,
          localOnly: Bool = false,
@@ -38,7 +42,8 @@ final class UserPrefs {
          activeWorkspace: String = "",
          confirmEveryAction: Bool = false,
          autoApproveSafeOnly: Bool = false,
-         restrictToWorkspace: Bool = false) {
+         restrictToWorkspace: Bool = false,
+         launchColorHex: String = "#7B5BFF") {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -55,6 +60,7 @@ final class UserPrefs {
         self.confirmEveryAction = confirmEveryAction
         self.autoApproveSafeOnly = autoApproveSafeOnly
         self.restrictToWorkspace = restrictToWorkspace
+        self.launchColorHex = launchColorHex
     }
 
     var excludePaths: [String] {
@@ -79,9 +85,21 @@ final class UserPrefs {
                 existing.activeWorkspace = path
                 try? context.save()
             }
+            // Seed Gemini key from the user's macOS Keychain if Settings hasn't
+            // been filled in yet. Run once: `security add-generic-password
+            // -s dev.ithuriel.agent -a gemini.apiKey -w <KEY>`.
+            if existing.geminiApiKey.isEmpty,
+               let seed = Keychain.get("gemini.apiKey"), !seed.isEmpty {
+                existing.geminiApiKey = seed
+                try? context.save()
+            }
             return existing
         }
-        let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
+        let seededKey = Keychain.get("gemini.apiKey") ?? ""
+        let prefs = UserPrefs(
+            geminiApiKey: seededKey,
+            activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? ""
+        )
         context.insert(prefs)
         try context.save()
         return prefs

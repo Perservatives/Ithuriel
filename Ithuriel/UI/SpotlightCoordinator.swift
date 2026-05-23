@@ -25,6 +25,11 @@ final class SpotlightCoordinator {
     func configure(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
         self.agentLoop = agentLoop
+        NotificationCenter.default.addObserver(
+            forName: .ithurielOpenChat, object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in SpotlightCoordinator.shared.summon() }
+        }
     }
 
     // MARK: - Public entry points
@@ -258,4 +263,12 @@ final class SpotlightWindow: NSWindow {
 final class TransparentWindow: NSWindow {
     override var canBecomeKey: Bool  { false }
     override var canBecomeMain: Bool { false }
+}
+
+// MARK: - Notification names
+
+extension Notification.Name {
+    /// Posted to summon the Spotlight prompt from anywhere in the app.
+    /// SpotlightCoordinator observes this in `configure(...)`.
+    static let ithurielOpenChat = Notification.Name("dev.ithuriel.openChat")
 }

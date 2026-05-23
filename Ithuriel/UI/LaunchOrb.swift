@@ -24,7 +24,15 @@ struct LaunchOrbView: View {
     @State private var captionOpacity: Double = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// User-chosen launch color (UserPrefs.launchColorHex). Falls back to
+    /// the system accent if no preference has been set yet.
+    let tint: Color
     let onComplete: () -> Void
+
+    init(tint: Color = .accentColor, onComplete: @escaping () -> Void) {
+        self.tint = tint
+        self.onComplete = onComplete
+    }
 
     var body: some View {
         ZStack {
@@ -36,8 +44,8 @@ struct LaunchOrbView: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.accentColor.opacity(0.55),
-                                 Color.accentColor.opacity(0.15),
+                        colors: [tint.opacity(0.55),
+                                 tint.opacity(0.15),
                                  .clear],
                         center: .center,
                         startRadius: 4,
@@ -49,11 +57,13 @@ struct LaunchOrbView: View {
                 .blur(radius: 28)
 
             // The mark itself — much bigger
-            AsteriskBurst(rotation: rotation, petalScale: petalScale, glowRadius: 60)
+            AsteriskBurst(rotation: rotation, petalScale: petalScale,
+                          tint: tint, secondaryTint: tint.opacity(0.55),
+                          glowRadius: 60)
                 .frame(width: 280, height: 280)
                 .opacity(coreOpacity)
                 .scaleEffect(coreScale)
-                .shadow(color: .accentColor.opacity(0.6), radius: 30, y: 0)
+                .shadow(color: tint.opacity(0.6), radius: 30, y: 0)
 
             // Caption
             Text("ITHURIEL")
@@ -72,7 +82,7 @@ struct LaunchOrbView: View {
         Circle()
             .strokeBorder(
                 LinearGradient(
-                    colors: [Color.accentColor.opacity(0.6), Color.accentColor.opacity(0.05)],
+                    colors: [tint.opacity(0.6), tint.opacity(0.05)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),

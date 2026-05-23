@@ -1,6 +1,6 @@
-project_id          = "ithuriel-prod-001"
+project_id          = "synthesis-hack26svl-121"
 region              = "us-central1"
-api_image           = "us-central1-docker.pkg.dev/ithuriel-prod-001/ithuriel/api:latest"
+api_image           = "us-central1-docker.pkg.dev/synthesis-hack26svl-121/ithuriel/api:latest"
 oauth_client_id     = "REPLACE.apps.googleusercontent.com"
 oauth_client_secret = "REPLACE"
 # gemini_api_key    = ""   # optional — leave blank for bring-your-own-key only
