@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Full-screen takeover that sits behind the LaunchOrb. Arc-style: black with
-/// soft fuzzy color blobs that bloom in, drift, and breathe. The color is
-/// pulled from `UserPrefs.launchColorHex` (with the system accent as
-/// fallback).
+/// Full-screen launch backdrop. Pure black with the faintest vignette toward
+/// the centre — the screen "goes dark" so the shards assembling into the
+/// 8-point Ithuriel mark are the only thing the eye is drawn to.
 struct LaunchBackdropView: View {
     let baseColor: Color
 
@@ -12,7 +11,16 @@ struct LaunchBackdropView: View {
     }
 
     var body: some View {
-        LaunchBlobsView(baseColor: baseColor)
+        ZStack {
+            Color.black.ignoresSafeArea()
+            RadialGradient(
+                colors: [Color.white.opacity(0.04), .clear],
+                center: .center,
+                startRadius: 60,
+                endRadius: 540
+            )
+            .blendMode(.plusLighter)
             .ignoresSafeArea()
+        }
     }
 }

@@ -147,12 +147,11 @@ final class SpotlightCoordinator {
 
     // MARK: - Hotkeys
 
-    /// ⌃Space toggles Spotlight. ⌥Space tap opens the full Chat window;
-    /// hold ⌥Space starts voice capture and release submits.
+    /// ⌥Space toggles the Spotlight prompt. Hold ⌥Space starts voice
+    /// capture; release submits the captured utterance to the agent.
     func installSummonHotkey() {
         let monitor = HotkeyMonitor.shared
-        monitor.onSummonTap = { [weak self] in self?.toggle() }
-        monitor.onChatTap   = { Task { @MainActor in ChatWindowController.shared.toggle() } }
+        monitor.onSummonTap  = { [weak self] in self?.toggle() }
         monitor.onVoiceStart = { Task { @MainActor in VoiceController.shared.start() } }
         monitor.onVoiceEnd   = { Task { @MainActor in VoiceController.shared.stopAndSubmit() } }
         monitor.install()

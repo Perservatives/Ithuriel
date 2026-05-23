@@ -11,7 +11,7 @@
 "spotlight.headline.running"   = "Working on it…";
 "spotlight.subhead.needsKey"   = "Add your Gemini API key in Settings to begin";
 "spotlight.newChat"            = "New Chat";
-"spotlight.hotkey"             = "⌘⇧Space to summon · ⎋ to dismiss · ⌃⌥⌘. to kill";
+"spotlight.hotkey"             = "⌥Space to summon · hold to talk · ⎋ dismiss · ⌃⌥⌘. kill";
 
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";
@@ -55,6 +55,23 @@
 
 /* Workspace picker */
 "settings.agent.workspacePick" = "Choose…";
+
+/* How To */
+"settings.tab.howto"     = "How To";
+"howto.title"            = "How to use Ithuriel";
+"howto.subtitle"         = "A one-page reference. Most of the app is keyboard-driven.";
+"howto.summon.title"     = "⌥Space to summon";
+"howto.summon.body"      = "Tap Option-Space anywhere on your Mac to bring up the prompt. Type a task; press Return to send. ⎋ closes the prompt.";
+"howto.voice.title"      = "Hold ⌥Space to talk";
+"howto.voice.body"       = "Keep Option-Space held to speak. A 'Listening…' pill appears at the top of the screen. Release to send the transcribed message to the agent.";
+"howto.chat.title"       = "Open the full chat window";
+"howto.chat.body"        = "Left-click the menu bar icon, or pick 'Open Chat…' from its menu. You get full conversation history, the composer, and the Context Web inspector.";
+"howto.kill.title"       = "Kill switch — ⌃⌥⌘.";
+"howto.kill.body"        = "Press Control-Option-Command-Period at any time to stop the agent mid-step. Use it freely; the agent expects this.";
+"howto.privacy.title"    = "Sandbox + secret scrubber";
+"howto.privacy.body"     = "File operations are pinned to the active workspace. Secrets matching common API-key patterns are scrubbed from anything that leaves your Mac.";
+"howto.cloud.title"      = "Everything stored on Google Cloud";
+"howto.cloud.body"       = "Snapshots and agent runs sync to Firestore + Cloud Storage. Semantic search runs on Vertex AI text-embedding-005 vectors. Local-only mode disables network sync.";
 
 /* Appearance tab */
 "settings.appearance.launch"       = "Launch animation";

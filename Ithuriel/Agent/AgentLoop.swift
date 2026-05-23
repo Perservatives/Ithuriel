@@ -25,6 +25,7 @@ final class AgentLoop: ObservableObject {
         transcript.removeAll()
         AgentController.shared.arm()
         SoundPlayer.shared.play(.submit)
+        AgentStatusBus.shared.publish(.started(task: userTask))
         defer { isRunning = false }
 
         guard let container = container else { return }
@@ -86,6 +87,7 @@ final class AgentLoop: ObservableObject {
         for step in 1...maxSteps {
             if AgentController.shared.killed {
                 log(AgentTranscript.lineKilled())
+                AgentStatusBus.shared.publish(.stopped)
                 await uploadFinalState(.killed)
                 return
             }
@@ -95,6 +97,7 @@ final class AgentLoop: ObservableObject {
             } catch {
                 lastError = "\(error)"
                 log(AgentTranscript.lineGeminiError("\(error)"))
+                AgentStatusBus.shared.publish(.failed(error: "\(error)"))
                 await uploadFinalState(.failed)
                 return
             }
@@ -113,6 +116,8 @@ final class AgentLoop: ObservableObject {
                     let summary = call.args["summary"]?.stringValue ?? "done"
                     log(AgentTranscript.lineDone(summary))
                     SoundPlayer.shared.play(.done)
+                    AgentStatusBus.shared.publish(.finished(summary: summary))
+                    AgentSpeaker.shared.speakAsync(summary, prefs: prefs)
                     continue
                 }
                 let result = await dispatch(call: call, prefs: prefs)
@@ -133,6 +138,11 @@ final class AgentLoop: ObservableObject {
             }
             if functionResponses.isEmpty {
                 log(AgentTranscript.lineNoToolCalls())
+                let summary = transcript.last(where: { $0.hasPrefix("·") }).map {
+                    String($0.dropFirst()).trimmingCharacters(in: .whitespaces)
+                } ?? "done"
+                AgentStatusBus.shared.publish(.finished(summary: summary))
+                AgentSpeaker.shared.speakAsync(summary, prefs: prefs)
                 await uploadFinalState(.completed)
                 return
             }
@@ -141,6 +151,7 @@ final class AgentLoop: ObservableObject {
         }
 
         log(AgentTranscript.lineStepBudgetExhausted(maxSteps: maxSteps))
+        AgentStatusBus.shared.publish(.failed(error: "step budget exhausted"))
         await uploadFinalState(.failed)
     }
 

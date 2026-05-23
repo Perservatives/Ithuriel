@@ -12,11 +12,12 @@ struct SettingsView: View {
     @State private var section: Section = .agent
 
     enum Section: String, CaseIterable, Identifiable {
-        case agent, voice, appearance, capture, privacy, integrations, permissions
+        case howto, agent, voice, appearance, capture, privacy, integrations, permissions
         var id: String { rawValue }
 
         var title: String {
             switch self {
+            case .howto:        return NSLocalizedString("settings.tab.howto", comment: "")
             case .agent:        return NSLocalizedString("settings.tab.agent", comment: "")
             case .voice:        return NSLocalizedString("settings.tab.voice", comment: "")
             case .appearance:   return NSLocalizedString("settings.tab.appearance", comment: "")
@@ -29,6 +30,7 @@ struct SettingsView: View {
 
         var symbol: String {
             switch self {
+            case .howto:        return "questionmark.circle"
             case .agent:        return "wand.and.stars"
             case .voice:        return "waveform"
             case .appearance:   return "paintpalette"
@@ -131,6 +133,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var content: some View {
         switch section {
+        case .howto:        HowToView()
         case .agent:        agentSection
         case .voice:        voiceSection
         case .appearance:   appearanceSection

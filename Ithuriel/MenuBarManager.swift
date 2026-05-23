@@ -151,7 +151,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         let summon = menu.addItem(withTitle: NSLocalizedString("menubar.menu.summon", comment: ""),
                                   action: #selector(menuSummon), keyEquivalent: " ")
         summon.target = self
-        summon.keyEquivalentModifierMask = [.command, .shift]
+        summon.keyEquivalentModifierMask = [.option]
 
         let chatItem = menu.addItem(withTitle: "Open Chat…",
                                     action: #selector(menuOpenChat), keyEquivalent: "n")

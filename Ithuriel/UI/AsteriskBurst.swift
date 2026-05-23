@@ -35,6 +35,28 @@ struct AsteriskBurst: View {
     }
 }
 
+/// Compact 8-point asterisk for inline UI (sidebar header, message author).
+/// Same Petal shape, no halo or glow. `size` is the total mark diameter.
+struct AsteriskMark: View {
+    var size: CGFloat = 12
+    var tint: Color = .accentColor
+
+    var body: some View {
+        let petalLen = size * 0.5
+        let petalWid = size * 0.22
+        return ZStack {
+            ForEach(0..<8) { i in
+                Petal()
+                    .fill(tint)
+                    .frame(width: petalWid, height: petalLen)
+                    .offset(y: -petalLen / 2)
+                    .rotationEffect(.degrees(Double(i) * 45))
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 /// A single teardrop-shaped petal. Wide at the centre, tapered at the tip.
 struct Petal: Shape {
     func path(in rect: CGRect) -> Path {

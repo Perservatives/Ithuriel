@@ -52,6 +52,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ChatWindowController.shared.configure(container: container, agent: loop)
         VoiceController.shared.configure(container: container, agentLoop: loop)
         SpotlightCoordinator.shared.installSummonHotkey()
+
+        // Apple-Intelligence-style screen-edge glow while voice hotkey is held.
+        let prev = HotkeyMonitor.shared.onVoiceStart
+        HotkeyMonitor.shared.onVoiceStart = {
+            Task { @MainActor in
+                EdgeGlowController.shared.show()
+                prev()
+            }
+        }
+        let prevEnd = HotkeyMonitor.shared.onVoiceEnd
+        HotkeyMonitor.shared.onVoiceEnd = {
+            Task { @MainActor in
+                EdgeGlowController.shared.hide()
+                prevEnd()
+            }
+        }
+
+        // Done/Failed/Stopped banner + animated menu bar respond to bus events.
+        AgentStatusBus.shared.subscribe { [weak self] event in
+            Task { @MainActor in
+                switch event {
+                case .started:
+                    self?.menuBarManager?.setStatus(.capturing)
+                case .finished(let summary):
+                    DoneBannerController.shared.showFinished(summary: summary)
+                case .failed(let err):
+                    DoneBannerController.shared.showFailed(summary: err)
+                case .stopped:
+                    DoneBannerController.shared.showStopped(summary: "Stopped")
+                }
+            }
+        }
+
         refreshPermissionState()
 
         NotificationCenter.default.addObserver(

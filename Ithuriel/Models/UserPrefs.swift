@@ -32,6 +32,15 @@ final class UserPrefs {
     /// users running.
     var googleCloudAPIKey: String
 
+    /// Whether to speak agent finishes via Google Cloud TTS.
+    var spokenResponsesEnabled: Bool
+
+    /// Google Cloud TTS voice name (e.g. "en-US-Neural2-F").
+    var ttsVoice: String
+
+    /// TTS speaking rate, 0.25–4.0; 1.0 is normal.
+    var ttsRate: Double
+
     init(id: String = "default",
          redactKeys: Bool = true,
          localOnly: Bool = false,
@@ -49,7 +58,10 @@ final class UserPrefs {
          autoApproveSafeOnly: Bool = false,
          restrictToWorkspace: Bool = false,
          launchColorHex: String = "#7B5BFF",
-         googleCloudAPIKey: String = "") {
+         googleCloudAPIKey: String = "",
+         spokenResponsesEnabled: Bool = true,
+         ttsVoice: String = "en-US-Neural2-F",
+         ttsRate: Double = 1.0) {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -68,6 +80,9 @@ final class UserPrefs {
         self.restrictToWorkspace = restrictToWorkspace
         self.launchColorHex = launchColorHex
         self.googleCloudAPIKey = googleCloudAPIKey
+        self.spokenResponsesEnabled = spokenResponsesEnabled
+        self.ttsVoice = ttsVoice
+        self.ttsRate = ttsRate
     }
 
     var excludePaths: [String] {

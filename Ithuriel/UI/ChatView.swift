@@ -18,7 +18,7 @@ struct ChatView: View {
 
     @State private var selectedRunID: UUID?
     @State private var prompt: String = ""
-    @State private var showInspector: Bool = false
+    @State private var showInspector: Bool = true
     @State private var searchQuery: String = ""
     @State private var isFullScreen: Bool = false
     @FocusState private var inputFocused: Bool
@@ -27,29 +27,38 @@ struct ChatView: View {
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
 
     var body: some View {
-        NavigationSplitView {
-            sidebar.frame(minWidth: 200, idealWidth: 240)
-        } detail: {
-            HSplitView {
+        GeometryReader { geo in
+            let w = geo.size.width
+            // Adaptive thresholds. Below these the sidebar/inspector hide
+            // themselves so the conversation always has room to breathe.
+            let showSidebar = w >= 640
+            let showInspectorAuto = showInspector && w >= 880
+
+            HStack(spacing: 0) {
+                if showSidebar {
+                    sidebar
+                        .frame(width: min(max(w * 0.22, 200), 280))
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                    Divider().opacity(0.4)
+                }
                 conversation
-                    .frame(minWidth: 420)
-                    .layoutPriority(1)
-                if showInspector {
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if showInspectorAuto {
+                    Divider().opacity(0.4)
                     ContextWebView()
-                        .frame(minWidth: isFullScreen ? 220 : 180,
-                               idealWidth: isFullScreen ? 300 : 240,
-                               maxWidth: isFullScreen ? 360 : 280)
+                        .frame(width: min(max(w * 0.25, isFullScreen ? 240 : 200), 360))
                         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-                        .layoutPriority(0)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
+            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showSidebar)
+            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showInspectorAuto)
         }
         .navigationTitle("Ithuriel")
         .toolbar { toolbarContent }
         .toolbarBackground(.regularMaterial, for: .windowToolbar)
-        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-        .frame(minWidth: 840, minHeight: 560)
+        .frame(minWidth: 520, minHeight: 420)
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
             isFullScreen = true
         }
@@ -86,13 +95,13 @@ struct ChatView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(Color.primary.opacity(0.06))
             )
-            .padding(.horizontal, UILayout.spacingM)
-            .padding(.bottom, UILayout.spacingS)
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
 
-            Divider().opacity(0.25).padding(.horizontal, UILayout.spacingS)
+            Divider().opacity(0.3)
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: UILayout.spacingS) {
+                LazyVStack(alignment: .leading, spacing: 14) {
                     let groups = groupRuns(filteredRuns)
                     if groups.isEmpty {
                         emptySidebar
@@ -128,9 +137,7 @@ struct ChatView: View {
 
     private var sidebarHeader: some View {
         HStack(spacing: 8) {
-            Image(systemName: "asterisk")
-                .foregroundStyle(.tint)
-                .font(.system(size: 13, weight: .semibold))
+            AsteriskMark(size: 14, tint: .accentColor)
             Text("Ithuriel")
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
             Spacer()
@@ -143,9 +150,9 @@ struct ChatView: View {
             .help("New conversation (⌘N)")
             .keyboardShortcut("n", modifiers: .command)
         }
-        .padding(.horizontal, UILayout.spacingL)
-        .padding(.top, UILayout.spacingL)
-        .padding(.bottom, UILayout.spacingM)
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
     }
 
     private var emptySidebar: some View {
@@ -188,13 +195,9 @@ struct ChatView: View {
 
     private var conversation: some View {
         VStack(spacing: 0) {
-            PermissionsBanner()
-                .padding(.horizontal, UILayout.spacingXL)
-                .padding(.top, UILayout.spacingS)
-
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: UILayout.spacingL) {
+                    LazyVStack(alignment: .leading, spacing: 22) {
                         if let selected = selectedRun {
                             renderMessages(transcript: selected.transcript, header: selected.task)
                         } else if agent.isRunning || !agent.transcript.isEmpty {
@@ -202,27 +205,16 @@ struct ChatView: View {
                         } else {
                             emptyConversation
                         }
-                        Color.clear.frame(height: 48).id("bottom")
+                        Color.clear.frame(height: 60).id("bottom")
                     }
-                    .frame(maxWidth: UILayout.chatContentMaxWidth)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, UILayout.spacingXL)
-                    .padding(.top, UILayout.spacingM)
-                    .padding(.bottom, UILayout.spacingS)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 32)
                 }
                 .onChange(of: agent.transcript.count) { _, _ in
                     withAnimation(Motion.easeOut) { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
             }
-            .layoutPriority(1)
-
-            composer
-                .padding(.horizontal, UILayout.spacingXL)
-                .padding(.top, UILayout.spacingS)
-
-            AppChromeBar()
-                .padding(.horizontal, UILayout.spacingXL)
-                .padding(.bottom, UILayout.spacingM)
+            composer.padding(20)
         }
     }
 
@@ -270,23 +262,21 @@ struct ChatView: View {
                     )
                     .frame(width: 220, height: 220)
                     .blur(radius: 36)
-                Image(systemName: "asterisk")
-                    .font(.system(size: 60, weight: .bold))
-                    .foregroundStyle(.tint)
+                AsteriskMark(size: 76, tint: .accentColor)
                     .shadow(color: .accentColor.opacity(0.6), radius: 18)
             }
             Text("What's on your mind?")
                 .font(.system(.largeTitle, design: .rounded).weight(.semibold))
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 48)
+        .padding(.top, 80)
     }
 
     // MARK: - Composer
 
     private var composer: some View {
-        VStack(alignment: .leading, spacing: UILayout.spacingS) {
-            HStack(alignment: .bottom, spacing: UILayout.spacingM) {
+        VStack(spacing: 0) {
+            HStack(alignment: .bottom, spacing: 10) {
                 ZStack(alignment: .topLeading) {
                     if prompt.isEmpty {
                         Text(keyMissing
@@ -294,8 +284,8 @@ struct ChatView: View {
                              : "Message Ithuriel…")
                             .font(.system(size: 15))
                             .foregroundStyle(.tertiary)
-                            .padding(.horizontal, UILayout.spacingL)
-                            .padding(.vertical, UILayout.spacingM)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
                             .allowsHitTesting(false)
                     }
                     TextField("", text: $prompt, axis: .vertical)
@@ -303,17 +293,15 @@ struct ChatView: View {
                         .textFieldStyle(.plain)
                         .font(.system(size: 15))
                         .focused($inputFocused)
-                        .padding(.horizontal, UILayout.spacingL)
-                        .padding(.vertical, UILayout.spacingM)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
                         .onSubmit(runAgent)
                 }
                 .frame(minHeight: 44)
                 .frame(maxWidth: .infinity)
-
-                sendOrStopButton
             }
 
-            HStack(spacing: UILayout.spacingS) {
+            HStack(spacing: 8) {
                 ModelPicker(selection: Binding(
                     get: { prefs?.geminiModel ?? "gemini-2.5-flash" },
                     set: { newValue in
@@ -322,27 +310,25 @@ struct ChatView: View {
                     }
                 ))
 
-                if keyMissing {
-                    Text("API key required")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-
                 Spacer()
+
+                Text(keyMissing ? "no key" : "ready")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(keyMissing ? Color.orange : Color.secondary.opacity(0.6))
+
+                sendOrStopButton
             }
-            .padding(.horizontal, UILayout.spacingS)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
-        .padding(UILayout.spacingM)
         .background(
-            RoundedRectangle(cornerRadius: UILayout.radiusL, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color.primary.opacity(inputFocused ? 0.08 : 0.05))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: UILayout.radiusL, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Color.primary.opacity(inputFocused ? 0.18 : 0.10), lineWidth: 0.5)
         )
-        .frame(maxWidth: UILayout.chatContentMaxWidth)
-        .frame(maxWidth: .infinity)
         .animation(Motion.easeOut, value: inputFocused)
     }
 
@@ -398,25 +384,13 @@ struct ChatView: View {
             Button { newConversation() } label: { Label("New", systemImage: "square.and.pencil") }
                 .help("New conversation (⌘N)")
         }
-        ToolbarItemGroup(placement: .primaryAction) {
-            Button { AppRouter.shared.summonSpotlight() } label: {
-                Label(NSLocalizedString("menubar.menu.summon", comment: ""), systemImage: "sparkles")
-            }
-            Button { copyContextFromToolbar() } label: {
-                Label(NSLocalizedString("status.copy", comment: ""), systemImage: "doc.on.doc")
-            }
-            Button { SoundPlayer.shared.muted.toggle() } label: {
-                Image(systemName: SoundPlayer.shared.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-            }
-            Button { AppRouter.shared.openSettings() } label: {
-                Label(NSLocalizedString("status.settings", comment: ""), systemImage: "gearshape.fill")
-            }
+        ToolbarItem(placement: .primaryAction) {
             Button {
                 withAnimation(Motion.easeOut) { showInspector.toggle() }
             } label: {
                 Label("Context Web", systemImage: showInspector ? "circle.grid.hex.fill" : "circle.grid.hex")
             }
-            .help("Toggle context graph (off by default for a wider chat)")
+            .help("Toggle context graph")
         }
     }
 
@@ -439,13 +413,6 @@ struct ChatView: View {
         prompt = ""
         selectedRunID = nil
         Task { await agent.run(task: task) }
-    }
-
-    private func copyContextFromToolbar() {
-        Task {
-            let userPrefs = prefs ?? UserPrefs.defaults()
-            _ = await AppRouter.shared.copyContext(modelContext: modelContext, prefs: userPrefs)
-        }
     }
 }
 
@@ -539,9 +506,7 @@ private struct AssistantMessageRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Image(systemName: "asterisk")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.tint)
+                AsteriskMark(size: 12, tint: .accentColor)
                 Text("Ithuriel")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.tint)
@@ -612,18 +577,14 @@ private struct ToolUseCard: View {
     }
 
     private var headline: String {
-        if !call.isEmpty { return call.components(separatedBy: "\n").first ?? call }
+        if !call.isEmpty { return call }
         if let result, !result.isEmpty { return result }
         return "tool"
     }
 
     private var detail: String {
-        if !call.isEmpty {
-            let parts = call.components(separatedBy: "\n")
-            if parts.count > 1 { return parts.dropFirst().joined(separator: "\n") }
-        }
-        if let result, !result.isEmpty { return result }
-        return ""
+        if !call.isEmpty, let result, !result.isEmpty { return "\(call)\n\n→ \(result)" }
+        return call.isEmpty ? (result ?? "") : call
     }
 }
 
