@@ -199,6 +199,10 @@ struct ChatView: View {
     }
 
     private func newConversation() {
+        // Reset agent threading so the next message mints a fresh runId
+        // and clears the prior transcript + model history. Without this
+        // every message would still get its own SavedAgentRun row.
+        agent.startNewConversation()
         selectedRunID = nil
         prompt = ""
         inputFocused = true

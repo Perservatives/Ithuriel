@@ -14,15 +14,36 @@ final class AgentLoop: ObservableObject {
     private weak var container: ModelContainer?
     private let maxSteps = 100
 
+    // MARK: - Conversation threading
+    // A "conversation" persists across multiple user turns until the user
+    // explicitly starts a new chat (pencil button / ⌘N). All turns share
+    // the same runId so they upsert into one SavedAgentRun row in the
+    // sidebar instead of spawning a new chat per message.
+    private var currentConversationId: UUID?
+    private var currentConversationStartedAt: Date?
+    private var conversationHistory: [GeminiClient.Content] = []
+
     init(container: ModelContainer?) {
         self.container = container
+    }
+
+    /// Reset threading state so the NEXT `run(task:)` starts a fresh
+    /// conversation with a new id, empty transcript, empty model history.
+    func startNewConversation() {
+        currentConversationId = nil
+        currentConversationStartedAt = nil
+        conversationHistory.removeAll()
+        transcript.removeAll()
     }
 
     func run(task userTask: String) async {
         guard !isRunning else { return }
         isRunning = true
         lastError = nil
-        transcript.removeAll()
+        // Only clear transcript for a brand-new conversation; otherwise we
+        // append to the existing one so the chat reads as a continuous
+        // thread instead of separate "Task" rows.
+        if currentConversationId == nil { transcript.removeAll() }
         AgentController.shared.arm()
         SoundPlayer.shared.play(.submit)
         AgentStatusBus.shared.publish(.started(task: userTask))
@@ -49,8 +70,12 @@ final class AgentLoop: ObservableObject {
         let temporary = UserDefaults.standard.bool(forKey: "Ithuriel.NextRunTemporary")
         if temporary { UserDefaults.standard.set(false, forKey: "Ithuriel.NextRunTemporary") }
 
-        let runId = UUID()
-        let startedAt = Date()
+        // Reuse the existing conversation id if we're mid-thread; only mint
+        // a new one when starting a fresh chat. Same for startedAt.
+        let runId = currentConversationId ?? UUID()
+        let startedAt = currentConversationStartedAt ?? Date()
+        currentConversationId = runId
+        currentConversationStartedAt = startedAt
         let apiClient = IthurielClient(prefs: prefs)
         let cloudSyncEnabled = !temporary && !prefs.localOnly && AuthService.shared.isSignedIn
         if cloudSyncEnabled {
@@ -99,9 +124,10 @@ final class AgentLoop: ObservableObject {
         }
         let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs, related: related)
 
-        var convo: [GeminiClient.Content] = [
-            .init(role: "user", parts: [.init(text: userTask)])
-        ]
+        // Carry prior turns in the same thread forward so Gemini sees the
+        // full conversation, not just the latest user message.
+        var convo: [GeminiClient.Content] = conversationHistory
+        convo.append(.init(role: "user", parts: [.init(text: userTask)]))
         log(AgentTranscript.lineTaskStarted(userTask))
 
         for step in 1...maxSteps {
@@ -158,6 +184,7 @@ final class AgentLoop: ObservableObject {
             }
 
             if sawDone {
+                conversationHistory = convo
                 await uploadFinalState(.completed)
                 return
             }
@@ -168,6 +195,7 @@ final class AgentLoop: ObservableObject {
                 } ?? "done"
                 AgentStatusBus.shared.publish(.finished(summary: summary))
                 AgentSpeaker.shared.speakAsync(summary, prefs: prefs)
+                conversationHistory = convo
                 await uploadFinalState(.completed)
                 return
             }
@@ -191,8 +219,12 @@ final class AgentLoop: ObservableObject {
         let temporary = UserDefaults.standard.bool(forKey: "Ithuriel.NextRunTemporary")
         if temporary { UserDefaults.standard.set(false, forKey: "Ithuriel.NextRunTemporary") }
 
-        let runId = UUID()
-        let startedAt = Date()
+        // Same conversation-id reuse as the full agent loop so the chat reads
+        // as one thread instead of a new sidebar row per turn.
+        let runId = currentConversationId ?? UUID()
+        let startedAt = currentConversationStartedAt ?? Date()
+        currentConversationId = runId
+        currentConversationStartedAt = startedAt
         let apiClient = IthurielClient(prefs: prefs)
         let cloudSyncEnabled = !temporary && !prefs.localOnly && AuthService.shared.isSignedIn
         if cloudSyncEnabled {
@@ -235,8 +267,11 @@ final class AgentLoop: ObservableObject {
         log(AgentTranscript.lineTaskStarted(userTask))
 
         do {
+            // Thread prior turns in so casual chat remembers context.
+            var convo = conversationHistory
+            convo.append(.init(role: "user", parts: [.init(text: userTask)]))
             let modelTurn = try await client.step(
-                contents: [.init(role: "user", parts: [.init(text: userTask)])],
+                contents: convo,
                 tools: [],
                 system: systemPrompt
             )
@@ -252,6 +287,8 @@ final class AgentLoop: ObservableObject {
             SoundPlayer.shared.play(.done, volume: 0.35)
             AgentStatusBus.shared.publish(.replied(message: reply))
             AgentSpeaker.shared.speakAsync(reply, prefs: prefs)
+            convo.append(modelTurn)
+            conversationHistory = convo
             await uploadFinalState(.completed)
         } catch {
             lastError = "\(error)"
