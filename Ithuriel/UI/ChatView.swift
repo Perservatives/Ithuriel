@@ -20,6 +20,7 @@ struct ChatView: View {
     @State private var prompt: String = ""
     @State private var showInspector: Bool = true
     @State private var searchQuery: String = ""
+    @State private var isFullScreen: Bool = false
     @FocusState private var inputFocused: Bool
 
     private var prefs: UserPrefs? { prefsList.first }
@@ -33,7 +34,8 @@ struct ChatView: View {
                 conversation.frame(minWidth: 380)
                 if showInspector {
                     ContextWebView()
-                        .frame(minWidth: 240, idealWidth: 320)
+                        .frame(minWidth: isFullScreen ? 240 : 160,
+                               idealWidth: isFullScreen ? 320 : 200)
                         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
                 }
             }
@@ -44,6 +46,12 @@ struct ChatView: View {
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
         .frame(minWidth: 720, minHeight: 480)
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
+            isFullScreen = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willExitFullScreenNotification)) { _ in
+            isFullScreen = false
+        }
     }
 
     // MARK: - Sidebar
