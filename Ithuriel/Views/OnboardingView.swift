@@ -18,7 +18,7 @@ struct OnboardingView: View {
 
     let onFinish: () -> Void
 
-    enum Step { case welcome, signIn, permissions, done }
+    enum Step { case welcome, signIn, hotkey, permissions, done }
 
     private var prefs: UserPrefs? { prefsList.first }
 
@@ -61,9 +61,36 @@ struct OnboardingView: View {
         switch step {
         case .welcome:     welcomeStep
         case .signIn:      signInStep
+        case .hotkey:      hotkeyStep
         case .permissions: permissionsStep
         case .done:        Color.clear.onAppear { onFinish() }
         }
+    }
+
+    private var hotkeyStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Pick your shortcut")
+                .font(.system(.title2, design: .rounded).weight(.semibold))
+            Text("Press the key combination you want to use to summon Ithuriel from anywhere. The default is ⌃Space.")
+                .font(.body).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if let prefs {
+                HotkeyPickerView(
+                    keyCode: Binding(get: { prefs.hotkeyKeyCode },
+                                     set: { prefs.hotkeyKeyCode = $0; try? context.save(); pushHotkey() }),
+                    modifiers: Binding(get: { prefs.hotkeyModifiers },
+                                       set: { prefs.hotkeyModifiers = $0; try? context.save(); pushHotkey() })
+                )
+                .padding(.top, 4)
+                Text("Hold the shortcut to talk; tap to type. You can change this any time in Settings.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func pushHotkey() {
+        guard let prefs else { return }
+        HotkeyMonitor.shared.updateBinding(keyCode: prefs.hotkeyKeyCode, modifiers: prefs.hotkeyModifiers)
     }
 
     private var welcomeStep: some View {
@@ -219,6 +246,7 @@ struct OnboardingView: View {
         case .signIn:      return AuthService.shared.isSignedIn
             ? NSLocalizedString("onboarding.next", comment: "")
             : NSLocalizedString("onboarding.skip", comment: "")
+        case .hotkey:      return NSLocalizedString("onboarding.next", comment: "")
         case .permissions: return NSLocalizedString("onboarding.start", comment: "")
         case .done:        return ""
         }
@@ -227,7 +255,8 @@ struct OnboardingView: View {
     private func forward() {
         switch step {
         case .welcome:     step = .signIn
-        case .signIn:      step = .permissions
+        case .signIn:      step = .hotkey
+        case .hotkey:      step = .permissions
         case .permissions: complete()
         case .done:        break
         }
@@ -236,7 +265,8 @@ struct OnboardingView: View {
     private func back() {
         switch step {
         case .signIn:      step = .welcome
-        case .permissions: step = .signIn
+        case .hotkey:      step = .signIn
+        case .permissions: step = .hotkey
         default: break
         }
     }

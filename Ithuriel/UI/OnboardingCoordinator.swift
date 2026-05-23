@@ -11,6 +11,10 @@ final class OnboardingCoordinator {
     private init() {}
 
     private var window: NSWindow?
+    /// Fires once when the user completes (or closes) onboarding. The app
+    /// uses it to chain into the chat window so the user only ever sees one
+    /// foreground surface at a time.
+    var onFinish: (() -> Void)?
 
     func presentIfNeeded(container: ModelContainer) {
         Task { @MainActor in
@@ -50,5 +54,8 @@ final class OnboardingCoordinator {
     private func dismiss() {
         window?.orderOut(nil)
         window = nil
+        let cb = onFinish
+        onFinish = nil
+        cb?()
     }
 }

@@ -109,13 +109,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshPermissionState()
         }
 
-        // Boot animation, then open chat window as the primary surface.
-        // If this is a first launch, the onboarding window opens too.
+        // Sequence: launch animation → onboarding (only on first run) →
+        // chat window. The chat window is the primary surface, but we keep
+        // it off-screen until onboarding completes so the user isn't seeing
+        // two windows fight for focus.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             Task { @MainActor in
                 SpotlightCoordinator.shared.playLaunchThenSummon()
-                ChatWindowController.shared.show(container: container, agent: loop)
-                OnboardingCoordinator.shared.presentIfNeeded(container: container)
+
+                let needsOnboarding: Bool = {
+                    if let prefs = try? UserPrefs.load(in: container) {
+                        return prefs.onboardingComplete == false
+                    }
+                    return true
+                }()
+
+                // Wait for the orb sequence to finish before opening any
+                // window so the animation isn't covered.
+                try? await Task.sleep(nanoseconds: 1_900_000_000)
+
+                if needsOnboarding {
+                    OnboardingCoordinator.shared.onFinish = {
+                        Task { @MainActor in
+                            ChatWindowController.shared.show(container: container, agent: loop)
+                        }
+                    }
+                    OnboardingCoordinator.shared.present(container: container)
+                } else {
+                    ChatWindowController.shared.show(container: container, agent: loop)
+                }
             }
         }
 
