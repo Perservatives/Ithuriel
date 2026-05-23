@@ -8,6 +8,8 @@
 "status.transcript.empty"      = "Idle. Type a task above and press return.";
 "status.stop"                  = "Stop";
 "status.copy"                  = "Copy context";
+"status.copy.done"             = "Context copied to clipboard.";
+"status.copy.empty"            = "No workspace context to copy yet.";
 "status.killSwitch"            = "Kill: ⌃⌥⌘.";
 "status.settings"              = "Settings…";
 "status.quit"                  = "Quit";

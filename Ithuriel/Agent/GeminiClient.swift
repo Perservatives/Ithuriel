@@ -8,6 +8,24 @@ final class GeminiClient {
         var inlineData: InlineData?
         var functionCall: FunctionCall?
         var functionResponse: FunctionResponse?
+        /// Required by Gemini 3.x thinking models — must round-trip on functionCall parts.
+        var thoughtSignature: String?
+        /// Marks reasoning text parts returned alongside tool calls.
+        var thought: Bool?
+
+        init(text: String? = nil,
+             inlineData: InlineData? = nil,
+             functionCall: FunctionCall? = nil,
+             functionResponse: FunctionResponse? = nil,
+             thoughtSignature: String? = nil,
+             thought: Bool? = nil) {
+            self.text = text
+            self.inlineData = inlineData
+            self.functionCall = functionCall
+            self.functionResponse = functionResponse
+            self.thoughtSignature = thoughtSignature
+            self.thought = thought
+        }
 
         struct InlineData: Codable {
             let mimeType: String
@@ -26,7 +44,7 @@ final class GeminiClient {
     }
 
     struct Content: Codable {
-        let role: String  // "user" | "model" | "function"
+        let role: String  // "user" | "model"
         var parts: [Part]
     }
 
@@ -91,7 +109,7 @@ final class GeminiClient {
         let body = GenerateRequest(
             contents: contents,
             tools: tools.isEmpty ? nil : tools,
-            systemInstruction: Content(role: "user", parts: [Part(text: system, inlineData: nil, functionCall: nil, functionResponse: nil)])
+            systemInstruction: Content(role: "user", parts: [Part(text: system)])
         )
         req.httpBody = try JSONEncoder().encode(body)
 

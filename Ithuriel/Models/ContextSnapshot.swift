@@ -30,6 +30,36 @@ struct ContextSnapshot: Codable, Identifiable, Sendable {
     let activeFiles: [String]
 }
 
+extension ContextSnapshot {
+    /// Builds a fresh workspace snapshot when the periodic capture cache is empty.
+    @MainActor
+    static func captureFresh(prefs: UserPrefs) async -> ContextSnapshot {
+        let workspacePath: String
+        if !prefs.activeWorkspace.isEmpty {
+            workspacePath = prefs.activeWorkspace
+        } else if let recent = WorkspaceMonitor.mostRecentEditorWorkspace() {
+            workspacePath = recent
+        } else {
+            workspacePath = FileManager.default.homeDirectoryForCurrentUser.path
+        }
+
+        let git = await GitCapture.capture(at: workspacePath)
+        let terminal = await TerminalCapture.recentCommands(limit: 20)
+        let raw = ContextSnapshot(
+            id: UUID(),
+            capturedAt: Date(),
+            source: SnapshotSource.detect(for: workspacePath),
+            workspacePath: workspacePath,
+            gitState: git,
+            recentEdits: [],
+            terminalHistory: terminal,
+            activeFiles: WorkspaceMonitor.openFiles(in: workspacePath)
+        )
+        let (redacted, _) = Redactor.redact(snapshot: raw, prefs: prefs)
+        return redacted
+    }
+}
+
 @Model
 final class CachedSnapshot {
     @Attribute(.unique) var id: UUID

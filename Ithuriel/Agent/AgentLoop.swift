@@ -61,7 +61,7 @@ final class AgentLoop: ObservableObject {
         let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs)
 
         var convo: [GeminiClient.Content] = [
-            .init(role: "user", parts: [.init(text: userTask, inlineData: nil, functionCall: nil, functionResponse: nil)])
+            .init(role: "user", parts: [.init(text: userTask)])
         ]
         log("▶ task: \(userTask)")
 
@@ -101,9 +101,6 @@ final class AgentLoop: ObservableObject {
                 log("→ \(call.name): \(result.prefix(120))")
                 SoundPlayer.shared.play(.tool, volume: 0.4)
                 let resp = GeminiClient.Part(
-                    text: nil,
-                    inlineData: nil,
-                    functionCall: nil,
                     functionResponse: GeminiClient.Part.FunctionResponse(
                         name: call.name,
                         response: ["result": .string(result)]
@@ -121,7 +118,7 @@ final class AgentLoop: ObservableObject {
                 await uploadFinalState(.completed)
                 return
             }
-            convo.append(.init(role: "function", parts: functionResponses))
+            convo.append(.init(role: "user", parts: functionResponses))
             log("step \(step)/\(maxSteps) complete")
         }
 
