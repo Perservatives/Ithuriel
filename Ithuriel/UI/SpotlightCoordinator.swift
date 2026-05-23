@@ -57,7 +57,7 @@ final class SpotlightCoordinator {
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView:
-            LaunchOrbView(tint: Color(white: 0.82), onComplete: { [weak self] in
+            LaunchOrbView(tint: resolveLaunchColor(), onComplete: { [weak self] in
                 self?.dismissLaunch()
             })
         )

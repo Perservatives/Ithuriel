@@ -50,6 +50,10 @@
 "settings.voice.key"           = "Google Cloud API key (Speech-to-Text + Text-to-Speech)";
 "settings.voice.help"          = "Enable the Cloud Speech-to-Text and Text-to-Speech APIs on the project tied to this key. Leave blank to reuse your Gemini API key.";
 "settings.voice.shortcut"      = "Hold ⇧⌘Space to talk. Release to send.";
+"settings.voice.spoken"        = "Spoken replies";
+"settings.voice.spokenEnabled" = "Speak the agent's final answer";
+"settings.voice.ttsVoice"      = "Voice";
+"settings.voice.ttsRate"       = "Speaking rate";
 
 /* Workspace picker */
 "settings.agent.workspacePick" = "Choose…";
@@ -189,6 +193,7 @@
 
 /* Agent loop */
 "agent.err.noKey"              = "Set your Gemini API key in Settings → Agent before running the agent.";
+"agent.err.disabled"           = "Agent control is turned off in Settings → Agent.";
 
 /* Agent run transcript (menu bar, spotlight, chat) */
 "agent.transcript.task"              = "Task: %@";

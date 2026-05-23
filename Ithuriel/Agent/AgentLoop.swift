@@ -30,15 +30,24 @@ final class AgentLoop: ObservableObject {
 
         guard let container = container else { return }
         let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        guard prefs.agentEnabled else {
+            lastError = NSLocalizedString("agent.err.disabled", comment: "")
+            return
+        }
         guard !prefs.geminiApiKey.isEmpty else {
             lastError = NSLocalizedString("agent.err.noKey", comment: "")
             return
         }
 
+        // Temporary-chat opt-out: ⌘⇧N in ChatView sets this flag so the next
+        // run skips cloud sync + persistence. One-shot — consumed and cleared.
+        let temporary = UserDefaults.standard.bool(forKey: "Ithuriel.NextRunTemporary")
+        if temporary { UserDefaults.standard.set(false, forKey: "Ithuriel.NextRunTemporary") }
+
         let runId = UUID()
         let startedAt = Date()
         let apiClient = IthurielClient(prefs: prefs)
-        let cloudSyncEnabled = !prefs.localOnly && AuthService.shared.isSignedIn
+        let cloudSyncEnabled = !temporary && !prefs.localOnly && AuthService.shared.isSignedIn
         if cloudSyncEnabled {
             try? await apiClient.postAgentRun(.init(
                 id: runId, task: userTask, status: .running,

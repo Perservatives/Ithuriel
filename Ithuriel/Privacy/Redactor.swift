@@ -41,8 +41,10 @@ enum Redactor {
     static func redact(snapshot: ContextSnapshot, prefs: UserPrefs) -> (ContextSnapshot, Int) {
         var redactions = 0
         let excludes = prefs.excludePaths
+        let scrubSecrets = prefs.redactKeys
 
         func scrub(_ s: String) -> String {
+            guard scrubSecrets else { return s }
             let (out, n) = redact(text: s)
             redactions += n
             return out

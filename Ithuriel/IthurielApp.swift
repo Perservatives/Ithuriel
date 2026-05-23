@@ -195,6 +195,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func runPeriodicCapture(reason: CaptureReason) async {
         guard let container = modelContainer else { return }
         let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        guard prefs.capturingEnabled else {
+            Log.debug("Capture disabled in Settings — skipping")
+            return
+        }
 
         let workspacePath = WorkspaceMonitor.mostRecentEditorWorkspace() ?? FileManager.default.homeDirectoryForCurrentUser.path
         let git = await GitCapture.capture(at: workspacePath)

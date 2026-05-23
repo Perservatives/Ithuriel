@@ -3,8 +3,10 @@ import SwiftUI
 import SwiftData
 
 /// Hosts the first-run `OnboardingView` in a borderless titled window.
-/// AppDelegate calls `presentIfNeeded(...)` on launch; if the user has
-/// already completed onboarding it's a no-op.
+/// AppDelegate computes whether onboarding is needed (it has to gate the
+/// chat-window opening on this), so this coordinator is intentionally
+/// simple: a singleton that owns the window and exposes `present(...)`
+/// plus an `onFinish` callback for chaining.
 @MainActor
 final class OnboardingCoordinator {
     static let shared = OnboardingCoordinator()
@@ -15,14 +17,6 @@ final class OnboardingCoordinator {
     /// uses it to chain into the chat window so the user only ever sees one
     /// foreground surface at a time.
     var onFinish: (() -> Void)?
-
-    func presentIfNeeded(container: ModelContainer) {
-        Task { @MainActor in
-            guard let prefs = try? await UserPrefs.load(in: container),
-                  prefs.onboardingComplete == false else { return }
-            present(container: container)
-        }
-    }
 
     func present(container: ModelContainer) {
         guard window == nil else {

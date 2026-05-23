@@ -53,14 +53,10 @@ final class VoiceController {
                 let text = try await GoogleSpeech.transcribe(pcm16: data, apiKey: key)
                 guard !text.isEmpty else { return }
                 Log.info("STT: \(text)")
+                // AgentLoop already routes the final summary through
+                // AgentSpeaker (which honors spokenResponsesEnabled). The
+                // earlier inline speak() call here resulted in double-playback.
                 await loop.run(task: text)
-                // After the run completes, speak the last transcript line.
-                if let lastLine = loop.transcript.reversed().first(where: { $0.hasPrefix("✓") || $0.hasPrefix("·") }) {
-                    let spoken = String(lastLine.dropFirst()).trimmingCharacters(in: .whitespaces)
-                    if !spoken.isEmpty {
-                        try? await self.speak(spoken, apiKey: key)
-                    }
-                }
             } catch {
                 Log.error("Voice run failed: \(error)")
             }

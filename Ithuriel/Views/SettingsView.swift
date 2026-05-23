@@ -229,6 +229,30 @@ struct SettingsView: View {
                 Text(NSLocalizedString("settings.voice.shortcut", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
             }
+            card(NSLocalizedString("settings.voice.spoken", comment: "")) {
+                Toggle(NSLocalizedString("settings.voice.spokenEnabled", comment: ""),
+                       isOn: binding(\.spokenResponsesEnabled))
+                labelledField(NSLocalizedString("settings.voice.ttsVoice", comment: "")) {
+                    Picker("", selection: binding(\.ttsVoice)) {
+                        Text("Neural2 Female (en-US)").tag("en-US-Neural2-F")
+                        Text("Neural2 Male (en-US)").tag("en-US-Neural2-D")
+                        Text("Studio Female (en-US)").tag("en-US-Studio-O")
+                        Text("Wavenet Female (en-GB)").tag("en-GB-Wavenet-A")
+                    }
+                    .labelsHidden()
+                }
+                .disabled(!prefs.spokenResponsesEnabled)
+                labelledField(NSLocalizedString("settings.voice.ttsRate", comment: "")) {
+                    HStack {
+                        Slider(value: binding(\.ttsRate), in: 0.5...2.0, step: 0.05)
+                        Text(String(format: "%.2fx", prefs.ttsRate))
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 50, alignment: .trailing)
+                    }
+                }
+                .disabled(!prefs.spokenResponsesEnabled)
+            }
         }
     }
 

@@ -113,7 +113,10 @@ final class HotkeyMonitor {
         if needShift != flags.contains(.maskShift)     { return false }
         if needOpt   != flags.contains(.maskAlternate) { return false }
         if needCtrl  != flags.contains(.maskControl)   { return false }
-        return modifiers.rawValue != 0
+        // Allow modifier-free hotkeys (e.g. a function key) — the caller
+        // (HotkeyPickerView) is responsible for not registering ambiguous
+        // chords like a bare letter that would type into every text field.
+        return true
     }
 
     private func beginPress() {
@@ -152,14 +155,20 @@ final class HotkeyMonitor {
     // MARK: - Carbon fallback (no Accessibility yet — tap=summon only)
 
     private var carbonHotKey: EventHotKeyRef?
+    private var carbonHandlerRef: EventHandlerRef?
+
     private func installCarbonFallback() {
         let hotKeyID = EventHotKeyID(signature: OSType(0x49544855), id: 3)
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                                  eventKind: UInt32(kEventHotKeyPressed))
-        InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
-            Task { @MainActor in HotkeyMonitor.shared.onSummonTap() }
-            return noErr
-        }, 1, &spec, nil, nil)
+        // Only install the global event handler once. Previous implementations
+        // re-installed on every rebind, leaking handlers each time.
+        if carbonHandlerRef == nil {
+            InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
+                Task { @MainActor in HotkeyMonitor.shared.onSummonTap() }
+                return noErr
+            }, 1, &spec, nil, &carbonHandlerRef)
+        }
         var carbonMods: UInt32 = 0
         if modifiers.contains(.cmd)   { carbonMods |= UInt32(cmdKey) }
         if modifiers.contains(.shift) { carbonMods |= UInt32(shiftKey) }
