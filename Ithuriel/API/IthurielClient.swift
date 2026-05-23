@@ -76,6 +76,76 @@ final class IthurielClient {
         return (json["user_id"] as? String) ?? (json["sub"] as? String)
     }
 
+    /// Semantic search against `/v1/context/search`. Returns up to `k`
+    /// snapshots ranked by relevance to `query`. Designed to fail soft:
+    /// any error (not signed in, transport, decoding, non-2xx) yields `[]`
+    /// so the agent can run unaugmented when RAG is unavailable.
+    func searchContext(query: String, k: Int = 5) async -> [RelatedSnapshot] {
+        guard AuthService.shared.isSignedIn || staticToken != nil else { return [] }
+        let url = baseURL.appendingPathComponent("/v1/context/search")
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            try await attachAuth(&req)
+        } catch {
+            return []
+        }
+        let body: [String: Any] = ["query": query, "k": k]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        do {
+            let data = try await sendWithRetry(req)
+            let env = try JSONDecoder.ithuriel.decode(SearchEnvelope.self, from: data)
+            return env.items.map { item in
+                RelatedSnapshot(
+                    id: item.snapshot.id,
+                    capturedAt: item.snapshot.capturedAt,
+                    workspacePath: item.snapshot.workspacePath,
+                    gitBranch: item.snapshot.gitBranch,
+                    gitCommit: item.snapshot.gitCommit,
+                    summaryShort: item.snapshot.summaryShort,
+                    summaryMedium: item.snapshot.summaryMedium,
+                    summaryFull: item.snapshot.summaryFull,
+                    score: item.score
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    struct RelatedSnapshot: Codable {
+        let id: String?
+        let capturedAt: Date?
+        let workspacePath: String?
+        let gitBranch: String?
+        let gitCommit: String?
+        let summaryShort: String?
+        let summaryMedium: String?
+        let summaryFull: String?
+        let score: Double?
+    }
+
+    private struct SearchEnvelope: Decodable {
+        let items: [SearchItem]
+    }
+
+    private struct SearchItem: Decodable {
+        let snapshot: SnapshotPayload
+        let score: Double?
+    }
+
+    private struct SnapshotPayload: Decodable {
+        let id: String?
+        let capturedAt: Date?
+        let workspacePath: String?
+        let gitBranch: String?
+        let gitCommit: String?
+        let summaryShort: String?
+        let summaryMedium: String?
+        let summaryFull: String?
+    }
+
     func fetchCurrent(format tool: AITool) async throws -> ContextSnapshot {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/context/current"),
                                        resolvingAgainstBaseURL: false)

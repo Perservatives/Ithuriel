@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "snapshots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "embedding", "vectorConfig": { "dimension": 768, "flat": {} } }
+      ]
+    },
+    {
       "collectionGroup": "agentRuns",
       "queryScope": "COLLECTION",
       "fields": [

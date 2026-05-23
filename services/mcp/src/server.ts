@@ -6,7 +6,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { IthurielAPI, type InjectTarget } from "./ithuriel.js";
+import { IthurielAPI, type InjectTarget, type RelatedSnapshot } from "./ithuriel.js";
 
 export interface BuildOptions {
   apiBaseURL: string;
@@ -84,6 +84,27 @@ export function buildServer(opts: BuildOptions): McpServer {
     async ({ id }) => {
       const snap = await api().snapshot(id);
       return { content: [{ type: "text", text: renderSnapshot(snap) }] };
+    },
+  );
+
+  server.tool(
+    "search_context",
+    "Semantic search over the user's past Ithuriel workspace snapshots. Embed the query with Vertex AI text-embedding-005 and run native Firestore KNN. Use this when the user asks 'have I worked on X before?', 'find when I last touched Y', or to RAG-ground answers in their actual project history.",
+    { query: z.string().min(1), k: z.number().int().min(1).max(20).default(5) },
+    async ({ query, k }) => {
+      const items = await api().searchContext(query, k);
+      if (items.length === 0) {
+        return { content: [{ type: "text", text: `No prior snapshots matched "${query}".` }] };
+      }
+      const lines = items.map((s: RelatedSnapshot, i: number) => {
+        const when = s.capturedAt ? s.capturedAt : "unknown time";
+        const where = s.workspacePath ?? "(unknown workspace)";
+        const branch = s.gitBranch ? ` · ${s.gitBranch}` : "";
+        const summary = s.summaryMedium ?? s.summaryShort ?? s.searchText ?? "(no summary)";
+        const score = s.score != null ? ` [similarity ${(s.score * 100).toFixed(1)}%]` : "";
+        return `${i + 1}. ${when} · ${where}${branch}${score}\n   ${summary}`;
+      });
+      return { content: [{ type: "text", text: lines.join("\n\n") }] };
     },
   );
 

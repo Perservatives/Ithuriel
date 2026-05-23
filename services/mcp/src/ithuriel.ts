@@ -36,6 +36,19 @@ export type InjectTarget =
   | "copilot-chat"
   | "gemini";
 
+export interface RelatedSnapshot {
+  id?: string;
+  capturedAt?: string;
+  workspacePath?: string | null;
+  gitBranch?: string | null;
+  gitCommit?: string | null;
+  summaryShort?: string | null;
+  summaryMedium?: string | null;
+  summaryFull?: string | null;
+  searchText?: string | null;
+  score?: number | null;
+}
+
 export class IthurielAPI {
   constructor(
     private readonly baseURL: string,
@@ -63,6 +76,14 @@ export class IthurielAPI {
 
   async agentRuns(limit = 25): Promise<{ items: AgentRun[] }> {
     return this.get(`/v1/agent/runs?limit=${limit}`);
+  }
+
+  async searchContext(query: string, k = 5): Promise<RelatedSnapshot[]> {
+    const res = await this.post<{ items: Array<{ snapshot: any; score: number }> }>(
+      "/v1/context/search",
+      { query, k },
+    );
+    return (res.items ?? []).map((it) => ({ ...it.snapshot, score: it.score }));
   }
 
   // ---- internals ----

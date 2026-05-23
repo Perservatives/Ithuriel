@@ -86,7 +86,13 @@ final class AgentLoop: ObservableObject {
         let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
         let tools = AgentTools.declarations
         let snapshot = await CachedSnapshot.latest(in: container)
-        let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs)
+        let related: [IthurielClient.RelatedSnapshot]
+        if !prefs.localOnly, AuthService.shared.isSignedIn {
+            related = await apiClient.searchContext(query: userTask, k: 5)
+        } else {
+            related = []
+        }
+        let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs, related: related)
 
         var convo: [GeminiClient.Content] = [
             .init(role: "user", parts: [.init(text: userTask)])
@@ -179,7 +185,7 @@ final class AgentLoop: ObservableObject {
         Log.info("[agent] \(line)")
     }
 
-    private func buildSystemPrompt(snapshot: ContextSnapshot?, prefs: UserPrefs) -> String {
+    private func buildSystemPrompt(snapshot: ContextSnapshot?, prefs: UserPrefs, related: [IthurielClient.RelatedSnapshot] = []) -> String {
         var s = """
         You are Ithuriel — a macOS computer-use agent that lives in the menu
         bar and acts as a real collaborator, not a silent script runner. You
@@ -223,7 +229,7 @@ final class AgentLoop: ObservableObject {
              ("Fixed the off-by-one in chunkSize and re-ran the tests —
              all 47 pass."). This becomes the user's at-a-glance result.
 
-        ## Hard rules
+        \(relatedContextBlock(related))## Hard rules
 
           - File paths under .env, .ssh/, secrets/, and private/ are refused.
           - \(prefs.restrictToWorkspace
@@ -256,6 +262,33 @@ final class AgentLoop: ObservableObject {
             s += "\n\n(No workspace context yet — capture is still warming up.)"
         }
 
+        return s
+    }
+
+    /// Renders the RAG block injected into the system prompt. Returns an
+    /// empty string when there's nothing useful to show, which collapses
+    /// cleanly into the surrounding template.
+    private func relatedContextBlock(_ related: [IthurielClient.RelatedSnapshot]) -> String {
+        let usable = related.prefix(5).filter { $0.summaryMedium != nil || $0.summaryShort != nil }
+        guard !usable.isEmpty else { return "" }
+        let iso = ISO8601DateFormatter()
+        var lines: [String] = []
+        for item in usable {
+            let summary = item.summaryMedium ?? item.summaryShort ?? ""
+            let trimmed = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty { continue }
+            let capped = trimmed.count > 280 ? String(trimmed.prefix(280)) : trimmed
+            let branch = item.gitBranch ?? "?"
+            let date = item.capturedAt.map { iso.string(from: $0) } ?? "?"
+            lines.append("  - [\(branch) @ \(date)] \(capped)")
+        }
+        guard !lines.isEmpty else { return "" }
+        var s = "## Related context from past sessions\n\n"
+        s += "The user has worked on this project before. Here's what they were doing\n"
+        s += "in past snapshots most relevant to today's task — use this background if\n"
+        s += "it helps; ignore if not relevant.\n\n"
+        s += lines.joined(separator: "\n")
+        s += "\n\n"
         return s
     }
 

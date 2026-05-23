@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 import functions_framework
 from google.cloud import firestore, storage, pubsub_v1
+from google.cloud.firestore_v1.vector import Vector
 from vertexai import init as vertex_init
 from vertexai.generative_models import GenerativeModel
 from vertexai.language_models import TextEmbeddingModel
@@ -55,16 +56,29 @@ def handle(event):
     medium = _summarize(_flash, text, max_tokens=500,  style="A short paragraph capturing the active task.")
     full   = _summarize(_pro,   text, max_tokens=1800, style="Long-form CLAUDE.md-style brief.")
 
-    vector = _embed.get_embeddings([text[:8000]])[0].values
+    # text-embedding-005 returns 768-dim vectors by default. Embed the
+    # short+medium summary + a slice of raw text — summaries are more
+    # semantically dense than the dump alone, so RAG retrieval over them
+    # finds better neighbours.
+    embed_input = f"{short}\n\n{medium}\n\n{text[:6000]}"
+    vector = _embed.get_embeddings([embed_input])[0].values
+
+    # (a) Portable JSON copy of the vector in GCS.
     embed_path = f"{user_id}/{snapshot_id}.embedding.json"
     _storage.bucket(SNAP_BUCKET).blob(embed_path).upload_from_string(
         json.dumps(vector), content_type="application/json"
     )
 
+    # (b) Native Firestore Vector field — the API's /v1/context/search route
+    # runs find_nearest() against this for RAG retrieval. `searchText` is a
+    # compact retrieval-friendly bundle so callers don't need a second GCS
+    # fetch to render a result.
     _db.collection("snapshots").document(snapshot_id).set({
         "summaryShort":  short,
         "summaryMedium": medium,
         "summaryFull":   full,
+        "embedding":     Vector(vector),
+        "searchText":    _search_text(raw, medium),
         "embeddingRef":  f"gs://{SNAP_BUCKET}/{embed_path}",
         "processedAt":   datetime.now(timezone.utc),
     }, merge=True)
@@ -81,6 +95,19 @@ def _load_raw(ref: str) -> dict:
     bucket_name, _, path = ref[5:].partition("/")
     data = _storage.bucket(bucket_name).blob(path).download_as_bytes()
     return json.loads(data)
+
+
+def _search_text(raw: dict, medium_summary: str) -> str:
+    """Compact retrieval-friendly bundle stored on the snapshot doc so RAG
+    results carry usable context without a second fetch."""
+    bits: list[str] = []
+    if raw.get("workspacePath"):
+        bits.append(f"workspace={raw['workspacePath']}")
+    git = raw.get("gitState") or {}
+    if git.get("branch"):     bits.append(f"branch={git['branch']}")
+    if git.get("lastCommit"): bits.append(f"commit={git['lastCommit']}")
+    if medium_summary:        bits.append(medium_summary)
+    return " | ".join(bits)
 
 
 def _render_for_llm(raw: dict) -> str:

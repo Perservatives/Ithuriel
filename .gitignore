@@ -29,3 +29,4 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/terraform.tfvars
 crash.log
+graphify-out/
