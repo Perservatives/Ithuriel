@@ -15,19 +15,20 @@ final class PermissionsManager: ObservableObject {
     @Published private(set) var screenRecordingGranted = false
     @Published private(set) var notificationsGranted = false
 
+    /// Accessibility + screen recording — required for computer-use.
+    var needsRequired: Bool {
+        !(accessibilityGranted && screenRecordingGranted)
+    }
+
     var needsAny: Bool {
-        !(accessibilityGranted && screenRecordingGranted && notificationsGranted)
+        needsRequired || !notificationsGranted
     }
 
     private init() {}
 
     func refresh() async {
         accessibilityGranted = AXIsProcessTrusted()
-        if #available(macOS 10.15, *) {
-            screenRecordingGranted = CGPreflightScreenCaptureAccess()
-        } else {
-            screenRecordingGranted = true
-        }
+        screenRecordingGranted = ScreenCapture.hasScreenRecordingAccess()
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         switch settings.authorizationStatus {
         case .authorized, .provisional, .ephemeral:
@@ -36,6 +37,14 @@ final class PermissionsManager: ObservableObject {
             notificationsGranted = false
         }
         NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
+
+        // TCC can lag briefly after returning from System Settings.
+        if needsRequired {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            accessibilityGranted = AXIsProcessTrusted()
+            screenRecordingGranted = ScreenCapture.hasScreenRecordingAccess()
+            NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
+        }
     }
 
     func requestAccessibility() {

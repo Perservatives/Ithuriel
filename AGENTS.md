@@ -28,15 +28,47 @@ These are standing instructions from the project owner. Follow them without
 asking each time.
 
 1. **Always read `AGENTS.md` (this file) and `PRD.md` before starting work.**
-2. **Always commit and push to the git remote.** When you finish a unit of
-   work, create a commit with a clear message and `git push`. The owner has
-   pre-authorized push.
-3. **When push is rejected because remote diverged: pull and combine.**
-   Run `git pull --rebase`, resolve any conflicts by combining both sides
-   (never discard remote work or local work silently), then push again.
-4. **Never force-push** (`--force`, `--force-with-lease`) unless the owner
+2. **Commit only when the user explicitly asks.** If unclear, ask first. Do not
+   commit at the end of a task unless they requested it.
+3. **Push only when the user explicitly asks** (e.g. "push", "pull before edit,
+   push after"). Pre-authorized push does not mean push every time.
+4. **Before editing, when they asked to sync:** pull latest (`git pull --rebase`).
+   If uncommitted changes block pull, stash → pull → stash pop. Narrate each step
+   to the user (see §2.1).
+5. **When push is rejected because remote diverged:** pull and combine. Resolve
+   conflicts by merging both sides (never discard remote or local work silently),
+   then push again if they asked for push.
+6. **Never force-push** (`--force`, `--force-with-lease`) unless the owner
    explicitly asks.
-5. **Never skip hooks** (`--no-verify`) unless explicitly asked.
+7. **Never skip hooks** (`--no-verify`) unless explicitly asked.
+8. **Never change git config** or use interactive git (`-i`).
+
+### 2.1 Git steps — tell the user what is happening
+
+Agents must not run opaque stash/pull/commit/push chains. Use short **bold
+labels** and one plain sentence per phase so the user can follow along.
+
+| Phase | Tell the user |
+|--------|----------------|
+| Status check | **Checking git status** — any local changes? |
+| Stash | **Stashing your work** — temporary; needed so pull can run. |
+| Pull | **Pulling latest** — from `origin` (rebase). |
+| Stash pop | **Restoring your work** — re-applying stashed files. |
+| Review (commit) | **Reviewing changes** — status, diff, recent commits. |
+| Stage | **Staging files** — which paths (no secrets). |
+| Commit | **Creating commit** — one-line why (HEREDOC message). |
+| Verify | **Verifying commit** — post-commit status. |
+| Push | **Pushing to remote** — branch name; pull first if needed. |
+
+Example narration:
+
+> **Stashing your work** — You have uncommitted edits; saving them briefly.  
+> **Pulling latest** — `git pull --rebase` on `main`. Already up to date.  
+> **Restoring your work** — Stash popped; your local edits are back.
+
+Full commit safety rules (parallel status/diff/log, no amend unless allowed,
+no secrets in commits) live in the project Cursor rule
+`.cursor/rules/git-workflow.mdc`.
 
 ---
 
@@ -134,5 +166,7 @@ A change is done when:
 - All new files compile without warnings.
 - Code matches existing style (4-space indent, no trailing whitespace).
 - New user-facing strings are added to `Localizable.strings`.
-- A commit has been created and pushed to the remote.
-- If the remote had diverged, the pull-and-combine workflow was used.
+- If the user asked to commit: a commit was created with a clear message and
+  they were told what was staged (see §2.1).
+- If the user asked to push: remote is updated after pull/rebase as needed,
+  with each git phase narrated.

@@ -50,7 +50,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         URLSchemeHandler.shared.install()
         SpotlightCoordinator.shared.configure(container: container, agentLoop: loop)
         SpotlightCoordinator.shared.installSummonHotkey()
-        requestAccessibilityIfNeeded()
+        refreshPermissionState()
+
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.refreshPermissionState()
+        }
 
         // Boot animation only — menubar popover is the primary surface.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -82,13 +90,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         workspaceMonitor?.stop()
     }
 
-    private func requestAccessibilityIfNeeded() {
-        let opts: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-        let trusted = AXIsProcessTrustedWithOptions(opts as CFDictionary)
-        if !trusted {
-            Log.info("Accessibility permission not yet granted. Injection features disabled until granted.")
+    private func refreshPermissionState() {
+        Task { @MainActor in
+            await PermissionsManager.shared.refresh()
+            menuBarManager?.setAccessibilityState(
+                granted: PermissionsManager.shared.accessibilityGranted
+            )
         }
-        Task { @MainActor in menuBarManager?.setAccessibilityState(granted: trusted) }
     }
 
     private func handleFileChanges(_ changed: [String]) {
@@ -102,9 +110,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case appFocus(AITool)
     }
 
+    @MainActor
     func runPeriodicCapture(reason: CaptureReason) async {
         guard let container = modelContainer else { return }
-        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
 
         let workspacePath = WorkspaceMonitor.mostRecentEditorWorkspace() ?? FileManager.default.homeDirectoryForCurrentUser.path
         let git = await GitCapture.capture(at: workspacePath)

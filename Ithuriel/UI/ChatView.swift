@@ -654,21 +654,21 @@ enum ChatBubble {
     enum Role { case user, assistant, tool, toolResult, error, system }
 
     static func agentForLine(_ line: String) -> Role {
-        if line.hasPrefix("▶") { return .user }
-        if line.hasPrefix("·") { return .assistant }
-        if line.hasPrefix("→") { return .tool }
-        if line.hasPrefix("✓") { return .assistant }
-        if line.hasPrefix("✗") { return .error }
-        if line.hasPrefix("■") { return .system }
-        if line.hasPrefix("◌") { return .system }
-        return .system
+        switch AgentTranscript.present(line).kind {
+        case .task:      return .user
+        case .thinking:  return .assistant
+        case .action:    return .tool
+        case .done:      return .assistant
+        case .error:     return .error
+        case .stopped, .progress, .plain: return .system
+        }
     }
 
     static func cleanLine(_ line: String) -> String {
-        let prefixes: Set<Character> = ["▶", "·", "→", "✓", "✗", "■", "◌"]
-        if let first = line.first, prefixes.contains(first) {
-            return String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
+        let p = AgentTranscript.present(line)
+        if let detail = p.detail {
+            return "\(p.title)\n\(detail)"
         }
-        return line
+        return p.title
     }
 }

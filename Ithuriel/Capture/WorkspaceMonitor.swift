@@ -81,9 +81,10 @@ final class WorkspaceMonitor {
         Task { await injectContext(for: tool) }
     }
 
+    @MainActor
     private func injectContext(for tool: AITool) async {
         guard let container = container else { return }
-        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
 
         let snapshot: ContextSnapshot?
         if prefs.localOnly || kIthurielDebug {

@@ -4,9 +4,7 @@ import UserNotifications
 
 final class InjectionEngine {
     static let shared = InjectionEngine()
-    private init() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-    }
+    private init() {}
 
     /// Writes formatted context to the system pasteboard and posts a notification.
     func primaryInject(text: String, target: AITool) {

@@ -28,6 +28,8 @@
     <string>Ithuriel uses Apple Events to launch apps, control other applications, and run agent tasks on your behalf.</string>
     <key>NSAccessibilityUsageDescription</key>
     <string>Ithuriel needs Accessibility access to type, click, send keyboard shortcuts, and drive apps while executing agent tasks.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Ithuriel needs Screen Recording access so the agent can take screenshots and understand what is on your display.</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

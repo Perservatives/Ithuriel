@@ -240,30 +240,27 @@ private struct SpotlightTranscriptLine: View {
     let line: String
 
     var body: some View {
-        let parts = decompose(line)
+        let p = AgentTranscript.present(line)
         HStack(alignment: .top, spacing: 8) {
-            Text(parts.symbol)
+            Text(p.symbol)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundStyle(parts.tint)
+                .foregroundStyle(AgentTranscript.tint(for: p.kind))
                 .frame(width: 14, alignment: .leading)
-            Text(parts.content)
-                .font(.system(size: 12.5, design: .monospaced))
-                .foregroundStyle(.primary.opacity(0.88))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(p.title)
+                    .font(.system(size: 12.5, design: .rounded))
+                    .fontWeight(p.kind == .task || p.kind == .done ? .semibold : .regular)
+                    .foregroundStyle(.primary.opacity(0.9))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(p.detail == nil ? 3 : 2)
+                if let detail = p.detail {
+                    Text(detail)
+                        .font(.system(size: 11, design: .rounded))
+                        .foregroundStyle(detail.lowercased().hasPrefix("error") ? .red : .secondary)
+                        .lineLimit(2)
+                }
+            }
         }
-    }
-
-    private func decompose(_ line: String) -> (symbol: String, content: String, tint: Color) {
-        let rest = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
-        if line.hasPrefix("▶") { return ("▶", rest, .accentColor) }
-        if line.hasPrefix("→") { return ("→", rest, .blue) }
-        if line.hasPrefix("✓") { return ("✓", rest, .green) }
-        if line.hasPrefix("✗") { return ("✗", rest, .red) }
-        if line.hasPrefix("■") { return ("■", rest, .orange) }
-        if line.hasPrefix("◌") { return ("◌", rest, .secondary) }
-        if line.hasPrefix("·") { return ("·", rest, .secondary) }
-        return (" ", line, .secondary)
     }
 }
 

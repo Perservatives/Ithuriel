@@ -22,6 +22,7 @@
 		6288D7616BB488699A9C0430 /* AgentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D95B4207C0A344197E2FF8 /* AgentController.swift */; };
 		6A1C471A1484B83750B34683 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798888136F3708A12FED1754 /* ChatView.swift */; };
 		7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7110B9703A844A2A9959E461 /* AsteriskBurst.swift */; };
+		A1TRAN001AGENTTRANSCRIPT01 /* AgentTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1TRAN002AGENTTRANSCRIPT02 /* AgentTranscript.swift */; };
 		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
 		98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */; };
 		9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5C15C17AE947AC0627405D /* Persistence.swift */; };
@@ -95,6 +96,7 @@
 		BA4F50A5F9CAF8EB220F61B3 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		BC5C15C17AE947AC0627405D /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		CE83920959D844A29A8407BB /* InjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionEngine.swift; sourceTree = "<group>"; };
+		A1TRAN002AGENTTRANSCRIPT02 /* AgentTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTranscript.swift; sourceTree = "<group>"; };
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 		D7595E5C04849BFF3D6D1982 /* Agent */ = {
 			isa = PBXGroup;
 			children = (
+				A1TRAN002AGENTTRANSCRIPT02 /* AgentTranscript.swift */,
 				D30E10DA1986A407F779FB78 /* AgentLoop.swift */,
 				7605591CD999D43F7A2A8EDB /* GeminiClient.swift */,
 				03F7F899D222D5F05BB333DD /* KillSwitch.swift */,
@@ -343,6 +346,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6288D7616BB488699A9C0430 /* AgentController.swift in Sources */,
+				A1TRAN001AGENTTRANSCRIPT01 /* AgentTranscript.swift in Sources */,
 				8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */,
 				570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */,
 				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,

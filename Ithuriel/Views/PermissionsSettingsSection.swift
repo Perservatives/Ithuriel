@@ -7,33 +7,40 @@ struct PermissionsSettingsSection: View {
     var body: some View {
         if permissions.needsAny {
             Section {
-                Text(NSLocalizedString("settings.permissions.intro", comment: ""))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if permissions.needsRequired {
+                    Text(NSLocalizedString("settings.permissions.intro", comment: ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                if !permissions.accessibilityGranted {
-                    PermissionRow(
-                        title: NSLocalizedString("settings.permissions.accessibility.title", comment: ""),
-                        detail: NSLocalizedString("settings.permissions.accessibility.detail", comment: ""),
-                        systemImage: "hand.point.up.left.fill",
-                        actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
-                        secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
-                        onPrimary: { permissions.requestAccessibility() },
-                        onSecondary: { permissions.openAccessibilitySettings() }
-                    )
-                }
+                    if !permissions.accessibilityGranted {
+                        PermissionRow(
+                            title: NSLocalizedString("settings.permissions.accessibility.title", comment: ""),
+                            detail: NSLocalizedString("settings.permissions.accessibility.detail", comment: ""),
+                            systemImage: "hand.point.up.left.fill",
+                            actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
+                            secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
+                            onPrimary: { permissions.requestAccessibility() },
+                            onSecondary: { permissions.openAccessibilitySettings() }
+                        )
+                    }
 
-                if !permissions.screenRecordingGranted {
-                    PermissionRow(
-                        title: NSLocalizedString("settings.permissions.screen.title", comment: ""),
-                        detail: NSLocalizedString("settings.permissions.screen.detail", comment: ""),
-                        systemImage: "rectangle.on.rectangle",
-                        actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
-                        secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
-                        onPrimary: { permissions.requestScreenRecording() },
-                        onSecondary: { permissions.openScreenRecordingSettings() }
-                    )
+                    if !permissions.screenRecordingGranted {
+                        PermissionRow(
+                            title: NSLocalizedString("settings.permissions.screen.title", comment: ""),
+                            detail: NSLocalizedString("settings.permissions.screen.detail", comment: ""),
+                            systemImage: "rectangle.on.rectangle",
+                            actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
+                            secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
+                            onPrimary: { permissions.requestScreenRecording() },
+                            onSecondary: { permissions.openScreenRecordingSettings() }
+                        )
+                    }
+                } else {
+                    Label(NSLocalizedString("settings.permissions.allGranted", comment: ""),
+                          systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
                 }
 
                 if !permissions.notificationsGranted {

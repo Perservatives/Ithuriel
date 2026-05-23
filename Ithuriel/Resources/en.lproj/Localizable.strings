@@ -31,6 +31,12 @@
 "status.needKey.body"          = "Set your key in Settings → Agent to enable computer-use.";
 "status.needKey.open"          = "Open Settings";
 
+/* Missing-permissions banner */
+"status.needPermissions.title" = "Permissions required";
+"status.needPermissions.body"  = "Enable Accessibility and Screen Recording so the agent can control your Mac.";
+"status.needPermissions.missing" = "Still needed: %@";
+"status.needPermissions.open"  = "Open Settings";
+
 /* Settings tabs */
 "settings.window.title"        = "Ithuriel Settings";
 "settings.tab.agent"           = "Agent";
@@ -58,6 +64,19 @@
 "settings.agent.restrictWorkspace" = "Restrict file access to workspace";
 "settings.agent.safetyHelp"    = "Off by default: shell, file writes, deletes, and app quits run immediately. Turn on confirmation for a slower, safer mode.";
 "settings.agent.killSwitch"    = "Global kill switch: ⌃⌥⌘. (control-option-command-period) stops the agent instantly.";
+
+/* Permissions (Settings → Agent) */
+"settings.permissions.header"              = "Permissions";
+"settings.permissions.intro"               = "Grant these when you're ready. Ithuriel won't prompt on launch.";
+"settings.permissions.allGranted"          = "All set — Ithuriel has the access it needs.";
+"settings.permissions.enable"              = "Enable";
+"settings.permissions.openSettings"        = "Open System Settings";
+"settings.permissions.accessibility.title" = "Accessibility";
+"settings.permissions.accessibility.detail"= "Required to type, click, and use keyboard shortcuts.";
+"settings.permissions.screen.title"        = "Screen Recording";
+"settings.permissions.screen.detail"       = "Required for the agent to capture screenshots.";
+"settings.permissions.notifications.title" = "Notifications";
+"settings.permissions.notifications.detail"= "Optional — alerts when context is copied to the clipboard.";
 
 /* Capture */
 "settings.capturing"           = "Enable passive context capture";
@@ -103,3 +122,33 @@
 
 /* Agent loop */
 "agent.err.noKey"              = "Set your Gemini API key in Settings → Agent before running the agent.";
+
+/* Agent run transcript (menu bar, spotlight, chat) */
+"agent.transcript.task"              = "Task: %@";
+"agent.transcript.done"              = "Finished: %@";
+"agent.transcript.geminiError"       = "Model error: %@";
+"agent.transcript.killed"            = "Stopped — kill switch";
+"agent.transcript.stopRequested"     = "Stopping…";
+"agent.transcript.stepComplete"      = "Step %d of %d complete";
+"agent.transcript.noToolCalls"       = "No further actions — wrapping up";
+"agent.transcript.stepBudget"        = "Reached step limit (%d) — stopping";
+"agent.transcript.outcome.ok"        = "Done";
+"agent.transcript.outcome.screenshot"= "Screenshot ready";
+"agent.transcript.outcome.long"      = "Returned %d characters";
+"agent.transcript.action.type"       = "Typing “%@”";
+"agent.transcript.action.pressKeys"  = "Pressing %@";
+"agent.transcript.action.click"      = "Clicking at (%d, %d)";
+"agent.transcript.action.moveCursor" = "Moving cursor to (%d, %d)";
+"agent.transcript.action.screenshot" = "Taking a screenshot";
+"agent.transcript.action.focusApp"   = "Switching to %@";
+"agent.transcript.action.launchApp"  = "Launching %@";
+"agent.transcript.action.quitApp"    = "Quitting %@";
+"agent.transcript.action.readFile"   = "Reading %@";
+"agent.transcript.action.writeFile"  = "Writing %@";
+"agent.transcript.action.deleteFile" = "Deleting %@";
+"agent.transcript.action.runShell"   = "Running shell: %@";
+"agent.transcript.action.unknown"    = "Running %@";
+"agent.transcript.role.action"       = "Action";
+"agent.transcript.role.result"       = "Result";
+"agent.transcript.role.error"        = "Error";
+"agent.transcript.role.system"       = "Status";

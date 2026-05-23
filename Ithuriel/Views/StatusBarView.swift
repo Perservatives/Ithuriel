@@ -6,6 +6,7 @@ struct StatusBarView: View {
     @Environment(\.modelContext) private var context
     @Query private var prefsList: [UserPrefs]
     @ObservedObject var agent: AgentLoop
+    @ObservedObject private var permissions = PermissionsManager.shared
     @State private var prompt: String = ""
     @State private var workspacePath: String = ""
     @State private var promptFieldFocused: Bool = false
@@ -13,14 +14,23 @@ struct StatusBarView: View {
     @FocusState private var fieldFocus: Bool
 
     let onOpenSettings: () -> Void
+    let onOpenChat: () -> Void
     let onQuit: () -> Void
 
     private var prefs: UserPrefs? { prefsList.first }
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
+    private var permissionsMissing: Bool { permissions.needsRequired }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
+
+            if permissionsMissing {
+                missingPermissionsBanner.transition(.asymmetric(
+                    insertion: .scale(scale: 0.96).combined(with: .opacity),
+                    removal: .opacity
+                ))
+            }
 
             if keyMissing {
                 missingKeyBanner.transition(.asymmetric(
@@ -48,10 +58,18 @@ struct StatusBarView: View {
                 .ignoresSafeArea()
         )
         .animation(Motion.easeOut, value: keyMissing)
+        .animation(Motion.easeOut, value: permissionsMissing)
         .animation(Motion.easeOut, value: agent.isRunning)
         .task {
             await refresh()
+            await permissions.refresh()
             fieldFocus = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await permissions.refresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .ithurielPermissionsDidChange)) { _ in
+            Task { await permissions.refresh() }
         }
     }
 
@@ -88,7 +106,7 @@ struct StatusBarView: View {
 
     private var statusDot: some View {
         Circle()
-            .fill(agent.isRunning ? Color.green : (keyMissing ? Color.orange : Color.secondary))
+            .fill(agent.isRunning ? Color.green : (permissionsMissing || keyMissing ? Color.orange : Color.secondary))
             .frame(width: 6, height: 6)
             .scaleEffect(agent.isRunning ? 1.15 : 1)
             .animation(agent.isRunning
@@ -120,6 +138,45 @@ struct StatusBarView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(Color.orange.opacity(0.25), lineWidth: 0.5)
         )
+    }
+
+    private var missingPermissionsBanner: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "lock.shield.fill").foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(NSLocalizedString("status.needPermissions.title", comment: "")).font(.subheadline.bold())
+                Text(missingPermissionsDetail).font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(NSLocalizedString("status.needPermissions.open", comment: ""), action: onOpenSettings)
+                    .buttonStyle(.pressable(sound: .tool))
+                    .controlSize(.small)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.orange.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.orange.opacity(0.25), lineWidth: 0.5)
+        )
+    }
+
+    private var missingPermissionsDetail: String {
+        var missing: [String] = []
+        if !permissions.accessibilityGranted {
+            missing.append(NSLocalizedString("settings.permissions.accessibility.title", comment: ""))
+        }
+        if !permissions.screenRecordingGranted {
+            missing.append(NSLocalizedString("settings.permissions.screen.title", comment: ""))
+        }
+        guard !missing.isEmpty else {
+            return NSLocalizedString("status.needPermissions.body", comment: "")
+        }
+        return String(format: NSLocalizedString("status.needPermissions.missing", comment: ""), missing.joined(separator: ", "))
     }
 
     // MARK: - Prompt
@@ -248,7 +305,7 @@ struct StatusBarView: View {
     // MARK: - Actions
 
     private func openChat() {
-        NotificationCenter.default.post(name: .ithurielOpenChat, object: nil)
+        onOpenChat()
     }
 
     private func runAgent() {
@@ -305,30 +362,27 @@ private struct TranscriptLineView: View {
     let line: String
 
     var body: some View {
-        let parts = decompose(line)
+        let p = AgentTranscript.present(line)
         HStack(alignment: .top, spacing: 6) {
-            Text(parts.symbol)
+            Text(p.symbol)
                 .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(parts.tint)
+                .foregroundStyle(AgentTranscript.tint(for: p.kind))
                 .frame(width: 12, alignment: .leading)
-            Text(parts.content)
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(.primary.opacity(0.85))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(p.title)
+                    .font(.system(.caption, design: p.kind == .action ? .rounded : .default))
+                    .fontWeight(p.kind == .task || p.kind == .done ? .medium : .regular)
+                    .foregroundStyle(.primary.opacity(0.9))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(p.detail == nil ? 3 : 2)
+                if let detail = p.detail {
+                    Text(detail)
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(detail.lowercased().hasPrefix("error") ? .red : .secondary)
+                        .lineLimit(2)
+                }
+            }
         }
-    }
-
-    private func decompose(_ line: String) -> (symbol: String, content: String, tint: Color) {
-        let rest = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
-        if line.hasPrefix("▶") { return ("▶", rest, .accentColor) }
-        if line.hasPrefix("→") { return ("→", rest, .blue) }
-        if line.hasPrefix("✓") { return ("✓", rest, .green) }
-        if line.hasPrefix("✗") { return ("✗", rest, .red) }
-        if line.hasPrefix("■") { return ("■", rest, .orange) }
-        if line.hasPrefix("◌") { return ("◌", rest, .secondary) }
-        if line.hasPrefix("·") { return ("·", rest, .secondary) }
-        return (" ", line, .secondary)
     }
 }
 

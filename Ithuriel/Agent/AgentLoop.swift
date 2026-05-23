@@ -28,7 +28,7 @@ final class AgentLoop: ObservableObject {
         defer { isRunning = false }
 
         guard let container = container else { return }
-        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
         guard !prefs.geminiApiKey.isEmpty else {
             lastError = NSLocalizedString("agent.err.noKey", comment: "")
             return
@@ -81,11 +81,11 @@ final class AgentLoop: ObservableObject {
         var convo: [GeminiClient.Content] = [
             .init(role: "user", parts: [.init(text: userTask)])
         ]
-        log("▶ task: \(userTask)")
+        log(AgentTranscript.lineTaskStarted(userTask))
 
         for step in 1...maxSteps {
             if AgentController.shared.killed {
-                log("■ killed by user")
+                log(AgentTranscript.lineKilled())
                 await uploadFinalState(.killed)
                 return
             }
@@ -94,7 +94,7 @@ final class AgentLoop: ObservableObject {
                 modelTurn = try await client.step(contents: convo, tools: tools, system: systemPrompt)
             } catch {
                 lastError = "\(error)"
-                log("✗ gemini error: \(error)")
+                log(AgentTranscript.lineGeminiError("\(error)"))
                 await uploadFinalState(.failed)
                 return
             }
@@ -105,18 +105,18 @@ final class AgentLoop: ObservableObject {
 
             for part in modelTurn.parts {
                 if let text = part.text, !text.isEmpty {
-                    log("· \(text)")
+                    log(AgentTranscript.lineThinking(text))
                 }
                 guard let call = part.functionCall else { continue }
                 if call.name == "done" {
                     sawDone = true
                     let summary = call.args["summary"]?.stringValue ?? "done"
-                    log("✓ \(summary)")
+                    log(AgentTranscript.lineDone(summary))
                     SoundPlayer.shared.play(.done)
                     continue
                 }
                 let result = await dispatch(call: call, prefs: prefs)
-                log("→ \(call.name): \(result.prefix(120))")
+                log(AgentTranscript.lineAction(name: call.name, args: call.args, result: result))
                 SoundPlayer.shared.play(.tool, volume: 0.4)
                 let resp = GeminiClient.Part(
                     functionResponse: GeminiClient.Part.FunctionResponse(
@@ -132,21 +132,21 @@ final class AgentLoop: ObservableObject {
                 return
             }
             if functionResponses.isEmpty {
-                log("(no tool calls — ending loop)")
+                log(AgentTranscript.lineNoToolCalls())
                 await uploadFinalState(.completed)
                 return
             }
             convo.append(.init(role: "user", parts: functionResponses))
-            log("step \(step)/\(maxSteps) complete")
+            log(AgentTranscript.lineStepComplete(step: step, maxSteps: maxSteps))
         }
 
-        log("◌ step budget exhausted")
+        log(AgentTranscript.lineStepBudgetExhausted(maxSteps: maxSteps))
         await uploadFinalState(.failed)
     }
 
     func stop() {
         AgentController.shared.kill()
-        log("■ stop requested")
+        log(AgentTranscript.lineStopRequested())
     }
 
     private func log(_ line: String) {

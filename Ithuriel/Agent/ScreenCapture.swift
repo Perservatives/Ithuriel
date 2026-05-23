@@ -6,6 +6,13 @@ import AppKit
 /// for inline upload to Gemini. Uses CGDisplayCreateImage which is widely
 /// available across macOS versions (deprecated in macOS 15 but functional).
 enum ScreenCapture {
+    /// `CGPreflightScreenCaptureAccess` can stay false after the user grants access
+    /// (common with ad-hoc debug builds). Probe with a real capture when preflight fails.
+    static func hasScreenRecordingAccess() -> Bool {
+        if CGPreflightScreenCaptureAccess() { return true }
+        return CGDisplayCreateImage(CGMainDisplayID()) != nil
+    }
+
     static func mainDisplayJPEGBase64(maxWidth: CGFloat = 1280, quality: Double = 0.7) -> String? {
         let displayId = CGMainDisplayID()
         guard let cgImage = CGDisplayCreateImage(displayId) else { return nil }

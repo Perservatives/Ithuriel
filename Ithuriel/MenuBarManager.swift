@@ -191,6 +191,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
 
     func popoverDidShow(_ notification: Notification) {
         ignoreOutsideCloseUntil = Date().addingTimeInterval(0.35)
+        Task { @MainActor in await PermissionsManager.shared.refresh() }
         // Install after the opening click finishes so we don't instantly self-close.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.installOutsideClickMonitor()
@@ -244,6 +245,10 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         let root = StatusBarView(
             agent: agentLoop,
             onOpenSettings: { [weak self] in self?.showSettings() },
+            onOpenChat: { [weak self] in
+                self?.closePopover()
+                ChatWindowController.shared.show(container: self?.container, agent: self?.agentLoop)
+            },
             onQuit: { NSApp.terminate(nil) }
         )
         .modelContainer(container)
