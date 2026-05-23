@@ -19,6 +19,8 @@ struct SettingsView: View {
         TabView {
             agentTab
                 .tabItem { Label(NSLocalizedString("settings.tab.agent", comment: ""), systemImage: "wand.and.stars") }
+            appearanceTab
+                .tabItem { Label(NSLocalizedString("settings.tab.appearance", comment: ""), systemImage: "paintpalette") }
             captureTab
                 .tabItem { Label(NSLocalizedString("settings.tab.capture", comment: ""), systemImage: "eye") }
             privacyTab
@@ -32,6 +34,57 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await permissions.refresh() }
         }
+    }
+
+    // MARK: - Appearance (launch animation color)
+
+    private var appearanceTab: some View {
+        scrollableTab {
+            Form {
+                Section(NSLocalizedString("settings.appearance.launch", comment: "")) {
+                    ColorPicker(NSLocalizedString("settings.appearance.launchColor", comment: ""),
+                                selection: launchColorBinding,
+                                supportsOpacity: false)
+                    Text(NSLocalizedString("settings.appearance.launchHelp", comment: ""))
+                        .font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 10) {
+                        ForEach(["#7B5BFF", "#FF5E8B", "#3DDC97", "#FFB23F", "#39C5FF"], id: \.self) { hex in
+                            presetSwatch(hex: hex)
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+            }
+        }
+    }
+
+    private func presetSwatch(hex: String) -> some View {
+        Button {
+            prefs.launchColorHex = hex
+            try? context.save()
+        } label: {
+            Circle()
+                .fill(Color(hex: hex))
+                .frame(width: 24, height: 24)
+                .overlay(
+                    Circle()
+                        .stroke(prefs.launchColorHex.uppercased() == hex.uppercased()
+                                ? Color.primary.opacity(0.7) : Color.primary.opacity(0.12),
+                                lineWidth: 2)
+                )
+        }
+        .buttonStyle(.plain)
+        .help(hex)
+    }
+
+    private var launchColorBinding: Binding<Color> {
+        Binding(
+            get: { Color(hex: prefs.launchColorHex, fallback: .accentColor) },
+            set: { newColor in
+                prefs.launchColorHex = newColor.hexString
+                try? context.save()
+            }
+        )
     }
 
     private func scrollableTab<Content: View>(@ViewBuilder content: () -> Content) -> some View {

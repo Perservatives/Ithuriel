@@ -34,9 +34,15 @@
 /* Settings tabs */
 "settings.window.title"        = "Ithuriel Settings";
 "settings.tab.agent"           = "Agent";
+"settings.tab.appearance"      = "Appearance";
 "settings.tab.capture"         = "Capture";
 "settings.tab.privacy"         = "Privacy";
 "settings.tab.integrations"    = "Integrations";
+
+/* Appearance tab */
+"settings.appearance.launch"       = "Launch animation";
+"settings.appearance.launchColor"  = "Animation color";
+"settings.appearance.launchHelp"   = "Seeds the fuzzy color blobs you see when Ithuriel boots and pulls the orb halo. Independent of the system accent color.";
 
 /* Agent tab */
 "settings.agent.enabled"       = "Agent control enabled";

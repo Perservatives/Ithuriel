@@ -39,8 +39,11 @@ final class SpotlightCoordinator {
     func playLaunchThenSummon() {
         guard launchWindow == nil else { return }
         let screen = NSScreen.main ?? NSScreen.screens.first!
+        let tint = resolveLaunchColor()
 
-        // Full-screen backdrop — everything else on screen fades behind it.
+        // Full-screen backdrop — Arc-style fuzzy color blobs over black.
+        // Snapped on at full alpha (no fade) so the desktop never flashes
+        // through while the bloom is ramping up.
         let backdrop = TransparentWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
@@ -52,16 +55,10 @@ final class SpotlightCoordinator {
         backdrop.level = .screenSaver - 1
         backdrop.ignoresMouseEvents = true
         backdrop.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        backdrop.contentView = NSHostingView(rootView: LaunchBackdropView())
-        backdrop.alphaValue = 0
+        backdrop.contentView = NSHostingView(rootView: LaunchBackdropView(baseColor: tint))
+        backdrop.alphaValue = 1
         backdrop.orderFrontRegardless()
         launchBackdropWindow = backdrop
-
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.32
-            ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
-            backdrop.animator().alphaValue = 1
-        }
 
         // Bigger orb window — covers a generous swath of the screen.
         let size = NSSize(width: 720, height: 720)
@@ -82,12 +79,22 @@ final class SpotlightCoordinator {
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView:
-            LaunchOrbView(onComplete: { [weak self] in
+            LaunchOrbView(tint: tint, onComplete: { [weak self] in
                 self?.dismissLaunch()
             })
         )
         window.orderFrontRegardless()
         launchWindow = window
+    }
+
+    /// Read the user's chosen launch color from `UserPrefs`. Falls back to
+    /// the system accent on first run or if the model container isn't wired.
+    private func resolveLaunchColor() -> Color {
+        guard let container,
+              let prefs = try? UserPrefs.load(in: container) else {
+            return .accentColor
+        }
+        return Color(hex: prefs.launchColorHex, fallback: .accentColor)
     }
 
     /// Show the Spotlight prompt at screen centre.
