@@ -18,6 +18,7 @@
 		1CCC498533C7E8DBE47C3B56 /* GeminiTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B6B0DCAA7072A6E6BBE510 /* GeminiTTS.swift */; };
 		212D2A651EE045225234EB43 /* DoneBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2249AA5388624D12B6B6EF8 /* DoneBanner.swift */; };
 		29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEBCABAF164410E96E13023 /* SoundPlayer.swift */; };
+		339F757EFC6B5AEB5A4063A9 /* SecretManagerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */; };
 		349BC74CF7EC0967C6ABF46F /* LaunchBlobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB347B68858B7CB3E1D8B5EF /* LaunchBlobsView.swift */; };
 		372F55C575802630F6CE9651 /* NativeAppDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C70B07F147B79AD9239634D /* NativeAppDriver.swift */; };
 		396F086C0CF63D9C88BD8EBF /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA4F50A5F9CAF8EB220F61B3 /* Color+Hex.swift */; };
@@ -50,6 +51,7 @@
 		9DCF63850075B045D0AB0BD7 /* FirebaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
 		A1E78D8EF1F2066C37BDE117 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2002F8FDDF0EBF2C87416566 /* FirebaseStorage */; };
+		A2FCEB109FDE60608412DA46 /* PrefsSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F8A9AADEAC531E5587D575 /* PrefsSync.swift */; };
 		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
 		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
 		B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */; };
@@ -95,6 +97,7 @@
 
 /* Begin PBXFileReference section */
 		00D600D3F50336DBD3ADB46A /* agent-done.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "agent-done.mp3"; sourceTree = "<group>"; };
+		01F8A9AADEAC531E5587D575 /* PrefsSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrefsSync.swift; sourceTree = "<group>"; };
 		02D89098071ABB785E6460F0 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		03D95B4207C0A344197E2FF8 /* AgentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentController.swift; sourceTree = "<group>"; };
 		03F7F899D222D5F05BB333DD /* KillSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KillSwitch.swift; sourceTree = "<group>"; };
@@ -107,6 +110,7 @@
 		1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedAgentRun.swift; sourceTree = "<group>"; };
 		204BCCE55881BB7B32DFDA95 /* PermissionsSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsSection.swift; sourceTree = "<group>"; };
 		2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielClient.swift; sourceTree = "<group>"; };
+		28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretManagerClient.swift; sourceTree = "<group>"; };
 		2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshot.swift; sourceTree = "<group>"; };
 		2D44D95499CACE7017FC62EF /* ChatWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatWindowController.swift; sourceTree = "<group>"; };
 		3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConfig.swift; sourceTree = "<group>"; };
@@ -309,6 +313,7 @@
 				75228747667389CA05EBB789 /* DirectFirestoreClient.swift */,
 				3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */,
 				49D3581883E9C02A57988A5E /* Keychain.swift */,
+				28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */,
 				F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */,
 			);
 			path = Auth;
@@ -362,6 +367,7 @@
 			isa = PBXGroup;
 			children = (
 				2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */,
+				01F8A9AADEAC531E5587D575 /* PrefsSync.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -542,9 +548,11 @@
 				F101DBE84B21CD8128C0990E /* PermissionsManager.swift in Sources */,
 				B4FFE4F7119A81B820C365C1 /* PermissionsSettingsSection.swift in Sources */,
 				9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */,
+				A2FCEB109FDE60608412DA46 /* PrefsSync.swift in Sources */,
 				BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */,
 				D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */,
 				D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */,
+				339F757EFC6B5AEB5A4063A9 /* SecretManagerClient.swift in Sources */,
 				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
 				B5A8FB081F2DF85548FA7326 /* SettingsWindowController.swift in Sources */,
 				29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */,

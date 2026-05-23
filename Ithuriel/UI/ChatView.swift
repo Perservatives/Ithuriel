@@ -2,14 +2,10 @@ import SwiftUI
 import SwiftData
 import AppKit
 
-/// Full chat GUI. Follows the patterns of ChatGPT-mac and Claude-mac:
-///   - Asymmetric messages: user = right-aligned bubble, assistant = full-width
-///     block with no avatar (the model's text is the focus).
-///   - Composer pill at the bottom with model picker inside; send button morphs
-///     into a square stop button while streaming.
-///   - Sidebar grouped by Today / Yesterday / Previous 7 Days / Previous 30
-///     Days / Older with single-line truncated titles and a hover ⋯ menu.
-///   - Context Web inspector on the right (toggleable).
+/// ChatGPT-desktop-style layout. NavigationSplitView with a collapsible sidebar
+/// on the left and the conversation pane on the right. The right pane shows the
+/// empty hero when there's no active conversation and a stack of message rows
+/// otherwise. Composer is pinned to the bottom of the right pane.
 struct ChatView: View {
     @ObservedObject var agent: AgentLoop
     @Environment(\.modelContext) private var modelContext
@@ -18,9 +14,8 @@ struct ChatView: View {
 
     @State private var selectedRunID: UUID?
     @State private var prompt: String = ""
-    @State private var showInspector: Bool = true
     @State private var searchQuery: String = ""
-    @State private var isFullScreen: Bool = false
+    @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @FocusState private var inputFocused: Bool
     @ObservedObject private var permissions = PermissionsManager.shared
 
@@ -28,41 +23,22 @@ struct ChatView: View {
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
 
     var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            // Adaptive thresholds. Below these the sidebar/inspector hide
-            // themselves so the conversation always has room to breathe.
-            let showSidebar = w >= 640
-            let showInspectorAuto = showInspector && w >= 880
-
-            HStack(spacing: 0) {
-                if showSidebar {
-                    sidebar
-                        .frame(width: min(max(w * 0.22, 200), 280))
-                        .transition(.move(edge: .leading).combined(with: .opacity))
-                    Divider().opacity(0.25)
-                }
-                conversation
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .overlay(alignment: .topTrailing) { conversationOverlayControls }
-                if showInspectorAuto {
-                    Divider().opacity(0.25)
-                    ContextWebView()
-                        .frame(width: min(max(w * 0.25, isFullScreen ? 240 : 200), 360))
-                        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                }
-            }
-            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showSidebar)
-            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22), value: showInspectorAuto)
+        NavigationSplitView(columnVisibility: $sidebarVisibility) {
+            ChatSidebar(
+                runs: runs,
+                searchQuery: $searchQuery,
+                selectedRunID: $selectedRunID,
+                onNew: newConversation,
+                onDelete: deleteRun
+            )
+            .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 320)
+        } detail: {
+            chatPane
         }
+        .navigationSplitViewStyle(.balanced)
+        .frame(minWidth: 720, minHeight: 480)
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
-        .ignoresSafeArea(.container, edges: .top)
-        .frame(minWidth: 520, minHeight: 420)
         .background(
-            // Invisible hot-buttons binding keyboard shortcuts at the
-            // window-root level. SwiftUI dispatches the shortcut as long as
-            // the chat window is key, regardless of subview focus.
             Group {
                 Button("New", action: newConversation)
                     .keyboardShortcut("n", modifiers: .command)
@@ -75,139 +51,313 @@ struct ChatView: View {
                     .hidden().frame(width: 0, height: 0)
             }
         )
-        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
-            isFullScreen = true
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willExitFullScreenNotification)) { _ in
-            isFullScreen = false
-        }
         .task { await PermissionsManager.shared.refresh() }
     }
 
-    /// Single floating control in the top-right of the conversation pane —
-    /// replaces the previous opaque toolbar so the traffic lights sit flush
-    /// against the sidebar vibrancy.
-    private var conversationOverlayControls: some View {
-        HStack(spacing: 6) {
-            Button {
-                withAnimation(Motion.easeOut) { showInspector.toggle() }
-            } label: {
-                Image(systemName: showInspector ? "circle.grid.hex.fill" : "circle.grid.hex")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        Circle().fill(Color.primary.opacity(0.06))
-                    )
+    // MARK: - Right pane
+
+    private var chatPane: some View {
+        VStack(spacing: 0) {
+            ChatTopBar(workspaceLabel: workspaceLabel)
+
+            if permissions.hasRefreshed && permissions.needsRequired && !agent.isRunning {
+                PermissionsBanner()
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
             }
-            .buttonStyle(.plain)
-            .help("Toggle context graph")
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 22) {
+                        if let selected = selectedRun {
+                            renderMessages(transcript: selected.transcript, header: selected.task)
+                        } else if agent.isRunning || !agent.transcript.isEmpty {
+                            renderMessages(transcript: agent.transcript, header: nil)
+                        } else {
+                            ChatEmptyState()
+                                .padding(.top, 80)
+                        }
+                        Color.clear.frame(height: 40).id("bottom")
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 8)
+                }
+                .onChange(of: agent.transcript.count) { _, _ in
+                    withAnimation(Motion.easeOut) { proxy.scrollTo("bottom", anchor: .bottom) }
+                }
+            }
+
+            ChatComposer(
+                prompt: $prompt,
+                inputFocused: $inputFocused,
+                placeholder: keyMissing ? "Add your Gemini API key in Settings…" : "Ask anything",
+                canSubmit: canSubmit,
+                isRunning: agent.isRunning,
+                onSubmit: runAgent,
+                onStop: stopAgentIfRunning,
+                onMic: toggleVoice
+            )
+            .padding(.horizontal, 24)
+            .padding(.bottom, 18)
         }
-        .padding(.top, 16)
-        .padding(.trailing, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
     }
 
-    // MARK: - Sidebar
+    private var workspaceLabel: String? {
+        if let selected = selectedRun, !selected.workspacePath.isEmpty {
+            return URL(fileURLWithPath: selected.workspacePath).lastPathComponent
+        }
+        if let recent = WorkspaceMonitor.mostRecentEditorWorkspace() {
+            return URL(fileURLWithPath: recent).lastPathComponent
+        }
+        return nil
+    }
 
-    private var sidebar: some View {
-        VStack(spacing: 0) {
-            sidebarHeader
-
-            ZStack(alignment: .leading) {
-                if searchQuery.isEmpty {
-                    Text("Search")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
-                        .padding(.leading, 28)
+    @ViewBuilder
+    private func renderMessages(transcript: [String], header: String?) -> some View {
+        if let header {
+            ChatBubbleView(role: .user, text: stripTaskPrefix(header), index: 0)
+        }
+        if prefs?.transcriptVerbosity ?? 1 == 0 {
+            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
+                let role = ChatBubble.agentForLine(line)
+                if role == .assistant || role == .user || role == .error {
+                    messageRow(for: line, index: idx)
                 }
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.tertiary)
-                    TextField("", text: $searchQuery)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.primary.opacity(0.06))
-            )
-            .padding(.horizontal, 10)
-            .padding(.bottom, 8)
+            ThinkingSpinner(agent: agent).padding(.leading, 4)
+        } else {
+            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
+                messageRow(for: line, index: idx)
+            }
+            ThinkingSpinner(agent: agent).padding(.leading, 4)
+        }
+    }
 
-            Divider().opacity(0.3)
+    @ViewBuilder
+    private func messageRow(for line: String, index: Int) -> some View {
+        let role = ChatBubble.agentForLine(line)
+        let clean = ChatBubble.cleanLine(line)
+        switch role {
+        case .user:
+            ChatBubbleView(role: .user, text: stripTaskPrefix(clean), index: index)
+        case .assistant:
+            ChatBubbleView(role: .assistant, text: clean, index: index)
+        case .tool:
+            ToolUseCard(call: clean, result: nil, index: index)
+        case .toolResult:
+            ToolUseCard(call: "", result: clean, index: index)
+        case .error:
+            ErrorRow(text: clean, index: index)
+        case .system:
+            SystemRow(text: clean, index: index)
+        }
+    }
+
+    // Defensive: strip an inherited "Task: " prefix in case any code path still
+    // emits one. The Localizable.strings template is already "%@".
+    private func stripTaskPrefix(_ s: String) -> String {
+        if s.hasPrefix("Task: ") { return String(s.dropFirst("Task: ".count)) }
+        return s
+    }
+
+    // MARK: - Actions
+
+    private var selectedRun: SavedAgentRun? {
+        guard let id = selectedRunID else { return nil }
+        return runs.first { $0.id == id }
+    }
+
+    private var canSubmit: Bool {
+        !prompt.trimmingCharacters(in: .whitespaces).isEmpty && !agent.isRunning && !keyMissing
+    }
+
+    private func newConversation() {
+        selectedRunID = nil
+        prompt = ""
+        inputFocused = true
+    }
+
+    private func temporaryConversation() {
+        UserDefaults.standard.set(true, forKey: "Ithuriel.NextRunTemporary")
+        selectedRunID = nil
+        prompt = ""
+        inputFocused = true
+    }
+
+    private func stopAgentIfRunning() {
+        if agent.isRunning { agent.stop() }
+    }
+
+    private func runAgent() {
+        let task = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !task.isEmpty, !agent.isRunning else { return }
+        prompt = ""
+        selectedRunID = nil
+        Task { await agent.run(task: task) }
+    }
+
+    private func toggleVoice() {
+        // Tap to start, tap again to stop+submit. Mirrors the hold-to-talk
+        // hotkey but as a click affordance in the composer.
+        Task { @MainActor in
+            VoiceController.shared.start()
+        }
+    }
+
+    private func deleteRun(_ run: SavedAgentRun) {
+        if selectedRunID == run.id { selectedRunID = nil }
+        modelContext.delete(run)
+    }
+}
+
+// MARK: - Sidebar
+
+private struct ChatSidebar: View {
+    let runs: [SavedAgentRun]
+    @Binding var searchQuery: String
+    @Binding var selectedRunID: UUID?
+    let onNew: () -> Void
+    let onDelete: (SavedAgentRun) -> Void
+
+    private var filteredRuns: [SavedAgentRun] {
+        guard !searchQuery.trimmingCharacters(in: .whitespaces).isEmpty else { return runs }
+        let q = searchQuery.lowercased()
+        return runs.filter { $0.task.lowercased().contains(q) }
+    }
+
+    private var projectFolders: [String] {
+        // Distinct workspace paths from recent runs (most recent first).
+        var seen = Set<String>()
+        var out: [String] = []
+        for run in runs where !run.workspacePath.isEmpty {
+            if !seen.contains(run.workspacePath) {
+                seen.insert(run.workspacePath)
+                out.append(run.workspacePath)
+                if out.count == 5 { break }
+            }
+        }
+        if out.isEmpty, let recent = WorkspaceMonitor.mostRecentEditorWorkspace() {
+            out = [recent]
+        }
+        return out
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+
+            searchField
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+
+            topItems
+                .padding(.horizontal, 8)
+                .padding(.bottom, 14)
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(alignment: .leading, spacing: 16) {
+                    if !projectFolders.isEmpty {
+                        sectionHeader("Projects")
+                        VStack(spacing: 2) {
+                            ForEach(projectFolders, id: \.self) { path in
+                                ProjectRow(path: path)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                    }
+
                     let groups = groupRuns(filteredRuns)
                     if groups.isEmpty {
-                        emptySidebar
+                        sectionHeader("Recents")
+                        emptyHint
                     }
                     ForEach(groups, id: \.0) { groupTitle, items in
-                        Section {
+                        VStack(alignment: .leading, spacing: 2) {
+                            sectionHeader(groupTitle)
                             ForEach(items) { run in
                                 SidebarRow(
                                     run: run,
                                     selected: run.id == selectedRunID,
                                     onSelect: { selectedRunID = run.id },
-                                    onDelete: {
-                                        if selectedRunID == run.id { selectedRunID = nil }
-                                        modelContext.delete(run)
-                                    }
+                                    onDelete: { onDelete(run) }
                                 )
                             }
-                        } header: {
-                            Text(groupTitle)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.tertiary)
-                                .textCase(.uppercase)
-                                .tracking(0.6)
-                                .padding(.horizontal, 12)
                         }
+                        .padding(.horizontal, 8)
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.bottom, 10)
             }
+
+            Divider().opacity(0.3)
+            UserFooterRow()
         }
         .background(VisualEffectBlur(material: .sidebar, blendingMode: .behindWindow))
     }
 
-    private var sidebarHeader: some View {
+    private var header: some View {
         HStack(spacing: 8) {
             AsteriskMark(size: 14, tint: .accentColor)
             Text("Ithuriel")
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
             Spacer()
-            Button {
-                newConversation()
-            } label: {
+            Button(action: onNew) {
                 Image(systemName: "square.and.pencil")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 26, height: 26)
             }
             .buttonStyle(.pressable(sound: .summon))
             .help("New conversation (⌘N)")
-            .keyboardShortcut("n", modifiers: .command)
         }
         .padding(.horizontal, 14)
         .padding(.top, 38)   // clear macOS traffic lights
         .padding(.bottom, 10)
     }
 
-    private var emptySidebar: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("No runs yet").font(.subheadline).foregroundStyle(.secondary)
-            Text("Start a conversation to see history here.")
-                .font(.caption).foregroundStyle(.tertiary)
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+            TextField("Search", text: $searchQuery)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
         }
-        .padding(14)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(0.06))
+        )
     }
 
-    private var filteredRuns: [SavedAgentRun] {
-        guard !searchQuery.trimmingCharacters(in: .whitespaces).isEmpty else { return runs }
-        let q = searchQuery.lowercased()
-        return runs.filter { $0.task.lowercased().contains(q) }
+    private var topItems: some View {
+        VStack(spacing: 2) {
+            TopItemRow(icon: .asterisk,      label: "Ithuriel", isAccent: true, action: onNew)
+            TopItemRow(icon: .system("books.vertical"),  label: "Library",    action: onNew)
+            TopItemRow(icon: .system("square.grid.2x2"), label: "Workspaces", action: onNew)
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.tertiary)
+            .textCase(.uppercase)
+            .tracking(0.7)
+            .padding(.horizontal, 12)
+            .padding(.top, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var emptyHint: some View {
+        Text("Start a conversation to see history here.")
+            .font(.caption)
+            .foregroundStyle(.tertiary)
+            .padding(.horizontal, 14)
     }
 
     private func groupRuns(_ runs: [SavedAgentRun]) -> [(String, [SavedAgentRun])] {
@@ -230,251 +380,87 @@ struct ChatView: View {
         }
         return buckets.filter { !$0.1.isEmpty }
     }
+}
 
-    // MARK: - Conversation
+private enum SidebarIcon {
+    case system(String)
+    case asterisk
+}
 
-    private var conversation: some View {
-        VStack(spacing: 0) {
-            if permissions.hasRefreshed && permissions.needsRequired && !agent.isRunning {
-                PermissionsBanner()
-                    .padding(.horizontal, 20)
-                    .padding(.top, 48)
-            }
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 22) {
-                        if let selected = selectedRun {
-                            renderMessages(transcript: selected.transcript, header: selected.task)
-                        } else if agent.isRunning || !agent.transcript.isEmpty {
-                            renderMessages(transcript: agent.transcript, header: nil)
-                        } else {
-                            emptyConversation
-                        }
-                        Color.clear.frame(height: 60).id("bottom")
+private struct TopItemRow: View {
+    let icon: SidebarIcon
+    let label: String
+    var isAccent: Bool = false
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Group {
+                    switch icon {
+                    case .system(let name):
+                        Image(systemName: name)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 18)
+                    case .asterisk:
+                        AsteriskMark(size: 13, tint: isAccent ? .accentColor : .secondary)
+                            .frame(width: 18)
                     }
-                    .padding(.horizontal, 32)
-                    .padding(.top, 56)   // clear traffic lights
                 }
-                .onChange(of: agent.transcript.count) { _, _ in
-                    withAnimation(Motion.easeOut) { proxy.scrollTo("bottom", anchor: .bottom) }
-                }
-            }
-            composer.padding(20)
-            AppChromeBar()
-                .padding(.horizontal, 20)
-                .padding(.bottom, 14)
-        }
-    }
-
-    @ViewBuilder
-    private func renderMessages(transcript: [String], header: String?) -> some View {
-        if let header {
-            UserMessageRow(text: header, index: 0)
-        }
-        if prefs?.transcriptVerbosity ?? 1 == 0 {
-            // Summary-only — render the final assistant line(s) and the
-            // inline thinking spinner while the loop is running.
-            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
-                let role = ChatBubble.agentForLine(line)
-                if role == .assistant || role == .user || role == .error {
-                    messageRow(for: line, index: idx)
-                }
-            }
-            ThinkingSpinner(agent: agent).padding(.leading, 4)
-        } else {
-            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
-                messageRow(for: line, index: idx)
-            }
-            ThinkingSpinner(agent: agent).padding(.leading, 4)
-        }
-    }
-
-    @ViewBuilder
-    private func messageRow(for line: String, index: Int) -> some View {
-        let role = ChatBubble.agentForLine(line)
-        let clean = ChatBubble.cleanLine(line)
-        switch role {
-        case .user:
-            UserMessageRow(text: clean, index: index)
-        case .assistant:
-            AssistantMessageRow(text: clean, index: index)
-        case .tool:
-            ToolUseCard(call: clean, result: nil, index: index)
-        case .toolResult:
-            // Appended to the previous tool card if possible — for now, render
-            // inline so the timeline is still complete.
-            ToolUseCard(call: "", result: clean, index: index)
-        case .error:
-            ErrorRow(text: clean, index: index)
-        case .system:
-            SystemRow(text: clean, index: index)
-        }
-    }
-
-    private var emptyConversation: some View {
-        VStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.accentColor.opacity(0.30), .clear],
-                            center: .center, startRadius: 4, endRadius: 90
-                        )
-                    )
-                    .frame(width: 220, height: 220)
-                    .blur(radius: 36)
-                AsteriskMark(size: 76, tint: .accentColor)
-                    .shadow(color: .accentColor.opacity(0.6), radius: 18)
-            }
-            Text("What's on your mind?")
-                .font(.system(.largeTitle, design: .rounded).weight(.semibold))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 80)
-    }
-
-    // MARK: - Composer
-
-    private var composer: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .bottom, spacing: 10) {
-                ZStack(alignment: .topLeading) {
-                    if prompt.isEmpty {
-                        Text(keyMissing
-                             ? "Add your Gemini API key in Settings…"
-                             : "Message Ithuriel…")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.tertiary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 12)
-                            .allowsHitTesting(false)
-                    }
-                    TextField("", text: $prompt, axis: .vertical)
-                        .lineLimit(1...8)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 15))
-                        .focused($inputFocused)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .onSubmit(runAgent)
-                }
-                .frame(minHeight: 44)
-                .frame(maxWidth: .infinity)
-            }
-
-            HStack(spacing: 8) {
-                ModelPicker(selection: Binding(
-                    get: { prefs?.geminiModel ?? "gemini-2.5-flash" },
-                    set: { newValue in
-                        prefs?.geminiModel = newValue
-                        try? modelContext.save()
-                    }
-                ))
-
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.primary)
                 Spacer()
-
-                Text(keyMissing ? "no key" : "ready")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(keyMissing ? Color.orange : Color.secondary.opacity(0.6))
-
-                sendOrStopButton
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.primary.opacity(hovering ? 0.06 : 0))
+            )
         }
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.primary.opacity(inputFocused ? 0.08 : 0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.primary.opacity(inputFocused ? 0.18 : 0.10), lineWidth: 0.5)
-        )
-        .animation(Motion.easeOut, value: inputFocused)
-    }
-
-    /// Single button that morphs between Send (arrow.up) and Stop (square.fill)
-    /// — Claude/ChatGPT pattern.
-    private var sendOrStopButton: some View {
-        Button {
-            if agent.isRunning {
-                agent.stop()
-            } else {
-                runAgent()
-            }
-        } label: {
-            ZStack {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(buttonFill)
-                    .frame(width: 32, height: 32)
-                    .shadow(color: canSubmit ? Color(red: 1, green: 0.45, blue: 0.32).opacity(0.5) : .clear,
-                            radius: canSubmit ? 8 : 0, y: 3)
-                Image(systemName: agent.isRunning ? "square.fill" : "arrow.up")
-                    .font(.system(size: agent.isRunning ? 11 : 13, weight: .bold))
-                    .foregroundStyle(.white)
-            }
+        .buttonStyle(.plain)
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
         }
-        .buttonStyle(.pressable(scale: 0.92, sound: .submit))
-        .keyboardShortcut(.return, modifiers: [])
-        .disabled(!agent.isRunning && !canSubmit)
-        .animation(Motion.easeOut, value: agent.isRunning)
-    }
-
-    private var buttonFill: AnyShapeStyle {
-        if agent.isRunning {
-            return AnyShapeStyle(Color.primary.opacity(0.85))
-        }
-        if canSubmit {
-            return AnyShapeStyle(LinearGradient(
-                colors: [Color(red: 1, green: 0.45, blue: 0.32),
-                         Color(red: 0.94, green: 0.30, blue: 0.22)],
-                startPoint: .top, endPoint: .bottom))
-        }
-        return AnyShapeStyle(Color.secondary.opacity(0.18))
-    }
-
-    private var canSubmit: Bool {
-        !prompt.trimmingCharacters(in: .whitespaces).isEmpty && !agent.isRunning && !keyMissing
-    }
-
-    // MARK: - Actions
-
-    private var selectedRun: SavedAgentRun? {
-        guard let id = selectedRunID else { return nil }
-        return runs.first { $0.id == id }
-    }
-
-    private func newConversation() {
-        selectedRunID = nil
-        prompt = ""
-        inputFocused = true
-    }
-
-    /// Same canvas as `newConversation` but explicitly skips persistence on
-    /// the next run — matches ChatGPT's "Temporary chat" affordance. The
-    /// AgentLoop honours `UserPrefs.localOnly` per-run; we flip a one-shot
-    /// flag on UserDefaults that the loop reads at the start of each run.
-    private func temporaryConversation() {
-        UserDefaults.standard.set(true, forKey: "Ithuriel.NextRunTemporary")
-        selectedRunID = nil
-        prompt = ""
-        inputFocused = true
-    }
-
-    private func stopAgentIfRunning() {
-        if agent.isRunning { agent.stop() }
-    }
-
-    private func runAgent() {
-        let task = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !task.isEmpty, !agent.isRunning else { return }
-        prompt = ""
-        selectedRunID = nil
-        Task { await agent.run(task: task) }
     }
 }
 
-// MARK: - Sidebar row
+private struct ProjectRow: View {
+    let path: String
+    @State private var hovering = false
+
+    private var name: String { URL(fileURLWithPath: path).lastPathComponent }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "folder")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .frame(width: 18)
+            Text(name)
+                .font(.system(size: 13))
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.primary.opacity(hovering ? 0.06 : 0))
+        )
+        .contentShape(Rectangle())
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
+        .help(path)
+    }
+}
 
 private struct SidebarRow: View {
     let run: SavedAgentRun
@@ -487,10 +473,7 @@ private struct SidebarRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 8) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 5, height: 5)
-                Text(run.task)
+                Text(truncate(run.task, max: 30))
                     .font(.system(size: 13))
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -513,69 +496,161 @@ private struct SidebarRow: View {
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(selected
-                          ? Color.accentColor.opacity(0.16)
-                          : (hovering ? Color.primary.opacity(0.05) : Color.clear))
+                          ? Color.primary.opacity(0.10)
+                          : (hovering ? Color.primary.opacity(0.06) : Color.clear))
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 6)
-        .onHover { hovering = $0 }
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
     }
 
-    private var statusColor: Color {
-        switch run.status {
-        case .running:   return .accentColor
-        case .completed: return .green
-        case .failed:    return .red
-        case .killed:    return .orange
-        }
+    private func truncate(_ s: String, max: Int) -> String {
+        if s.count <= max { return s }
+        return String(s.prefix(max - 1)) + "…"
     }
 }
 
-// MARK: - Message rows (asymmetric layout)
+// MARK: - User footer
 
-private struct UserMessageRow: View {
-    let text: String
-    let index: Int
+private struct UserFooterRow: View {
+    @State private var hovering = false
+
+    private var initials: String {
+        guard AuthService.shared.isSignedIn,
+              let uid = AuthService.shared.uid,
+              !uid.isEmpty
+        else { return "?" }
+        // No display name in AuthService — fall back to first two chars of uid.
+        return String(uid.prefix(2)).uppercased()
+    }
+
+    private var label: String {
+        AuthService.shared.isSignedIn ? "Account" : "Sign in"
+    }
+
+    private var subtitle: String {
+        AuthService.shared.isSignedIn ? "Settings & preferences" : "Configure Ithuriel"
+    }
 
     var body: some View {
-        HStack {
-            Spacer(minLength: 60)
-            Text(text)
-                .font(.system(size: 15))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+        Button(action: { AppRouter.shared.openSettings() }) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
                         .fill(Color.primary.opacity(0.10))
-                )
-                .frame(maxWidth: 520, alignment: .trailing)
-                .textSelection(.enabled)
+                        .frame(width: 28, height: 28)
+                    Text(initials)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(label)
+                        .font(.system(size: 12, weight: .medium))
+                    Text(subtitle)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "gearshape")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            .background(Color.primary.opacity(hovering ? 0.06 : 0))
         }
-        .staggered(index)
+        .buttonStyle(.plain)
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
     }
 }
 
-private struct AssistantMessageRow: View {
+// MARK: - Top bar
+
+private struct ChatTopBar: View {
+    let workspaceLabel: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let workspaceLabel {
+                HStack(spacing: 6) {
+                    Image(systemName: "folder.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    Text(workspaceLabel)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(Color.primary.opacity(0.06))
+                )
+            }
+            Spacer()
+        }
+        .padding(.leading, 16)
+        .padding(.trailing, 16)
+        .frame(height: 44)
+        .padding(.top, 30)   // clear traffic lights area
+    }
+}
+
+// MARK: - Empty state
+
+private struct ChatEmptyState: View {
+    var body: some View {
+        VStack(spacing: 18) {
+            AsteriskBurst(rotation: 0, petalScale: 1, tint: .accentColor, glowRadius: 14)
+                .frame(width: 80, height: 80)
+            Text("How can I help today?")
+                .font(.system(size: 26, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Bubbles
+
+enum ChatRole { case user, assistant }
+
+private struct ChatBubbleView: View {
+    let role: ChatRole
     let text: String
     let index: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                AsteriskMark(size: 12, tint: .accentColor)
-                Text("Ithuriel")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tint)
+        switch role {
+        case .user:
+            HStack {
+                Spacer(minLength: 60)
+                Text(text)
+                    .font(.system(size: 15))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.primary.opacity(0.08))
+                    )
+                    .frame(maxWidth: 520, alignment: .trailing)
+                    .textSelection(.enabled)
             }
+            .staggered(index)
+
+        case .assistant:
             Text(text)
                 .font(.system(size: 15))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
+                .staggered(index)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .staggered(index)
     }
 }
 
@@ -624,11 +699,7 @@ private struct ToolUseCard: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.blue.opacity(0.06))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.blue.opacity(0.18), lineWidth: 0.5)
+                .fill(Color.primary.opacity(0.04))
         )
         .frame(maxWidth: .infinity, alignment: .leading)
         .staggered(index)
@@ -681,49 +752,131 @@ private struct SystemRow: View {
     }
 }
 
-// MARK: - Model picker
+// MARK: - Composer
 
-private struct ModelPicker: View {
-    @Binding var selection: String
-
-    private let options: [(id: String, label: String)] = [
-        ("gemini-2.5-flash",          "Flash 2.5 · fast"),
-        ("gemini-2.5-flash-thinking", "Flash 2.5 · thinking"),
-        ("gemini-2.5-pro",            "Pro 2.5"),
-        ("gemini-3.0-flash",          "Flash 3.0"),
-        ("gemini-3.0-pro",            "Pro 3.0")
-    ]
+private struct ChatComposer: View {
+    @Binding var prompt: String
+    @FocusState.Binding var inputFocused: Bool
+    let placeholder: String
+    let canSubmit: Bool
+    let isRunning: Bool
+    let onSubmit: () -> Void
+    let onStop: () -> Void
+    let onMic: () -> Void
 
     var body: some View {
-        Menu {
-            ForEach(options, id: \.id) { opt in
-                Button(opt.label) { selection = opt.id }
+        VStack(spacing: 0) {
+            // Text row
+            ZStack(alignment: .topLeading) {
+                if prompt.isEmpty {
+                    Text(placeholder)
+                        .font(.system(size: 16))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+                        .allowsHitTesting(false)
+                }
+                TextField("", text: $prompt, axis: .vertical)
+                    .lineLimit(1...8)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 16))
+                    .focused($inputFocused)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .onSubmit(onSubmit)
             }
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "cpu").font(.system(size: 10))
-                Text(label(for: selection))
-                    .font(.system(size: 11, weight: .medium))
-                Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold))
+            .frame(minHeight: 48)
+            .frame(maxWidth: .infinity)
+
+            // Controls row
+            HStack(spacing: 6) {
+                ComposerIconButton(system: "plus", help: "Attach") { }
+                ComposerIconButton(system: "globe", help: "Search the web") { }
+                ComposerIconButton(system: "character.textbox", help: "Style") { }
+
+                Spacer()
+
+                ComposerIconButton(system: "mic.fill", help: "Voice input", action: onMic)
+                sendOrStopButton
             }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-                Capsule().fill(Color.primary.opacity(0.06))
-            )
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+            .padding(.top, 2)
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
+        .background(
+            ZStack {
+                VisualEffectBlur(material: .hudWindow, blendingMode: .withinWindow)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color.primary.opacity(inputFocused ? 0.04 : 0.02))
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color.primary.opacity(inputFocused ? 0.18 : 0.10), lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .animation(Motion.easeOut, value: inputFocused)
     }
 
-    private func label(for id: String) -> String {
-        options.first(where: { $0.id == id })?.label ?? id
+    private var sendOrStopButton: some View {
+        Button {
+            if isRunning { onStop() } else { onSubmit() }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(buttonFill)
+                    .frame(width: 30, height: 30)
+                Image(systemName: isRunning ? "square.fill" : "arrow.up")
+                    .font(.system(size: isRunning ? 10 : 13, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .buttonStyle(.pressable(scale: 0.92, sound: .submit))
+        .keyboardShortcut(.return, modifiers: [])
+        .disabled(!isRunning && !canSubmit)
+        .animation(Motion.easeOut, value: isRunning)
+    }
+
+    private var buttonFill: AnyShapeStyle {
+        if isRunning {
+            return AnyShapeStyle(Color.primary.opacity(0.85))
+        }
+        if canSubmit {
+            return AnyShapeStyle(LinearGradient(
+                colors: [Color(red: 1, green: 0.45, blue: 0.32),
+                         Color(red: 0.94, green: 0.30, blue: 0.22)],
+                startPoint: .top, endPoint: .bottom))
+        }
+        return AnyShapeStyle(Color.secondary.opacity(0.30))
     }
 }
 
-// MARK: - Transcript line decoder (used by parent ChatView)
+private struct ComposerIconButton: View {
+    let system: String
+    let help: String
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: system)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle().fill(Color.primary.opacity(hovering ? 0.08 : 0))
+                )
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .onHover { h in
+            withAnimation(Motion.easeOut) { hovering = h }
+        }
+    }
+}
+
+// MARK: - Transcript line decoder
 
 enum ChatBubble {
     enum Role { case user, assistant, tool, toolResult, error, system }

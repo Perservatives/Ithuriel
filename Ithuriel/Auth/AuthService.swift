@@ -37,6 +37,12 @@ final class AuthService {
 
     var idToken: String? { Keychain.get(idTokenKey) }
     var refreshToken: String? { Keychain.get(refreshTokenKey) }
+    /// Google OAuth access token from the most recent sign-in. Used by
+    /// `SecretManagerClient` to talk to `secretmanager.googleapis.com`.
+    /// Lives in memory only — not persisted; users get a fresh one each
+    /// session after signing in again. Currently a stub; populated when
+    /// `runGoogleSignIn` is extended to request the cloud-platform scope.
+    var googleAccessToken: String? { Keychain.get("google.accessToken") }
     var uid: String? { Keychain.get(uidKey) }
     var isSignedIn: Bool { idToken != nil }
 

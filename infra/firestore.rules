@@ -16,6 +16,10 @@ service cloud.firestore {
       match /agentRuns/{runId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /config/{configId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Snapshots indexed at top level (for queries by userId).

@@ -13,6 +13,7 @@ import { streamRoutes } from "./routes/stream.js";
 import { teamRoutes } from "./routes/team.js";
 import { searchRoutes } from "./routes/search.js";
 import { authBridgeRoutes } from "./routes/authBridge.js";
+import { userPrefsRoutes } from "./routes/userPrefs.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const ORIGINS = (process.env.ALLOWED_ORIGINS ?? "").split(",").filter(Boolean);
@@ -41,6 +42,7 @@ async function main() {
   await app.register(streamRoutes,    { prefix: "/v1" });
   await app.register(teamRoutes,      { prefix: "/v1" });
   await app.register(searchRoutes,    { prefix: "/v1" });
+  await app.register(userPrefsRoutes, { prefix: "/v1" });
 
   await app.listen({ host: "0.0.0.0", port: PORT });
   app.log.info(`ithuriel-api listening on :${PORT}`);

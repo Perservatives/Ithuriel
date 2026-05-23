@@ -47,9 +47,9 @@ final class ChatWindowController {
         w.titleVisibility = .hidden
         w.isMovableByWindowBackground = true
         w.isReleasedWhenClosed = false
-        w.setContentSize(NSSize(width: 960, height: 640))
+        w.setContentSize(NSSize(width: 1100, height: 720))
         w.center()
-        w.minSize = NSSize(width: 520, height: 420)
+        w.minSize = NSSize(width: 720, height: 480)
         // Transparent so the SwiftUI VisualEffectBlur shows through under the
         // title bar — no white strip behind the traffic lights.
         w.backgroundColor = .clear

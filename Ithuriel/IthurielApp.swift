@@ -66,6 +66,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        // Pull remote prefs once on launch so settings sync across devices.
+        // Runs only when signed in; errors are logged and never surface to UI.
+        if AuthService.shared.isSignedIn {
+            Task { await PrefsSync.shared.pullRemote(container: container) }
+            // Cloud secrets: if the user has signed in, fill any empty API
+            // key slot in their local prefs from GCP Secret Manager.
+            Task { @MainActor in
+                if let prefs = try? UserPrefs.load(in: container) {
+                    await SecretManagerClient.shared.sync(into: prefs) {
+                        try? container.mainContext.save()
+                    }
+                }
+            }
+        }
+
         // Done/Failed/Stopped banner responds to bus events.
         AgentStatusBus.shared.subscribe { event in
             Task { @MainActor in

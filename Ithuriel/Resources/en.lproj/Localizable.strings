@@ -191,7 +191,7 @@
 "agent.err.disabled"           = "Agent control is turned off in Settings → Agent.";
 
 /* Agent run transcript (menu bar, spotlight, chat) */
-"agent.transcript.task"              = "Task: %@";
+"agent.transcript.task"              = "%@";
 "agent.transcript.done"              = "Finished: %@";
 "agent.transcript.geminiError"       = "Model error: %@";
 "agent.transcript.killed"            = "Stopped — kill switch";
