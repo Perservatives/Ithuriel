@@ -55,7 +55,7 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
-        let client = GeminiClient(apiKey: prefs.geminiApiKey)
+        let client = GeminiClient(apiKey: prefs.geminiApiKey, model: prefs.geminiModel)
         let tools = AgentTools.declarations
         let snapshot = await CachedSnapshot.latest(in: container)
         let systemPrompt = buildSystemPrompt(snapshot: snapshot, prefs: prefs)

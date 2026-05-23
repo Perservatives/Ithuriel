@@ -32,7 +32,7 @@ final class UserPrefs {
          firebaseWebAPIKey: String = "",
          agentEnabled: Bool = true,
          geminiApiKey: String = "",
-         geminiModel: String = "gemini-2.0-flash-exp",
+         geminiModel: String = "gemini-3.5-flash",
          activeWorkspace: String = "",
          confirmEveryAction: Bool = false,
          autoApproveSafeOnly: Bool = true) {

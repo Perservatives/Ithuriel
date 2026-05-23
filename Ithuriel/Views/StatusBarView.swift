@@ -11,6 +11,7 @@ struct StatusBarView: View {
     @State private var promptFieldFocused: Bool = false
     @FocusState private var fieldFocus: Bool
 
+    let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     private var prefs: UserPrefs? { prefsList.first }
@@ -97,7 +98,7 @@ struct StatusBarView: View {
                 Text(NSLocalizedString("status.needKey.title", comment: "")).font(.subheadline.bold())
                 Text(NSLocalizedString("status.needKey.body", comment: "")).font(.caption)
                     .foregroundStyle(.secondary)
-                Button(NSLocalizedString("status.needKey.open", comment: ""), action: openSettings)
+                Button(NSLocalizedString("status.needKey.open", comment: ""), action: onOpenSettings)
                     .buttonStyle(.pressable(sound: .tool))
                     .controlSize(.small)
             }
@@ -220,7 +221,7 @@ struct StatusBarView: View {
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(.tertiary)
 
-            Button(NSLocalizedString("status.settings", comment: ""), action: openSettings)
+            Button(NSLocalizedString("status.settings", comment: ""), action: onOpenSettings)
                 .buttonStyle(.pressable(sound: .tool))
                 .controlSize(.small)
 
@@ -253,15 +254,6 @@ struct StatusBarView: View {
 
     private func toggleMute() {
         SoundPlayer.shared.muted.toggle()
-    }
-
-    private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
     }
 
     private func refresh() async {

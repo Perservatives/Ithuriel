@@ -75,7 +75,7 @@ final class GeminiClient {
     private let model: String
     private let session: URLSession
 
-    init(apiKey: String, model: String = "gemini-2.0-flash-exp", session: URLSession = .shared) {
+    init(apiKey: String, model: String = "gemini-3.5-flash", session: URLSession = .shared) {
         self.apiKey = apiKey
         self.model = model
         self.session = session
