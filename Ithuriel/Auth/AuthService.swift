@@ -5,17 +5,16 @@ import CryptoKit
 
 /// Client-only Google sign-in for the macOS app.
 ///
-/// Flow:
-///   1. `beginGoogleSignIn()` opens Google's OAuth consent page in an
-///      `ASWebAuthenticationSession` using PKCE + the iOS OAuth client id
-///      from `GoogleService-Info.plist` (no client secret needed).
-///   2. Google redirects to `<REVERSED_CLIENT_ID>:/oauth2callback?code=…`.
-///   3. The session returns the code; we exchange it at
-///      `https://oauth2.googleapis.com/token` for a Google `id_token`.
-///   4. We POST that id_token to Identity Toolkit `signInWithIdp` to mint
-///      Firebase `idToken` + `refreshToken`.
-///   5. Tokens land in the Keychain; `refreshIfNeeded()` uses the existing
-///      `securetoken.googleapis.com` exchange.
+/// End-to-end flow:
+///   1. PKCE handshake: generate verifier+challenge, open Google's consent
+///      page in `ASWebAuthenticationSession` with scopes
+///      `openid email profile` + `cloud-platform.read-only`.
+///   2. POST the auth code to `oauth2.googleapis.com/token` and capture both
+///      the Google `id_token` AND the `access_token` (+ `expires_in`).
+///   3. Forward the `id_token` to Identity Toolkit `signInWithIdp` for the
+///      Firebase `idToken` / `refreshToken` pair (stored under `firebase.*`).
+///   4. Persist the Google OAuth access token to Keychain under
+///      `google.accessToken` so `SecretManagerClient` can read GCP secrets.
 final class AuthService {
     static let shared = AuthService()
     private init() {}
@@ -50,10 +49,13 @@ final class AuthService {
     }
     /// Google OAuth access token from the most recent sign-in. Used by
     /// `SecretManagerClient` to talk to `secretmanager.googleapis.com`.
-    /// Lives in memory only — not persisted; users get a fresh one each
-    /// session after signing in again. Currently a stub; populated when
-    /// `runGoogleSignIn` is extended to request the cloud-platform scope.
-    var googleAccessToken: String? { Keychain.get("google.accessToken") }
+    /// Stored in Keychain under `google.accessToken`; populated by
+    /// `exchangeCodeForGoogleIdToken` when the user signs in with the
+    /// `cloud-platform.read-only` scope.
+    var googleAccessToken: String? { Keychain.get(googleAccessTokenKey) }
+
+    private let googleAccessTokenKey       = "google.accessToken"
+    private let googleAccessTokenExpiryKey = "google.accessToken.expiry"
     var uid: String? { Keychain.get(uidKey) }
     var isSignedIn: Bool { idToken != nil }
 
@@ -62,6 +64,8 @@ final class AuthService {
         Keychain.remove(refreshTokenKey)
         Keychain.remove(idTokenExpiry)
         Keychain.remove(uidKey)
+        Keychain.remove(googleAccessTokenKey)
+        Keychain.remove(googleAccessTokenExpiryKey)
         UserDefaults.standard.removeObject(forKey: "firebase.displayName")
         UserDefaults.standard.removeObject(forKey: "firebase.email")
     }
@@ -135,7 +139,7 @@ final class AuthService {
             URLQueryItem(name: "client_id",             value: FirebaseConfig.iosOAuthClientId),
             URLQueryItem(name: "redirect_uri",          value: redirectURI),
             URLQueryItem(name: "response_type",         value: "code"),
-            URLQueryItem(name: "scope",                 value: "openid email profile"),
+            URLQueryItem(name: "scope",                 value: "openid email profile https://www.googleapis.com/auth/cloud-platform.read-only"),
             URLQueryItem(name: "code_challenge",        value: challenge),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "prompt",                value: "select_account"),
@@ -179,6 +183,10 @@ final class AuthService {
         }
     }
 
+    /// Exchange the auth code for Google tokens. Captures both the OIDC
+    /// `id_token` (used to mint a Firebase session) and the OAuth
+    /// `access_token` (used by `SecretManagerClient`). The access token + its
+    /// absolute expiry are persisted to Keychain so they survive app restart.
     private func exchangeCodeForGoogleIdToken(code: String, verifier: String, redirectURI: String) async throws -> String {
         var req = URLRequest(url: URL(string: "https://oauth2.googleapis.com/token")!)
         req.httpMethod = "POST"
@@ -199,8 +207,18 @@ final class AuthService {
         guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw AuthError.exchangeFailed("google token exchange: \(String(data: data, encoding: .utf8) ?? "")")
         }
-        struct TokenResp: Decodable { let id_token: String }
-        return try JSONDecoder().decode(TokenResp.self, from: data).id_token
+        struct TokenResp: Decodable {
+            let id_token: String
+            let access_token: String?
+            let expires_in: Int?
+        }
+        let decoded = try JSONDecoder().decode(TokenResp.self, from: data)
+        if let access = decoded.access_token, !access.isEmpty {
+            try Keychain.set(access, key: googleAccessTokenKey)
+            let expiry = Int(Date().timeIntervalSince1970) + (decoded.expires_in ?? 3600)
+            try Keychain.set(String(expiry), key: googleAccessTokenExpiryKey)
+        }
+        return decoded.id_token
     }
 
     private func signInWithGoogleIdToken(_ googleIdToken: String, apiKey: String) async throws {

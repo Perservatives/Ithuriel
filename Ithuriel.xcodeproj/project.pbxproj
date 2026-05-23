@@ -29,7 +29,6 @@
 		45421130BA0ED4B3EF4BB984 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 477C813D72FEC593E7B0627E /* FirebaseAuth */; };
 		486AF1900FDA6A9633F566DA /* enter.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1892B9DF8E09632A6C7AC14F /* enter.mp3 */; };
 		4AC3837394F405C8063AB853 /* NotchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808F0FD7E6ECE5718B4009A2 /* NotchDetector.swift */; };
-		BR4NDM4RK5W1FT1N50URC3ES /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */; };
 		4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82F492D381182E0EE2A44BA /* AppChromeBar.swift */; };
 		570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */; };
 		59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B951B012E95739BF6F355D /* LiquidGlass.swift */; };
@@ -56,6 +55,8 @@
 		A1E78D8EF1F2066C37BDE117 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2002F8FDDF0EBF2C87416566 /* FirebaseStorage */; };
 		A2FCEB109FDE60608412DA46 /* PrefsSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F8A9AADEAC531E5587D575 /* PrefsSync.swift */; };
 		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
+		AB6595178102AC515F3DE739 /* SecretManagerCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = E21063B15C7E5CB6596833E4 /* SecretManagerCLI.swift */; };
+		ACD53492CC750D4634F85336 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE4B291DC22F1BAB3138481 /* BrandMark.swift */; };
 		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
 		B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */; };
 		B23AEFCA5D0F69AD45D103A4 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5554FD8CF030AD4C315E9CCC /* FirebaseCore */; };
@@ -106,6 +107,7 @@
 		03F7F899D222D5F05BB333DD /* KillSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KillSwitch.swift; sourceTree = "<group>"; };
 		095CFAD5BC1ECC4B766B1FCA /* Ithuriel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ithuriel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceMonitor.swift; sourceTree = "<group>"; };
+		0CE4B291DC22F1BAB3138481 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 		14408B6A22B80B8942E8FC62 /* Motion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; };
 		16FAC9360CF04257D0CF4BD5 /* ConnectorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectorsView.swift; sourceTree = "<group>"; };
 		1892B9DF8E09632A6C7AC14F /* enter.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = enter.mp3; sourceTree = "<group>"; };
@@ -175,6 +177,7 @@
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
 		DEF405A92594796F12FBC14E /* TranscriptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptChip.swift; sourceTree = "<group>"; };
 		DF8F9E9AD45970C3656659D6 /* InstantChatController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantChatController.swift; sourceTree = "<group>"; };
+		E21063B15C7E5CB6596833E4 /* SecretManagerCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretManagerCLI.swift; sourceTree = "<group>"; };
 		EA3D60E690647FAA6DCB97CD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EA63356B176A586DBB19722B /* AgentStatusBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStatusBus.swift; sourceTree = "<group>"; };
 		EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
@@ -184,7 +187,6 @@
 		F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
 		F82F492D381182E0EE2A44BA /* AppChromeBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeBar.swift; sourceTree = "<group>"; };
 		FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiEmbed.swift; sourceTree = "<group>"; };
-		BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -238,9 +240,9 @@
 			children = (
 				C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */,
 				EA63356B176A586DBB19722B /* AgentStatusBus.swift */,
-				BR4NDM4RK5W1FT1NREF3REN /* BrandMark.swift */,
 				F82F492D381182E0EE2A44BA /* AppChromeBar.swift */,
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
+				0CE4B291DC22F1BAB3138481 /* BrandMark.swift */,
 				5208EF87EDAF04F6AD87121B /* CapturePill.swift */,
 				798888136F3708A12FED1754 /* ChatView.swift */,
 				2D44D95499CACE7017FC62EF /* ChatWindowController.swift */,
@@ -330,6 +332,7 @@
 				75228747667389CA05EBB789 /* DirectFirestoreClient.swift */,
 				3070F48D4D672B77146C2DA2 /* FirebaseConfig.swift */,
 				49D3581883E9C02A57988A5E /* Keychain.swift */,
+				E21063B15C7E5CB6596833E4 /* SecretManagerCLI.swift */,
 				28FC4642D0E23AD716C21B90 /* SecretManagerClient.swift */,
 				F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */,
 			);
@@ -514,12 +517,12 @@
 				CD6F7F71367B04A8F2EE3062 /* AgentSpeaker.swift in Sources */,
 				66A1A7C987ECF9B8642C12F5 /* AgentStatusBus.swift in Sources */,
 				6BCF97A573F34542C6C3E33E /* AgentTranscript.swift in Sources */,
-				BR4NDM4RK5W1FT1N50URC3ES /* BrandMark.swift in Sources */,
 				4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */,
 				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,
 				00EA6FB58CBBC50057F4A2E2 /* AppRouter.swift in Sources */,
 				7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */,
 				E9F04B3AEADA318B6B2D2A17 /* AuthService.swift in Sources */,
+				ACD53492CC750D4634F85336 /* BrandMark.swift in Sources */,
 				EAE009A753F04CE8B13F134A /* CapturePill.swift in Sources */,
 				6A1C471A1484B83750B34683 /* ChatView.swift in Sources */,
 				F71825B6A0F4DCCB026790AC /* ChatWindowController.swift in Sources */,
@@ -572,6 +575,7 @@
 				BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */,
 				D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */,
 				D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */,
+				AB6595178102AC515F3DE739 /* SecretManagerCLI.swift in Sources */,
 				339F757EFC6B5AEB5A4063A9 /* SecretManagerClient.swift in Sources */,
 				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
 				B5A8FB081F2DF85548FA7326 /* SettingsWindowController.swift in Sources */,
