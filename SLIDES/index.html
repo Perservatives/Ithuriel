@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ithuriel — Synthesis Hackathon</title>
+<style>
+  :root {
+    --bg: #F8F8F7;
+    --ink: #111111;
+    --ink-2: #555555;
+    --ink-3: #8c8c8c;
+    --accent: #7B5BFF;
+    --accent-soft: #EFEAFF;
+    --rule: rgba(0,0,0,0.08);
+    --shadow: 0 10px 36px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    --rounded: ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+
+  .deck {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 6vh 8vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+    transition: opacity .42s cubic-bezier(0,0,0.2,1), transform .42s cubic-bezier(0,0,0.2,1);
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .hud {
+    position: fixed;
+    bottom: 16px;
+    right: 24px;
+    font: 12px/1 var(--mono);
+    color: var(--ink-3);
+    user-select: none;
+  }
+  .hud .glyph {
+    border: 1px solid var(--rule);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 4px;
+    background: white;
+  }
+  .pageNo { position: fixed; bottom: 16px; left: 24px; font: 12px/1 var(--mono); color: var(--ink-3); }
+
+  /* Brand mark */
+  .mark { display: inline-block; vertical-align: middle; }
+  .mark-lg { width: 96px; height: 96px; }
+  .mark-md { width: 36px; height: 36px; }
+  .mark-sm { width: 20px; height: 20px; }
+
+  /* Title slide */
+  .title-stack { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+  .tagline { font-family: var(--rounded); font-size: clamp(22px, 2.8vw, 32px); color: var(--ink-2); max-width: 760px; line-height: 1.35; font-weight: 400; }
+  h1.title { font-family: var(--rounded); font-size: clamp(64px, 8.2vw, 128px); margin: 0; letter-spacing: -0.025em; font-weight: 600; line-height: 1; }
+  .meta { font: 13px var(--mono); color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* Section header */
+  .eyebrow { font: 11px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h2 { font-family: var(--rounded); font-size: clamp(40px, 5vw, 64px); margin: 0 0 14px; letter-spacing: -0.02em; font-weight: 600; line-height: 1.05; }
+  h3 { font-family: var(--rounded); font-size: clamp(22px, 2.4vw, 30px); margin: 0; font-weight: 600; }
+  p, li { font-size: clamp(16px, 1.4vw, 20px); line-height: 1.5; color: var(--ink-2); }
+  p.lead { font-size: clamp(20px, 1.9vw, 26px); color: var(--ink); max-width: 880px; }
+
+  /* Two-column */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+  .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+
+  /* Cards */
+  .card {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+  }
+  .card-title { font-family: var(--rounded); font-weight: 600; font-size: 17px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .card-body { font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+  .card.muted { background: rgba(0,0,0,0.025); box-shadow: none; }
+
+  /* Keyboard chip */
+  .kbd {
+    display: inline-flex;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font: 12px/1 var(--mono);
+    background: white;
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 0 var(--rule);
+    color: var(--ink);
+  }
+
+  /* Code block */
+  pre { background: #0F0F10; color: #E9E6FF; padding: 18px 22px; border-radius: 10px; font: 13px/1.55 var(--mono); overflow: auto; box-shadow: var(--shadow); }
+  pre .c { color: #6E6688; }
+  pre .k { color: #C9AFFF; }
+  pre .s { color: #C8E6C9; }
+
+  /* Brand-burst hero */
+  .hero {
+    display: flex; align-items: center; gap: 36px;
+  }
+  .hero-mark { width: 220px; height: 220px; flex: 0 0 220px; }
+
+  /* Pill list (for keyboard demo) */
+  .keys { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .keys .row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+
+  /* Numbered steps */
+  .steps { display: grid; gap: 12px; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; }
+  .step .n { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: white; display: grid; place-items: center; font: 11px var(--mono); }
+
+  /* Footer ticker */
+  .ticker { position: fixed; top: 18px; right: 24px; font: 11px var(--mono); color: var(--ink-3); }
+
+  /* Slide-specific */
+  .quote {
+    font-family: var(--rounded);
+    font-size: clamp(26px, 3.4vw, 44px);
+    line-height: 1.25;
+    color: var(--ink);
+    max-width: 1000px;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+  }
+  .quote::before { content: "\201C"; color: var(--accent); margin-right: 6px; }
+  .quote::after  { content: "\201D"; color: var(--accent); margin-left: 6px; }
+
+  /* Diagram boxes */
+  .pipe { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .pipe .box { background: white; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 14px; font: 13px var(--mono); box-shadow: var(--shadow); }
+  .pipe .arrow { color: var(--ink-3); }
+  .pipe .box.accent { background: var(--accent-soft); border-color: rgba(123,91,255,0.2); color: var(--accent); }
+
+  /* Background tint */
+  .bg-violet { background: linear-gradient(180deg, var(--bg) 0%, #F2EDFF 100%); }
+
+  /* Closing */
+  .close {
+    display: flex; flex-direction: column; gap: 22px; align-items: center; text-align: center;
+  }
+  .close h2 { font-size: clamp(56px, 7vw, 96px); }
+
+  /* Print */
+  @media print {
+    .slide { position: relative; inset: auto; opacity: 1 !important; transform: none !important; page-break-after: always; height: 100vh; }
+    .hud, .pageNo, .ticker { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Reusable 8-petal asterisk burst as SVG symbol -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="burst" viewBox="-100 -100 200 200">
+      <!-- 8 teardrop petals at 0°, 45°, ... 315° -->
+      <g id="burst-petals" fill="currentColor">
+        <path d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z"></path>
+        <path transform="rotate(45)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z" opacity="0.65"></path>
+        <path transform="rotate(90)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z"></path>
+        <path transform="rotate(135)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z" opacity="0.65"></path>
+        <path transform="rotate(180)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z"></path>
+        <path transform="rotate(225)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z" opacity="0.65"></path>
+        <path transform="rotate(270)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z"></path>
+        <path transform="rotate(315)" d="M0,-95 C 10,-40  10,-40  0,-6 C -10,-40 -10,-40 0,-95 Z" opacity="0.65"></path>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="ticker">SYNTHESIS HACKATHON · Ithuriel · 2026</div>
+<div class="pageNo" id="pageNo">01 / 10</div>
+<div class="hud"><span class="glyph">←</span><span class="glyph">→</span> navigate</div>
+
+<div class="deck">
+
+  <!-- 1 — Title -->
+  <section class="slide active">
+    <div class="hero">
+      <svg class="hero-mark" style="color: var(--accent)" aria-hidden="true">
+        <use href="#burst"></use>
+      </svg>
+      <div class="title-stack">
+        <div class="meta">A macOS computer-use agent</div>
+        <h1 class="title">Ithuriel</h1>
+        <div class="tagline">An agent that knows what you're already doing —<br/>so you stop explaining and start working.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 — Problem -->
+  <section class="slide">
+    <div class="eyebrow">The cold-start tax</div>
+    <h2>Every AI tool starts blank.</h2>
+    <p class="lead">
+      Claude, ChatGPT, Cursor, Copilot — each one boots without memory of what you were
+      working on. So every prompt re-explains the project: <em>"the file I just edited"</em>,
+      <em>"the test that failed"</em>, <em>"the branch you read last time"</em>. 76% of developers
+      use ≥ 2 AI tools daily. The re-explanation tax is real.
+    </p>
+    <div class="cols" style="margin-top: 36px;">
+      <div class="card">
+        <div class="card-title">Today</div>
+        <div class="card-body">A blank textarea. Type until you've poured the world back in. Repeat tomorrow.</div>
+      </div>
+      <div class="card muted">
+        <div class="card-title">What we want</div>
+        <div class="card-body">A surface that already knows — your git branch, recent edits, open files, terminal history.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 — What it is -->
+  <section class="slide bg-violet">
+    <div class="eyebrow">What Ithuriel is</div>
+    <h2>One prompt, full execution.</h2>
+    <p class="lead">
+      A macOS-native agent that lives in your menu bar, watches your workspace,
+      and uses Google Gemini to drive your keyboard, mouse, file system, and apps —
+      with the project's full context already loaded into every turn.
+    </p>
+    <div class="cols-3" style="margin-top: 36px;">
+      <div class="card">
+        <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Summon</div>
+        <div class="card-body">Tap <span class="kbd">⌃ Space</span> anywhere to open the prompt. Movable, draggable, no shadow heroics.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Talk</div>
+        <div class="card-body">Hold <span class="kbd">⌃ Space</span> to speak. Google Cloud STT in, agent run, TTS out — all on your key.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Stop</div>
+        <div class="card-body">Global kill switch <span class="kbd">⌃ ⌥ ⌘ .</span> halts the agent mid-action. Use freely.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — The Spotlight -->
+  <section class="slide">
+    <div class="eyebrow">Headline surface</div>
+    <h2>A pill, on top of everything.</h2>
+    <div class="cols">
+      <div>
+        <p class="lead">A floating prompt. Liquid glass. Eight-pointed mark on the left. Type a task, hit return. The agent runs.</p>
+        <div class="keys" style="margin-top: 18px;">
+          <div class="row"><span class="kbd">⌃ Space</span> summon / dismiss</div>
+          <div class="row"><span class="kbd">hold ⌃ Space</span> voice mode</div>
+          <div class="row"><span class="kbd">⎋</span> close</div>
+          <div class="row"><span class="kbd">⌃ ⌥ ⌘ .</span> kill agent</div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="padding: 22px 24px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <svg class="mark" style="width:34px; height:34px; color: var(--accent)"><use href="#burst"></use></svg>
+            <div>
+              <div style="font-family: var(--rounded); font-size: 18px; font-weight: 500;">What can I help you with today?</div>
+              <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px;">Ithuriel · synthesis-hack26svl-121</div>
+            </div>
+            <div style="flex:1"></div>
+            <div style="background: linear-gradient(#FF7059, #F03E22); width: 36px; height: 32px; border-radius: 8px; display:grid; place-items:center; color:white;">↑</div>
+          </div>
+        </div>
+        <div style="font: 12px var(--mono); color: var(--ink-3); margin-top: 10px; text-align: right;">draggable · borderless · transparent</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 — Conversational, not transcript-y -->
+  <section class="slide">
+    <div class="eyebrow">Reads like a chat, not a log</div>
+    <h2>Tool calls collapse. Thinking mutates.</h2>
+    <p class="lead" style="margin-bottom: 28px;">
+      We borrowed the Claude Code &amp; ChatGPT desktop pattern: by default we hide
+      the per-tool spam behind a single chip. One line, "Used N tools — click to expand."
+      And the live thinking row mutates in place instead of stacking new "thinking…" lines.
+    </p>
+    <div class="cols">
+      <div class="card">
+        <div class="card-title">Default view</div>
+        <div class="card-body" style="font-family: var(--mono);">
+          ▶ refactor the failing test<br/>
+          <span style="color: var(--accent)">● Used 6 tools  ▸</span><br/>
+          ✓ all 4 cases pass; rerun summary attached
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Expanded view</div>
+        <div class="card-body" style="font-family: var(--mono); color: var(--ink-3);">
+          → run_shell: pytest test_alpha.py<br/>
+          → read_file: test_alpha.py<br/>
+          → write_file: test_alpha.py<br/>
+          → run_shell: pytest test_alpha.py<br/>
+          → screenshot: scrutinize editor<br/>
+          → run_shell: git status<br/>
+          ✓ all 4 cases pass; rerun summary attached
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — Context plumbing -->
+  <section class="slide">
+    <div class="eyebrow">Why the agent never starts cold</div>
+    <h2>Continuous context capture.</h2>
+    <div class="cols">
+      <div>
+        <p class="lead">Five subsystems run quietly in the background. Every agent turn is seeded with a fresh ContextSnapshot.</p>
+        <ul style="margin-top: 18px;">
+          <li><b>FSEventStream</b> — 5s-debounced file changes</li>
+          <li><b>NSWorkspace</b> — active editor + open tabs</li>
+          <li><b>GitCapture</b> — branch, recent commits, diff</li>
+          <li><b>TerminalCapture</b> — last 20 shell commands</li>
+          <li><b>Redactor</b> — scrubs API keys, .env, .ssh/</li>
+        </ul>
+      </div>
+      <div>
+        <div class="pipe">
+          <div class="box">FSEvents</div>
+          <div class="arrow">→</div>
+          <div class="box">Redactor</div>
+          <div class="arrow">→</div>
+          <div class="box accent">ContextSnapshot</div>
+          <div class="arrow">→</div>
+          <div class="box">AgentLoop</div>
+        </div>
+        <div class="pipe" style="margin-top: 14px;">
+          <div class="box">Pub/Sub</div>
+          <div class="arrow">→</div>
+          <div class="box">Cloud Function</div>
+          <div class="arrow">→</div>
+          <div class="box accent">Vertex AI<br/>text-embedding-005</div>
+          <div class="arrow">→</div>
+          <div class="box">Firestore + GCS</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — Under the hood -->
+  <section class="slide bg-violet">
+    <div class="eyebrow">Under the hood</div>
+    <h2>Pure Apple frameworks. Google Cloud backbone.</h2>
+    <div class="cols-3">
+      <div class="card">
+        <div class="card-title">Brain</div>
+        <div class="card-body">Gemini 3.5 Flash via the v1beta generateContent endpoint. Function-calling + screenshot vision feeds the loop until it calls <code>done()</code>.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Action surface</div>
+        <div class="card-body">CGEvent (type, click, hotkeys), NSWorkspace (launch / focus / quit), filesystem (sandboxed to workspace), zsh, screen capture.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cloud</div>
+        <div class="card-body">Firebase Auth, Firestore (snapshots + agent runs), Cloud Storage (raw + embeddings), Cloud Run, Cloud Functions, Vertex AI Vector Search.</div>
+      </div>
+    </div>
+    <div class="pipe" style="margin-top: 28px; justify-content: center;">
+      <div class="box">SwiftUI</div>
+      <div class="box">FirebaseAuth + Firestore</div>
+      <div class="box">Vertex AI</div>
+      <div class="box">Cloud Speech</div>
+      <div class="box">Cloud TTS</div>
+      <div class="box accent">synthesis-hack26svl-121</div>
+    </div>
+  </section>
+
+  <!-- 8 — Safety -->
+  <section class="slide">
+    <div class="eyebrow">Safety</div>
+    <h2>Permission-cheap, kill-switch-cheap.</h2>
+    <div class="cols">
+      <div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><div><b>Sandboxed file ops.</b> read/write/delete pinned to the active workspace. Outside? Refused.</div></div>
+          <div class="step"><div class="n">2</div><div><b>Secrets scrubber.</b> <code>sk-</code>, <code>ghp_</code>, <code>AIza</code>, <code>xoxb-</code>, <code>api_key=…</code> stripped before anything leaves the Mac.</div></div>
+          <div class="step"><div class="n">3</div><div><b>Destructive prompts.</b> <code>write_file</code> / <code>delete_file</code> / <code>run_shell</code> / <code>quit_app</code> can require explicit confirmation.</div></div>
+          <div class="step"><div class="n">4</div><div><b>Lazy permissions.</b> Onboarding only asks for what isn't already granted — no nagging.</div></div>
+          <div class="step"><div class="n">5</div><div><b>Global kill switch.</b> <span class="kbd">⌃ ⌥ ⌘ .</span> stops the agent mid-step. Always available.</div></div>
+        </div>
+      </div>
+      <div class="card" style="background: #fff; padding: 24px;">
+        <div style="font-family: var(--rounded); font-size: 20px; font-weight: 600; margin-bottom: 12px;">Privacy that survives shipping</div>
+        <p style="margin: 0;">
+          The agent is dangerous by design. So every off-Mac payload is funnelled through
+          the Redactor first; every destructive action is gated on user policy; every
+          sensitive path (<code>.env</code>, <code>.ssh/</code>, <code>secrets/</code>) is refused even inside the
+          sandbox.
+        </p>
+        <p style="margin: 14px 0 0; font: 12px var(--mono); color: var(--ink-3);">
+          Local-only mode short-circuits every network call. Promise it, mean it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — Numbers -->
+  <section class="slide">
+    <div class="eyebrow">By the numbers</div>
+    <h2>What's in the box.</h2>
+    <div class="cols-3">
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">~70</div>
+        <div class="card-body">Swift source files. Zero third-party deps in the agent core; Firebase SDK only at the network boundary.</div>
+      </div>
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">13</div>
+        <div class="card-body">Tool functions Gemini can call (type, click, screenshot, run_shell, write_file, focus_app, …).</div>
+      </div>
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">1.10s</div>
+        <div class="card-body">Launch animation. 8 shards converge with Material decelerate easing, 15ms radial stagger.</div>
+      </div>
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">768-dim</div>
+        <div class="card-body">Vertex AI text-embedding-005 vectors per snapshot. Cosine-ranked semantic search in production.</div>
+      </div>
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">⌃ Space</div>
+        <div class="card-body">One global shortcut. Tap for prompt, hold for voice. Configurable in Settings; bind any chord.</div>
+      </div>
+      <div class="card">
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">macOS 14</div>
+        <div class="card-body">Pure Swift / SwiftUI. Hardened-runtime accessory app, LSUIElement, sandbox off by design.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — Close -->
+  <section class="slide bg-violet">
+    <div class="close">
+      <svg class="mark-lg" style="color: var(--accent)"><use href="#burst"></use></svg>
+      <h2>Your AI never starts cold again.</h2>
+      <p class="lead" style="max-width: 760px; text-align: center;">
+        Tap <span class="kbd">⌃ Space</span>. Tell it what you want. Get back to work.
+      </p>
+      <div class="meta">github.com/Perservatives/Ithuriel</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const pageNo = document.getElementById('pageNo');
+  let i = 0;
+  const pad = n => String(n).padStart(2, '0');
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    pageNo.textContent = `${pad(i + 1)} / ${pad(slides.length)}`;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { show(i + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(i - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); e.preventDefault(); }
+    else if (e.key === 'End')  { show(slides.length - 1); e.preventDefault(); }
+  });
+  document.body.addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    const half = window.innerWidth / 2;
+    show(e.clientX > half ? i + 1 : i - 1);
+  });
+  show(0);
+</script>
+</body>
+</html>
