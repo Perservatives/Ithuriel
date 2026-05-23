@@ -36,13 +36,15 @@ final class SpotlightCoordinator {
     /// plays its sequence, then both fade out into the Spotlight prompt.
     func playLaunchThenSummon() {
         guard launchWindow == nil else { return }
-        let screen = NSScreen.main ?? NSScreen.screens.first!
+
+        // Union all screen frames to find the centre of the entire display arrangement.
+        let allBounds = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
 
         // Small floating square — no full-screen backdrop, no screen blur.
         let size = NSSize(width: 220, height: 220)
         let frame = NSRect(
-            x: screen.frame.midX - size.width / 2,
-            y: screen.frame.midY - size.height / 2,
+            x: allBounds.midX - size.width / 2,
+            y: allBounds.midY - size.height / 2,
             width: size.width, height: size.height
         )
         let window = TransparentWindow(
