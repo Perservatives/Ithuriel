@@ -19,6 +19,7 @@ final class SpotlightCoordinator {
     private var launchWindow: NSWindow?
 
     private var summonHotKeyRef: EventHotKeyRef?
+    private var spotlightIsOpen = false
 
     func configure(container: ModelContainer?, agentLoop: AgentLoop?) {
         self.container = container
@@ -78,10 +79,12 @@ final class SpotlightCoordinator {
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
             dimmerWindow?.animator().alphaValue = 1
         }
+        spotlightIsOpen = true
     }
 
     func dismiss() {
-        guard let dimmer = dimmerWindow, let spot = spotlightWindow else { return }
+        guard spotlightIsOpen, let dimmer = dimmerWindow, let spot = spotlightWindow else { return }
+        spotlightIsOpen = false
         SoundPlayer.shared.play(.dismiss, volume: 0.3)
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.16
@@ -97,7 +100,7 @@ final class SpotlightCoordinator {
 
     /// Toggle visibility — used by the menu bar.
     func toggle() {
-        if spotlightWindow?.isVisible == true { dismiss() } else { summon() }
+        if spotlightIsOpen { dismiss() } else { summon() }
     }
 
     // MARK: - Hotkey

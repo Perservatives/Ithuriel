@@ -6,13 +6,14 @@ enum CaptureStatus {
     case capturing, paused, error
 }
 
-/// Menu bar item is now the launcher for the Spotlight (the headline UX).
-/// Left-click → summon Spotlight. Right-click (or ⌥-click) → small menu
-/// with Settings / Mute / Quit. The status icon still indicates capture state.
+/// Left-click → dropdown popover. Right-click / control-click → context menu.
+/// ⌘⇧Space still summons the center-screen Spotlight via SpotlightCoordinator.
 @MainActor
-final class MenuBarManager: NSObject {
+final class MenuBarManager: NSObject, NSPopoverDelegate {
     private var statusItem: NSStatusItem?
+    private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private var outsideClickMonitor: Any?
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
     private weak var container: ModelContainer?
@@ -32,16 +33,29 @@ final class MenuBarManager: NSObject {
         if let button = item.button {
             button.target = self
             button.action = #selector(buttonClicked(_:))
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            button.sendAction(on: [.leftMouseDown, .rightMouseDown])
         }
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.contentSize = NSSize(width: 380, height: 480)
+        if let container = container, let loop = agentLoop {
+            let root = StatusBarView(
+                agent: loop,
+                onOpenSettings: { [weak self] in self?.showSettings() },
+                onQuit: { NSApp.terminate(nil) }
+            )
+            .modelContainer(container)
+            popover.contentViewController = NSHostingController(rootView: root)
+        }
+        popover.delegate = self
+        self.popover = popover
     }
 
-    /// Opens the Settings UI in its own borderless-titled window. Preferred
-    /// over `showSettingsWindow:` because we run with `LSUIElement` and the
-    /// SwiftUI `Settings` scene doesn't always activate reliably from an
-    /// accessory app.
     func showSettings() {
         guard let container = container else { return }
+        popover?.performClose(nil)
+
         if settingsWindow == nil {
             let root = SettingsView().modelContainer(container)
             let hosting = NSHostingController(rootView: root)
@@ -80,17 +94,31 @@ final class MenuBarManager: NSObject {
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
-        let event = NSApp.currentEvent
-        let isRightClick = event?.type == .rightMouseUp ||
-                           (event?.modifierFlags.contains(.option) == true)
+        guard let event = NSApp.currentEvent else {
+            togglePopover()
+            return
+        }
+        let isRightClick = event.type == .rightMouseDown
+            || event.type == .rightMouseUp
+            || event.modifierFlags.contains(.control)
         if isRightClick {
-            showContextMenu(from: sender)
+            showContextMenu(from: sender, event: event)
         } else {
-            SpotlightCoordinator.shared.toggle()
+            togglePopover()
         }
     }
 
-    private func showContextMenu(from button: NSStatusBarButton) {
+    @objc private func togglePopover() {
+        guard let popover = popover, let button = statusItem?.button else { return }
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
+    }
+
+    private func showContextMenu(from button: NSStatusBarButton, event: NSEvent) {
         let menu = NSMenu()
         let summon = menu.addItem(withTitle: NSLocalizedString("menubar.menu.summon", comment: ""),
                                   action: #selector(menuSummon), keyEquivalent: " ")
@@ -110,13 +138,47 @@ final class MenuBarManager: NSObject {
                                     action: #selector(menuQuit), keyEquivalent: "q")
         quitItem.target = self
 
-        statusItem?.menu = menu
-        button.performClick(nil)
-        statusItem?.menu = nil
+        NSMenu.popUpContextMenu(menu, with: event, for: button)
     }
 
-    @objc private func menuSummon() { SpotlightCoordinator.shared.summon() }
+    @objc private func menuSummon() {
+        popover?.performClose(nil)
+        SpotlightCoordinator.shared.summon()
+    }
+
     @objc private func menuToggleMute() { SoundPlayer.shared.muted.toggle() }
     @objc private func menuOpenSettings() { showSettings() }
     @objc private func menuQuit() { NSApp.terminate(nil) }
+
+    // MARK: - NSPopoverDelegate
+
+    func popoverDidShow(_ notification: Notification) {
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.closePopoverIfClickedOutside()
+        }
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        stopOutsideClickMonitor()
+    }
+
+    private func closePopoverIfClickedOutside() {
+        guard let popover = popover, popover.isShown else { return }
+
+        if let button = statusItem?.button, let window = button.window {
+            let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
+            if buttonFrame.contains(NSEvent.mouseLocation) {
+                return
+            }
+        }
+
+        popover.performClose(nil)
+    }
+
+    private func stopOutsideClickMonitor() {
+        if let monitor = outsideClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            outsideClickMonitor = nil
+        }
+    }
 }
