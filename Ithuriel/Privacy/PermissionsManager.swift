@@ -22,7 +22,19 @@ final class PermissionsManager: ObservableObject {
         !(accessibilityGranted && screenRecordingGranted)
     }
 
-    private init() {}
+    private enum CacheKey {
+        static let accessibility    = “perm.accessibility”
+        static let screenRecording  = “perm.screenRecording”
+        static let notifications    = “perm.notifications”
+    }
+
+    private init() {
+        // Seed from last-known state so the UI never flashes “missing” on cold launch.
+        let ud = UserDefaults.standard
+        accessibilityGranted   = ud.bool(forKey: CacheKey.accessibility)
+        screenRecordingGranted = ud.bool(forKey: CacheKey.screenRecording)
+        notificationsGranted   = ud.bool(forKey: CacheKey.notifications)
+    }
 
     func refresh() async {
         await measureAndPublish(retryIfMissing: true)
@@ -107,6 +119,10 @@ final class PermissionsManager: ObservableObject {
         accessibilityGranted = accessibility
         screenRecordingGranted = screen
         notificationsGranted = notifications
+        let ud = UserDefaults.standard
+        ud.set(accessibility,   forKey: CacheKey.accessibility)
+        ud.set(screen,          forKey: CacheKey.screenRecording)
+        ud.set(notifications,   forKey: CacheKey.notifications)
         if changed {
             NotificationCenter.default.post(name: .ithurielPermissionsDidChange, object: nil)
         }
