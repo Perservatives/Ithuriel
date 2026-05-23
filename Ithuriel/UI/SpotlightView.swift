@@ -172,7 +172,7 @@ struct SpotlightView: View {
     private var pillBackground: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor).opacity(0.72)
-            VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
+            VisualEffectBlur(material: .popover, blendingMode: .behindWindow)
             LinearGradient(
                 colors: [Color.primary.opacity(0.06), Color.primary.opacity(0.02)],
                 startPoint: .top, endPoint: .bottom
@@ -183,19 +183,18 @@ struct SpotlightView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5)
         )
-        .shadow(color: .black.opacity(0.45), radius: 30, y: 14)
-        .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+        // Single light shadow — the heavy two-layer drop shadow was reading
+        // as a halo on screen. Keeping it subtle so the pill feels weightless.
+        .shadow(color: .black.opacity(0.16), radius: 12, y: 6)
     }
 
     // MARK: - Transcript
 
     private var transcriptPanel: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: UILayout.spacingS) {
-                ForEach(Array(agent.transcript.enumerated()), id: \.offset) { idx, line in
-                    SpotlightTranscriptLine(line: line)
-                        .staggered(idx)
-                }
+            VStack(alignment: .leading, spacing: UILayout.spacingS) {
+                TranscriptChip(transcript: agent.transcript,
+                               verbosity: prefs?.transcriptVerbosity ?? 1)
                 if let err = agent.lastError {
                     Text(err)
                         .font(.system(.caption, design: .rounded))
@@ -210,7 +209,7 @@ struct SpotlightView: View {
         .background(
             ZStack {
                 Color(nsColor: .windowBackgroundColor).opacity(0.65)
-                VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
+                VisualEffectBlur(material: .popover, blendingMode: .behindWindow)
             }
             .clipShape(RoundedRectangle(cornerRadius: UILayout.radiusM, style: .continuous))
         )

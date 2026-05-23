@@ -65,6 +65,29 @@
 "settings.hotkey.verbosity.normal"  = "Answer + tool count";
 "settings.hotkey.verbosity.verbose" = "Every tool call";
 
+/* Transcript chip */
+"chip.thinking"    = "Thinking…";
+"chip.usedTools"   = "Used %d tools";
+
+/* Onboarding */
+"onboarding.welcome.title"     = "Welcome to Ithuriel";
+"onboarding.welcome.body"      = "Your context-aware computer-use agent. A few quick basics before you start.";
+"onboarding.welcome.summon"    = "Tap to summon the prompt anywhere.";
+"onboarding.welcome.holdLabel" = "hold";
+"onboarding.welcome.voice"     = "Hold the shortcut to talk. Release to send.";
+"onboarding.welcome.kill"      = "Kill switch — stops the agent mid-action.";
+"onboarding.signIn.title"      = "Sign in (optional)";
+"onboarding.signIn.body"       = "Sign in with Google to sync snapshots, agent runs, and semantic search across your devices. You can skip this and use Ithuriel locally.";
+"onboarding.signIn.connected"  = "Signed in";
+"onboarding.signIn.button"     = "Continue with Google";
+"onboarding.signIn.optional"   = "Skip below to use Ithuriel without an account.";
+"onboarding.permissions.title" = "Just what we need";
+"onboarding.permissions.body"  = "Ithuriel only asks for permissions you haven't already granted. Each one is gated to the feature that needs it.";
+"onboarding.next"              = "Continue";
+"onboarding.back"              = "Back";
+"onboarding.skip"              = "Skip";
+"onboarding.start"             = "Start using Ithuriel";
+
 /* How To */
 "settings.tab.howto"     = "How To";
 "howto.title"            = "How to use Ithuriel";

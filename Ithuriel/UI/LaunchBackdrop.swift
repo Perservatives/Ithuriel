@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Full-screen launch backdrop. Pure black with the faintest vignette toward
-/// the centre — the screen "goes dark" so the shards assembling into the
-/// 8-point Ithuriel mark are the only thing the eye is drawn to.
+/// Full-screen launch backdrop. A near-white wash with the faintest cool
+/// vignette toward the centre — the screen "becomes paper" so the
+/// 8-point shards converging onto the centre read cleanly. The tint is
+/// only used to colour the petals, never the canvas.
 struct LaunchBackdropView: View {
     let baseColor: Color
 
@@ -12,14 +13,17 @@ struct LaunchBackdropView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            // Off-white canvas. Apple's "graphite paper" feel: F8F8F7-ish.
+            Color(red: 0.976, green: 0.974, blue: 0.969).ignoresSafeArea()
+            // Subtle cool wash toward the centre so the shards' shadows
+            // have somewhere to land.
             RadialGradient(
-                colors: [Color.white.opacity(0.04), .clear],
+                colors: [Color.black.opacity(0.03), .clear],
                 center: .center,
-                startRadius: 60,
-                endRadius: 540
+                startRadius: 80,
+                endRadius: 520
             )
-            .blendMode(.plusLighter)
+            .blendMode(.multiply)
             .ignoresSafeArea()
         }
     }

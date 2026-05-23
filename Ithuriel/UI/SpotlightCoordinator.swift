@@ -178,7 +178,7 @@ final class SpotlightCoordinator {
         window.level = .floating
         window.titlebarAppearsTransparent = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        window.isMovableByWindowBackground = false
+        window.isMovableByWindowBackground = true
         window.contentView = host
         spotlightWindow = window
     }

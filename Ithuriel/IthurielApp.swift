@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import SwiftData
 import ApplicationServices
+import FirebaseCore
 
 #if DEBUG
 let kIthurielDebug = true
@@ -34,6 +35,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        // Initialize Firebase from the bundled GoogleService-Info.plist
+        // BEFORE anything that might want to talk to the project (AuthService,
+        // DirectFirestoreClient, IthurielClient fallbacks).
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
 
         let container = Persistence.makeContainer()
         modelContainer = container
@@ -104,10 +110,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Boot animation, then open chat window as the primary surface.
+        // If this is a first launch, the onboarding window opens too.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             Task { @MainActor in
                 SpotlightCoordinator.shared.playLaunchThenSummon()
                 ChatWindowController.shared.show(container: container, agent: loop)
+                OnboardingCoordinator.shared.presentIfNeeded(container: container)
             }
         }
 
