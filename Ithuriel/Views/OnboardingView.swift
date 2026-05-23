@@ -115,23 +115,39 @@ struct OnboardingView: View {
 
     private var signInStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Paste your Gemini API key")
+            Text("Paste your API keys")
                 .font(.system(.title2, design: .rounded).weight(.semibold))
-            Text("That's the only thing Ithuriel needs to work. Free at aistudio.google.com/apikey — no signup beyond a Google account, no cloud setup, no Firebase. The key lives on this Mac only.")
+            Text("Two keys total, pasted here once. They live on this Mac only — no Firebase, no sign-in, no cloud account.")
                 .font(.body).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let prefs {
-                SecureField("AIza…", text: Binding(
-                    get: { prefs.geminiApiKey },
-                    set: { prefs.geminiApiKey = $0; try? context.save() }
-                ))
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
-                if !prefs.geminiApiKey.isEmpty {
-                    Label("Key saved locally", systemImage: "checkmark.seal.fill")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("OpenAI API key (voice)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    SecureField("sk-…", text: Binding(
+                        get: { prefs.openAIAPIKey },
+                        set: { prefs.openAIAPIKey = $0; try? context.save() }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Gemini API key (agent brain)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    SecureField("AIza…", text: Binding(
+                        get: { prefs.geminiApiKey },
+                        set: { prefs.geminiApiKey = $0; try? context.save() }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+                }
+                if !prefs.openAIAPIKey.isEmpty && !prefs.geminiApiKey.isEmpty {
+                    Label("Both keys saved locally", systemImage: "checkmark.seal.fill")
                         .foregroundStyle(.green).font(.caption)
                 } else {
-                    Text("You can also skip this step and paste it later in Settings → Integrations.")
+                    Text("You can also skip this step and paste them later in Settings → Integrations.")
                         .font(.caption).foregroundStyle(.tertiary)
                 }
             }

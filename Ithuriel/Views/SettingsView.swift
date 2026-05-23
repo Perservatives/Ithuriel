@@ -302,18 +302,29 @@ struct SettingsView: View {
 
     private var integrationsSection: some View {
         sectionShell(title: section.title) {
-            // 1. The only thing a consumer actually needs: a Gemini key.
-            card("Gemini API key") {
+            // 1. OpenAI key — drives both Whisper STT and OpenAI TTS.
+            card("OpenAI API key (voice)") {
                 labelledField("API key") {
-                    SecureField("AIza…", text: binding(\.geminiApiKey))
+                    SecureField("sk-…", text: binding(\.openAIAPIKey))
                         .textFieldStyle(.roundedBorder)
                 }
-                Text("Free at https://aistudio.google.com/apikey — pasted here, the agent works fully offline of any cloud backend. No account required.")
+                Text("One sk-… key drives both text-to-speech (gpt-4o-mini-tts) and speech-to-text (Whisper). Pasted here, the agent talks and listens with no other setup.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            // 2. Tool list — present, but not required.
+            // 2. Gemini key — the agent brain (planning loop + embeddings).
+            card("Gemini API key (agent brain)") {
+                labelledField("API key") {
+                    SecureField("AIza…", text: binding(\.geminiApiKey))
+                        .textFieldStyle(.roundedBorder)
+                }
+                Text("Free at https://aistudio.google.com/apikey — runs the planning loop, tool calls, and vector search.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // 3. Tool list — present, but not required.
             card(NSLocalizedString("settings.targets", comment: "")) {
                 labelledField(NSLocalizedString("settings.targets.field", comment: "")) {
                     TextField("claude-code,cursor,chatgpt", text: binding(\.targetToolsRaw))
@@ -457,6 +468,8 @@ struct SettingsView: View {
             set: { newValue in
                 prefs[keyPath: keyPath] = newValue
                 try? context.save()
+                let snapshot = prefs
+                Task { await PrefsSync.shared.pushLocal(prefs: snapshot) }
             }
         )
     }
