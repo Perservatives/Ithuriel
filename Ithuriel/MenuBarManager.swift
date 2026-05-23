@@ -6,11 +6,13 @@ enum CaptureStatus {
     case capturing, paused, error
 }
 
-final class MenuBarManager: NSObject, NSPopoverDelegate {
+/// Menu bar item is now the launcher for the Spotlight (the headline UX).
+/// Left-click → summon Spotlight. Right-click (or ⌥-click) → small menu
+/// with Settings / Mute / Quit. The status icon still indicates capture state.
+@MainActor
+final class MenuBarManager: NSObject {
     private var statusItem: NSStatusItem?
-    private var popover: NSPopover?
     private var settingsWindow: NSWindow?
-    private var outsideClickMonitor: Any?
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
     private weak var container: ModelContainer?
@@ -28,31 +30,18 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         refreshIcon()
 
         if let button = item.button {
-            button.action = #selector(togglePopover)
             button.target = self
+            button.action = #selector(buttonClicked(_:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
-
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.contentSize = NSSize(width: 380, height: 460)
-        if let container = container, let loop = agentLoop {
-            let root = StatusBarView(
-                agent: loop,
-                onOpenSettings: { [weak self] in self?.showSettings() },
-                onQuit: { NSApp.terminate(nil) }
-            )
-            .modelContainer(container)
-            popover.contentViewController = NSHostingController(rootView: root)
-        }
-        popover.delegate = self
-        self.popover = popover
     }
 
+    /// Opens the Settings UI in its own borderless-titled window. Preferred
+    /// over `showSettingsWindow:` because we run with `LSUIElement` and the
+    /// SwiftUI `Settings` scene doesn't always activate reliably from an
+    /// accessory app.
     func showSettings() {
         guard let container = container else { return }
-
-        popover?.performClose(nil)
-
         if settingsWindow == nil {
             let root = SettingsView().modelContainer(container)
             let hosting = NSHostingController(rootView: root)
@@ -63,7 +52,6 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
             window.center()
             settingsWindow = window
         }
-
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
@@ -82,7 +70,7 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         guard let button = statusItem?.button else { return }
         let symbolName: String
         switch status {
-        case .capturing: symbolName = accessibilityGranted ? "circle.fill" : "circle.dotted"
+        case .capturing: symbolName = accessibilityGranted ? "asterisk" : "circle.dotted"
         case .paused:    symbolName = "circle"
         case .error:     symbolName = "exclamationmark.circle"
         }
@@ -91,44 +79,44 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         button.image?.isTemplate = true
     }
 
-    @objc private func togglePopover() {
-        guard let popover = popover, let button = statusItem?.button else { return }
-        if popover.isShown {
-            popover.performClose(nil)
+    @objc private func buttonClicked(_ sender: NSStatusBarButton) {
+        let event = NSApp.currentEvent
+        let isRightClick = event?.type == .rightMouseUp ||
+                           (event?.modifierFlags.contains(.option) == true)
+        if isRightClick {
+            showContextMenu(from: sender)
         } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            SpotlightCoordinator.shared.toggle()
         }
     }
 
-    // MARK: - NSPopoverDelegate
+    private func showContextMenu(from button: NSStatusBarButton) {
+        let menu = NSMenu()
+        let summon = menu.addItem(withTitle: NSLocalizedString("menubar.menu.summon", comment: ""),
+                                  action: #selector(menuSummon), keyEquivalent: " ")
+        summon.target = self
+        summon.keyEquivalentModifierMask = [.command, .shift]
+        menu.addItem(.separator())
+        let muteItem = menu.addItem(withTitle: SoundPlayer.shared.muted
+                                    ? NSLocalizedString("menubar.menu.unmute", comment: "")
+                                    : NSLocalizedString("menubar.menu.mute", comment: ""),
+                                    action: #selector(menuToggleMute), keyEquivalent: "")
+        muteItem.target = self
+        let settingsItem = menu.addItem(withTitle: NSLocalizedString("menubar.menu.settings", comment: ""),
+                                        action: #selector(menuOpenSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(.separator())
+        let quitItem = menu.addItem(withTitle: NSLocalizedString("menubar.menu.quit", comment: ""),
+                                    action: #selector(menuQuit), keyEquivalent: "q")
+        quitItem.target = self
 
-    func popoverDidShow(_ notification: Notification) {
-        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            self?.closePopoverIfClickedOutside()
-        }
+        statusItem?.menu = menu
+        button.performClick(nil)
+        statusItem?.menu = nil
     }
 
-    func popoverDidClose(_ notification: Notification) {
-        stopOutsideClickMonitor()
-    }
-
-    private func closePopoverIfClickedOutside() {
-        guard let popover = popover, popover.isShown else { return }
-
-        if let button = statusItem?.button, let window = button.window {
-            let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
-            if buttonFrame.contains(NSEvent.mouseLocation) {
-                return
-            }
-        }
-
-        popover.performClose(nil)
-    }
-
-    private func stopOutsideClickMonitor() {
-        if let monitor = outsideClickMonitor {
-            NSEvent.removeMonitor(monitor)
-            outsideClickMonitor = nil
-        }
-    }
+    @objc private func menuSummon() { SpotlightCoordinator.shared.summon() }
+    @objc private func menuToggleMute() { SoundPlayer.shared.muted.toggle() }
+    @objc private func menuOpenSettings() { showSettings() }
+    @objc private func menuQuit() { NSApp.terminate(nil) }
 }

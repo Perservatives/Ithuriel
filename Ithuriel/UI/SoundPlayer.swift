@@ -1,15 +1,33 @@
 import Foundation
 import AVFoundation
+import AppKit
 
-/// Tiny sound effects for the agent loop. Sourced from the Blink companion
-/// repo so the two apps share an audio identity. Mute via UserDefaults
+/// Tiny sound effects for the agent. Bundled mp3s preferred; falls back to
+/// macOS system sounds (`NSSound(named:)`) when an mp3 isn't shipped yet so
+/// the launch sequence still has audio out of the box. Mute via UserDefaults
 /// `Ithuriel.SoundsMuted`.
 enum AgentSound: String, CaseIterable {
-    case submit = "enter"
-    case tool = "eshop"
-    case done = "agent-done"
+    case submit  = "enter"
+    case tool    = "eshop"
+    case done    = "agent-done"
+    case launch  = "launch"
+    case summon  = "summon"
+    case dismiss = "dismiss"
 
     var resource: String { rawValue }
+
+    /// System fallback played via `NSSound(named:)` when no bundled mp3 exists.
+    /// Picked so the launch chord still feels intentional out of the box.
+    var systemFallback: String? {
+        switch self {
+        case .launch:  return "Glass"
+        case .summon:  return "Tink"
+        case .dismiss: return "Pop"
+        case .submit:  return "Morse"
+        case .done:    return "Hero"
+        case .tool:    return "Tink"
+        }
+    }
 }
 
 @MainActor
@@ -25,17 +43,25 @@ final class SoundPlayer {
     }
 
     private init() {
-        // Pre-warm players to avoid first-play latency.
         for sound in AgentSound.allCases {
             _ = player(for: sound)
         }
     }
 
     func play(_ sound: AgentSound, volume: Float = 0.6) {
-        guard !muted, let player = player(for: sound) else { return }
-        player.currentTime = 0
-        player.volume = volume
-        player.play()
+        guard !muted else { return }
+        if let player = player(for: sound) {
+            player.currentTime = 0
+            player.volume = volume
+            player.play()
+            return
+        }
+        if let name = sound.systemFallback,
+           let ns = NSSound(named: NSSound.Name(name)) {
+            ns.volume = volume
+            ns.stop()
+            ns.play()
+        }
     }
 
     private func player(for sound: AgentSound) -> AVAudioPlayer? {

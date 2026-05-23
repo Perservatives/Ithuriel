@@ -1,5 +1,17 @@
 /* Menu bar */
-"menubar.icon.a11y" = "Ithuriel status";
+"menubar.icon.a11y"    = "Ithuriel status";
+"menubar.menu.summon"  = "Summon Ithuriel";
+"menubar.menu.mute"    = "Mute sounds";
+"menubar.menu.unmute"  = "Unmute sounds";
+"menubar.menu.settings"= "Settings…";
+"menubar.menu.quit"    = "Quit Ithuriel";
+
+/* Spotlight (center-screen prompt) */
+"spotlight.headline.idle"      = "What can I help you with today?";
+"spotlight.headline.running"   = "Working on it…";
+"spotlight.subhead.needsKey"   = "Add your Gemini API key in Settings to begin";
+"spotlight.newChat"            = "New Chat";
+"spotlight.hotkey"             = "⌘⇧Space to summon · ⎋ to dismiss · ⌃⌥⌘. to kill";
 
 /* Status popover */
 "status.workspace.none"        = "No workspace detected";

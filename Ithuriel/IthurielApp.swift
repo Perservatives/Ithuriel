@@ -48,7 +48,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
+        SpotlightCoordinator.shared.configure(container: modelContainer, agentLoop: agentLoop)
+        SpotlightCoordinator.shared.installSummonHotkey()
         requestAccessibilityIfNeeded()
+
+        // Dramatic boot — orb spins up, hands off to the floating prompt.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            SpotlightCoordinator.shared.playLaunchThenSummon()
+        }
 
         let monitor = WorkspaceMonitor(container: modelContainer)
         monitor.start()
@@ -80,10 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let trusted = AXIsProcessTrustedWithOptions(opts as CFDictionary)
         if !trusted {
             Log.info("Accessibility permission not yet granted. Injection features disabled until granted.")
-            menuBarManager?.setAccessibilityState(granted: false)
-        } else {
-            menuBarManager?.setAccessibilityState(granted: true)
         }
+        Task { @MainActor in menuBarManager?.setAccessibilityState(granted: trusted) }
     }
 
     private func handleFileChanges(_ changed: [String]) {

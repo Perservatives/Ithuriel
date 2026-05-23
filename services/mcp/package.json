@@ -1,0 +1,28 @@
+{
+  "name": "@ithuriel/mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ithuriel MCP server — exposes live workspace context to Claude and ChatGPT via Model Context Protocol.",
+  "engines": { "node": ">=20" },
+  "bin": {
+    "ithuriel-mcp": "dist/stdio.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/http.js",
+    "start:stdio": "node dist/stdio.js",
+    "dev:stdio": "tsx src/stdio.ts",
+    "dev:http": "tsx watch src/http.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.5"
+  }
+}
