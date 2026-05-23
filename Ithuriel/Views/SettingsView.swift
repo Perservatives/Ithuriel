@@ -300,78 +300,271 @@ struct SettingsView: View {
         }
     }
 
+    /// Native-feeling Integrations panel. Apple System Settings pattern:
+    /// stacked Form groups with header + helper footer, system-style key
+    /// rows with a cloud-status pill on the right, account row at the top.
     private var integrationsSection: some View {
         sectionShell(title: section.title) {
-            // 1. OpenAI key — drives both Whisper STT and OpenAI TTS.
-            card("OpenAI API key (voice)") {
-                labelledField("API key") {
-                    SecureField("sk-…", text: binding(\.openAIAPIKey))
-                        .textFieldStyle(.roundedBorder)
-                }
-                Text("One sk-… key drives both text-to-speech (gpt-4o-mini-tts) and speech-to-text (Whisper). Pasted here, the agent talks and listens with no other setup.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            accountRow
 
-            // 2. Gemini key — the agent brain (planning loop + embeddings).
-            card("Gemini API key (agent brain)") {
-                labelledField("API key") {
-                    SecureField("AIza…", text: binding(\.geminiApiKey))
-                        .textFieldStyle(.roundedBorder)
-                }
-                Text("Free at https://aistudio.google.com/apikey — runs the planning loop, tool calls, and vector search.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            keysGroup
 
-            // 3. Tool list — present, but not required.
-            card(NSLocalizedString("settings.targets", comment: "")) {
-                labelledField(NSLocalizedString("settings.targets.field", comment: "")) {
-                    TextField("claude-code,cursor,chatgpt", text: binding(\.targetToolsRaw))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.body, design: .monospaced))
-                }
-                Text(NSLocalizedString("settings.targets.help", comment: ""))
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+            handoffGroup
 
-            // 3. Everything cloud-side hidden behind disclosure. Most users
-            // never need to touch it; the app is fully usable without it.
-            DisclosureGroup("Advanced — Ithuriel Cloud sync (optional)") {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Skip this whole section unless you want cross-device sync. The agent runs entirely locally with just your Gemini key.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    labelledField(NSLocalizedString("settings.api.baseURL", comment: "")) {
-                        TextField("https://api.ithuriel.dev", text: binding(\.apiBaseURL))
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    labelledField(NSLocalizedString("settings.api.firebaseWebKey", comment: "")) {
-                        SecureField("AIza…", text: binding(\.firebaseWebAPIKey)).textFieldStyle(.roundedBorder)
-                    }
-                    labelledField(NSLocalizedString("settings.api.token", comment: "")) {
-                        SecureField("", text: binding(\.apiToken)).textFieldStyle(.roundedBorder)
-                    }
-                    HStack {
-                        if AuthService.shared.isSignedIn {
-                            Label(NSLocalizedString("settings.api.signedIn", comment: ""), systemImage: "checkmark.seal")
-                                .foregroundStyle(.green)
-                            Spacer()
-                            Button(NSLocalizedString("settings.api.signOut", comment: "")) { AuthService.shared.signOut() }
-                        } else {
-                            Button(NSLocalizedString("settings.api.signIn", comment: "")) {
-                                AuthService.shared.apiBaseURL = prefs.apiBaseURL
-                                AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
-                                AuthService.shared.beginGoogleSignIn()
-                            }
-                            .disabled(prefs.firebaseWebAPIKey.isEmpty)
-                        }
-                    }
-                }
-                .padding(.top, 8)
-            }
-            .padding(.horizontal, 4)
+            developerDisclosure
         }
+    }
+
+    // MARK: - Integrations · pieces
+
+    /// Account row — sits at the top like the "Apple ID" row in System Settings.
+    private var accountRow: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        colors: [Color.accentColor, Color.accentColor.opacity(0.55)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ))
+                    .frame(width: 44, height: 44)
+                Image(systemName: AuthService.shared.isSignedIn ? "person.fill.checkmark" : "icloud")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(AuthService.shared.isSignedIn ? "Signed in" : "Cloud account")
+                    .font(.system(.headline, design: .rounded))
+                Text(AuthService.shared.isSignedIn
+                     ? "Cloud-synced API keys are pulled automatically. Your local prefs only override empty slots."
+                     : "Sign in to pull your API keys from Google Cloud Secret Manager. Optional — local keys still work.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            if AuthService.shared.isSignedIn {
+                Button("Sign Out") { AuthService.shared.signOut() }
+                    .controlSize(.regular)
+            } else {
+                Button {
+                    AuthService.shared.apiBaseURL = prefs.apiBaseURL
+                    AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
+                    AuthService.shared.beginGoogleSignIn()
+                } label: {
+                    Label("Sign in with Google", systemImage: "g.circle")
+                }
+                .controlSize(.regular)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+        )
+    }
+
+    /// API keys group rendered as a native macOS settings list.
+    private var keysGroup: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("API KEYS")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.5)
+                .padding(.bottom, 6)
+                .padding(.horizontal, 4)
+
+            VStack(spacing: 0) {
+                keyRow(
+                    icon: "waveform.circle.fill",
+                    tint: Color(red: 0.10, green: 0.65, blue: 0.45),
+                    title: "OpenAI",
+                    subtitle: "Whisper + TTS — drives voice in and out.",
+                    binding: binding(\.openAIAPIKey),
+                    placeholder: "sk-…",
+                    helpURL: "platform.openai.com/api-keys"
+                )
+                Divider().padding(.leading, 60).opacity(0.4)
+                keyRow(
+                    icon: "sparkles",
+                    tint: Color(red: 0.36, green: 0.50, blue: 0.95),
+                    title: "Gemini",
+                    subtitle: "Planning loop, tool calls, vector search.",
+                    binding: binding(\.geminiApiKey),
+                    placeholder: "AIza…",
+                    helpURL: "aistudio.google.com/apikey — free"
+                )
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+            )
+
+            Text(AuthService.shared.isSignedIn
+                 ? "Keys are stored in Google Cloud Secret Manager and pulled into this Mac on launch. Pasting here overrides for this device."
+                 : "Keys live locally on this Mac. Sign in above to sync them across devices via Secret Manager.")
+                .font(.caption).foregroundStyle(.tertiary)
+                .padding(.top, 6).padding(.horizontal, 4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func keyRow(
+        icon: String,
+        tint: Color,
+        title: String,
+        subtitle: String,
+        binding: Binding<String>,
+        placeholder: String,
+        helpURL: String
+    ) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: icon)
+                .foregroundStyle(tint)
+                .font(.system(size: 20))
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(title).font(.system(size: 13, weight: .medium))
+                    if !binding.wrappedValue.isEmpty {
+                        statusBadge(text: AuthService.shared.isSignedIn ? "Cloud-synced" : "Set",
+                                    color: AuthService.shared.isSignedIn ? .blue : .green)
+                    } else {
+                        statusBadge(text: "Empty", color: .orange)
+                    }
+                }
+                Text(subtitle)
+                    .font(.caption).foregroundStyle(.secondary)
+                SecureField(placeholder, text: binding)
+                    .textFieldStyle(.plain)
+                    .font(.system(.callout, design: .monospaced))
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.primary.opacity(0.05))
+                    )
+                Text(helpURL)
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+            Spacer()
+        }
+        .padding(14)
+    }
+
+    private func statusBadge(text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(
+                Capsule().fill(color.opacity(0.15))
+            )
+            .foregroundStyle(color)
+    }
+
+    /// Handoff targets — which external AI tools should Ithuriel format
+    /// context for. Rendered as native toggles, not a comma-separated
+    /// text field.
+    private var handoffGroup: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("HAND-OFF TARGETS")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.5)
+                .padding(.bottom, 6)
+                .padding(.horizontal, 4)
+                .padding(.top, 18)
+
+            VStack(spacing: 0) {
+                ForEach(handoffOptions, id: \.id) { opt in
+                    handoffToggle(opt)
+                    if opt.id != handoffOptions.last?.id {
+                        Divider().padding(.leading, 50).opacity(0.4)
+                    }
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+            )
+
+            Text("When you switch to one of these apps, Ithuriel copies a fresh context block to your clipboard for that tool's preferred format.")
+                .font(.caption).foregroundStyle(.tertiary)
+                .padding(.top, 6).padding(.horizontal, 4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var handoffOptions: [HandoffOption] {[
+        .init(id: "claude-code",    label: "Claude Code",    icon: "terminal",       tint: Color(red: 0.50, green: 0.40, blue: 0.95)),
+        .init(id: "claude-desktop", label: "Claude Desktop", icon: "macwindow",      tint: Color(red: 0.85, green: 0.60, blue: 0.40)),
+        .init(id: "chatgpt",        label: "ChatGPT",        icon: "bubble.left",    tint: Color(red: 0.10, green: 0.65, blue: 0.45)),
+        .init(id: "cursor",         label: "Cursor",         icon: "cursorarrow.square", tint: Color(red: 0.32, green: 0.85, blue: 0.70)),
+        .init(id: "copilot-chat",   label: "Copilot Chat",   icon: "chevron.left.forwardslash.chevron.right", tint: Color(red: 0.95, green: 0.50, blue: 0.30)),
+        .init(id: "gemini",         label: "Gemini",         icon: "sparkles",       tint: Color(red: 0.36, green: 0.50, blue: 0.95))
+    ]}
+
+    private func handoffToggle(_ opt: HandoffOption) -> some View {
+        let enabled = Binding<Bool>(
+            get: { prefs.targetToolsRaw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.contains(opt.id) },
+            set: { isOn in
+                var ids = prefs.targetToolsRaw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                if isOn {
+                    if !ids.contains(opt.id) { ids.append(opt.id) }
+                } else {
+                    ids.removeAll { $0 == opt.id }
+                }
+                prefs.targetToolsRaw = ids.joined(separator: ",")
+                try? context.save()
+            }
+        )
+        return HStack(spacing: 14) {
+            Image(systemName: opt.icon)
+                .foregroundStyle(opt.tint)
+                .font(.system(size: 16, weight: .medium))
+                .frame(width: 24)
+            Text(opt.label).font(.system(size: 13))
+            Spacer()
+            Toggle("", isOn: enabled).labelsHidden().controlSize(.small)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+    }
+
+    /// Developer disclosure — only the Cloud Run URL + Firebase web API key
+    /// + static bearer. Most users never see this open.
+    private var developerDisclosure: some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: 12) {
+                labelledField("Cloud Run URL") {
+                    TextField("https://api.ithuriel.dev", text: binding(\.apiBaseURL))
+                        .textFieldStyle(.roundedBorder)
+                }
+                labelledField("Firebase web API key") {
+                    SecureField("AIza…", text: binding(\.firebaseWebAPIKey)).textFieldStyle(.roundedBorder)
+                }
+                labelledField("Static bearer") {
+                    SecureField("", text: binding(\.apiToken)).textFieldStyle(.roundedBorder)
+                }
+            }
+            .padding(.top, 8)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "hammer")
+                Text("Developer overrides")
+            }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.secondary)
+        }
+        .padding(.top, 18)
     }
 
     private var permissionsSection: some View {
@@ -473,4 +666,12 @@ struct SettingsView: View {
             }
         )
     }
+}
+
+/// A row in the hand-off targets list.
+struct HandoffOption: Identifiable {
+    let id: String
+    let label: String
+    let icon: String
+    let tint: Color
 }
