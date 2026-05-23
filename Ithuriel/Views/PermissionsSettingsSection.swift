@@ -1,62 +1,46 @@
 import SwiftUI
 
-/// Compact permission rows for Settings — only missing items expand with actions.
+/// Required permission rows — hidden when accessibility and screen recording are granted.
 struct PermissionsSettingsSection: View {
     @ObservedObject var permissions: PermissionsManager
 
     var body: some View {
-        if permissions.needsAny {
-            Section {
-                if permissions.needsRequired {
-                    Text(NSLocalizedString("settings.permissions.intro", comment: ""))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+        if permissions.needsRequired {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(NSLocalizedString("settings.permissions.intro", comment: ""))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    if !permissions.accessibilityGranted {
-                        PermissionRow(
-                            title: NSLocalizedString("settings.permissions.accessibility.title", comment: ""),
-                            detail: NSLocalizedString("settings.permissions.accessibility.detail", comment: ""),
-                            systemImage: "hand.point.up.left.fill",
-                            actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
-                            secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
-                            onPrimary: { permissions.requestAccessibility() },
-                            onSecondary: { permissions.openAccessibilitySettings() }
-                        )
-                    }
-
-                    if !permissions.screenRecordingGranted {
-                        PermissionRow(
-                            title: NSLocalizedString("settings.permissions.screen.title", comment: ""),
-                            detail: NSLocalizedString("settings.permissions.screen.detail", comment: ""),
-                            systemImage: "rectangle.on.rectangle",
-                            actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
-                            secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
-                            onPrimary: { permissions.requestScreenRecording() },
-                            onSecondary: { permissions.openScreenRecordingSettings() }
-                        )
-                    }
-                } else {
-                    Label(NSLocalizedString("settings.permissions.allGranted", comment: ""),
-                          systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
-
-                if !permissions.notificationsGranted {
+                if !permissions.accessibilityGranted {
                     PermissionRow(
-                        title: NSLocalizedString("settings.permissions.notifications.title", comment: ""),
-                        detail: NSLocalizedString("settings.permissions.notifications.detail", comment: ""),
-                        systemImage: "bell.badge",
+                        title: NSLocalizedString("settings.permissions.accessibility.title", comment: ""),
+                        detail: NSLocalizedString("settings.permissions.accessibility.detail", comment: ""),
+                        systemImage: "hand.point.up.left.fill",
                         actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
-                        secondaryTitle: nil,
-                        onPrimary: { Task { await permissions.requestNotifications() } },
-                        onSecondary: nil
+                        secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
+                        onPrimary: { permissions.requestAccessibility() },
+                        onSecondary: { permissions.openAccessibilitySettings() }
                     )
                 }
-            } header: {
-                Text(NSLocalizedString("settings.permissions.header", comment: ""))
+
+                if !permissions.screenRecordingGranted {
+                    PermissionRow(
+                        title: NSLocalizedString("settings.permissions.screen.title", comment: ""),
+                        detail: NSLocalizedString("settings.permissions.screen.detail", comment: ""),
+                        systemImage: "rectangle.on.rectangle",
+                        actionTitle: NSLocalizedString("settings.permissions.enable", comment: ""),
+                        secondaryTitle: NSLocalizedString("settings.permissions.openSettings", comment: ""),
+                        onPrimary: { permissions.requestScreenRecording() },
+                        onSecondary: { permissions.openScreenRecordingSettings() }
+                    )
+                }
             }
+        } else {
+            Label(NSLocalizedString("settings.permissions.allGranted", comment: ""),
+                  systemImage: "checkmark.circle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.green)
         }
     }
 }

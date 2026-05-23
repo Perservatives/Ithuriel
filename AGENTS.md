@@ -32,16 +32,17 @@ asking each time.
    commit at the end of a task unless they requested it.
 3. **Push only when the user explicitly asks** (e.g. "push", "pull before edit,
    push after"). Pre-authorized push does not mean push every time.
-4. **Before editing, when they asked to sync:** pull latest (`git pull --rebase`).
-   If uncommitted changes block pull, stash → pull → stash pop. Narrate each step
-   to the user (see §2.1).
-5. **When push is rejected because remote diverged:** pull and combine. Resolve
+4. **Before editing:** always `git pull --rebase` first. If uncommitted changes
+   block pull, stash → pull → stash pop. Narrate each step to the user (see §2.1).
+5. **After editing, when they asked to push:** always `git pull --rebase` again,
+   then `git push`. Never push without pulling first.
+6. **When push is rejected because remote diverged:** pull and combine. Resolve
    conflicts by merging both sides (never discard remote or local work silently),
    then push again if they asked for push.
-6. **Never force-push** (`--force`, `--force-with-lease`) unless the owner
+7. **Never force-push** (`--force`, `--force-with-lease`) unless the owner
    explicitly asks.
-7. **Never skip hooks** (`--no-verify`) unless explicitly asked.
-8. **Never change git config** or use interactive git (`-i`).
+8. **Never skip hooks** (`--no-verify`) unless explicitly asked.
+9. **Never change git config** or use interactive git (`-i`).
 
 ### 2.1 Git steps — tell the user what is happening
 

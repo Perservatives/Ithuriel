@@ -12,7 +12,7 @@ enum AppDetector {
     ]
 
     static var isAccessibilityTrusted: Bool {
-        AXIsProcessTrusted()
+        AccessibilityTrust.isGranted()
     }
 
     static func currentFrontmostTool() -> AITool {

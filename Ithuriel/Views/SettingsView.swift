@@ -69,6 +69,16 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await permissions.refresh() }
         }
+        .onChange(of: permissions.needsRequired) { _, stillNeeded in
+            if !stillNeeded, section == .permissions { section = .agent }
+        }
+    }
+
+    private var visibleSections: [Section] {
+        Section.allCases.filter { item in
+            if item == .permissions { return permissions.needsRequired }
+            return true
+        }
     }
 
     // MARK: - Sidebar
@@ -81,7 +91,7 @@ struct SettingsView: View {
                 .padding(.top, 18)
                 .padding(.bottom, 12)
 
-            ForEach(Section.allCases) { item in
+            ForEach(visibleSections) { item in
                 sidebarRow(item)
             }
             Spacer()

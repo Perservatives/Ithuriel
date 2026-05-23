@@ -19,7 +19,7 @@ struct StatusBarView: View {
 
     private var prefs: UserPrefs? { prefsList.first }
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
-    private var permissionsMissing: Bool { permissions.needsRequired }
+    private var permissionsMissing: Bool { permissions.hasRefreshed && permissions.needsRequired }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -89,6 +89,13 @@ struct StatusBarView: View {
                     .lineLimit(1).truncationMode(.middle)
             }
             Spacer()
+            Button(action: onOpenSettings) {
+                Image(systemName: "gearshape.fill")
+            }
+            .buttonStyle(.pressable(sound: .tool))
+            .controlSize(.small)
+            .help(NSLocalizedString("status.settings", comment: ""))
+
             if agent.isRunning {
                 ProgressView().controlSize(.small)
                 Button(role: .destructive) {
