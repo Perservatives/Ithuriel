@@ -12,13 +12,14 @@ struct SettingsView: View {
     @State private var section: Section = .agent
 
     enum Section: String, CaseIterable, Identifiable {
-        case howto, agent, voice, appearance, capture, privacy, integrations, permissions
+        case howto, agent, hotkey, voice, appearance, capture, privacy, integrations, permissions
         var id: String { rawValue }
 
         var title: String {
             switch self {
             case .howto:        return NSLocalizedString("settings.tab.howto", comment: "")
             case .agent:        return NSLocalizedString("settings.tab.agent", comment: "")
+            case .hotkey:       return NSLocalizedString("settings.tab.hotkey", comment: "")
             case .voice:        return NSLocalizedString("settings.tab.voice", comment: "")
             case .appearance:   return NSLocalizedString("settings.tab.appearance", comment: "")
             case .capture:      return NSLocalizedString("settings.tab.capture", comment: "")
@@ -32,6 +33,7 @@ struct SettingsView: View {
             switch self {
             case .howto:        return "questionmark.circle"
             case .agent:        return "wand.and.stars"
+            case .hotkey:       return "command"
             case .voice:        return "waveform"
             case .appearance:   return "paintpalette"
             case .capture:      return "eye"
@@ -135,6 +137,7 @@ struct SettingsView: View {
         switch section {
         case .howto:        HowToView()
         case .agent:        agentSection
+        case .hotkey:       hotkeySection
         case .voice:        voiceSection
         case .appearance:   appearanceSection
         case .capture:      captureSection
@@ -182,6 +185,37 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.tertiary)
             }
         }
+    }
+
+    private var hotkeySection: some View {
+        sectionShell(title: section.title) {
+            card(NSLocalizedString("settings.hotkey.summon", comment: "")) {
+                HotkeyPickerView(
+                    keyCode: binding(\.hotkeyKeyCode),
+                    modifiers: binding(\.hotkeyModifiers)
+                )
+                .onChange(of: prefs.hotkeyKeyCode) { _, _ in pushHotkey() }
+                .onChange(of: prefs.hotkeyModifiers) { _, _ in pushHotkey() }
+                Text(NSLocalizedString("settings.hotkey.help", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            card(NSLocalizedString("settings.hotkey.verbosity", comment: "")) {
+                Picker("", selection: binding(\.transcriptVerbosity)) {
+                    Text(NSLocalizedString("settings.hotkey.verbosity.summary", comment: "")).tag(0)
+                    Text(NSLocalizedString("settings.hotkey.verbosity.normal",  comment: "")).tag(1)
+                    Text(NSLocalizedString("settings.hotkey.verbosity.verbose", comment: "")).tag(2)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+        }
+    }
+
+    private func pushHotkey() {
+        HotkeyMonitor.shared.updateBinding(
+            keyCode: prefs.hotkeyKeyCode,
+            modifiers: prefs.hotkeyModifiers
+        )
     }
 
     private var voiceSection: some View {

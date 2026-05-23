@@ -26,6 +26,7 @@
 		59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B951B012E95739BF6F355D /* LiquidGlass.swift */; };
 		5EF8A633E3739EACF8A7AB57 /* LaunchOrb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */; };
 		5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */; };
+		6178BCD6D9F4E079CCA8FD93 /* HotkeyPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F625171A29738F53AC7328F /* HotkeyPickerView.swift */; };
 		6288D7616BB488699A9C0430 /* AgentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D95B4207C0A344197E2FF8 /* AgentController.swift */; };
 		66A1A7C987ECF9B8642C12F5 /* AgentStatusBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA63356B176A586DBB19722B /* AgentStatusBus.swift */; };
 		69DA4103FF8B524F99DD5A3B /* MicRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50F4661A7AA396F9B346E75 /* MicRecorder.swift */; };
@@ -63,6 +64,7 @@
 		E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516597D218E7C22D12578E08 /* IthurielApp.swift */; };
 		E9F04B3AEADA318B6B2D2A17 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896FE25EBB3002E071FDB502 /* AuthService.swift */; };
 		F101DBE84B21CD8128C0990E /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CFC650F9BC81C34306D128 /* PermissionsManager.swift */; };
+		F267AD56D488BFEEAFF718EC /* ConnectorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FAC9360CF04257D0CF4BD5 /* ConnectorsView.swift */; };
 		F4E7879AA8C9815E2F84B2DD /* agent-done.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 00D600D3F50336DBD3ADB46A /* agent-done.mp3 */; };
 		F5390D45F895BA4FCA73E957 /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14408B6A22B80B8942E8FC62 /* Motion.swift */; };
 		F659D4D08DAA44F4DA843FC1 /* eshop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A53B4709739097B5B90B9F2A /* eshop.mp3 */; };
@@ -77,6 +79,7 @@
 		095CFAD5BC1ECC4B766B1FCA /* Ithuriel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ithuriel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceMonitor.swift; sourceTree = "<group>"; };
 		14408B6A22B80B8942E8FC62 /* Motion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; };
+		16FAC9360CF04257D0CF4BD5 /* ConnectorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectorsView.swift; sourceTree = "<group>"; };
 		1892B9DF8E09632A6C7AC14F /* enter.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = enter.mp3; sourceTree = "<group>"; };
 		1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedAgentRun.swift; sourceTree = "<group>"; };
 		204BCCE55881BB7B32DFDA95 /* PermissionsSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsSection.swift; sourceTree = "<group>"; };
@@ -97,6 +100,7 @@
 		62F0DAD4ED5681A6BF676DE9 /* AgentTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTranscript.swift; sourceTree = "<group>"; };
 		6C1F917DEA75F51337BC698C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6D1D911182FB411A12A15707 /* UserPrefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPrefs.swift; sourceTree = "<group>"; };
+		6F625171A29738F53AC7328F /* HotkeyPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyPickerView.swift; sourceTree = "<group>"; };
 		7110B9703A844A2A9959E461 /* AsteriskBurst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsteriskBurst.swift; sourceTree = "<group>"; };
 		73CFC650F9BC81C34306D128 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapture.swift; sourceTree = "<group>"; };
@@ -214,6 +218,8 @@
 		4AD3687E7698FF253AE2FE84 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				16FAC9360CF04257D0CF4BD5 /* ConnectorsView.swift */,
+				6F625171A29738F53AC7328F /* HotkeyPickerView.swift */,
 				87214B17B39813C77E861A0E /* HowToView.swift */,
 				204BCCE55881BB7B32DFDA95 /* PermissionsSettingsSection.swift */,
 				6C1F917DEA75F51337BC698C /* SettingsView.swift */,
@@ -414,6 +420,7 @@
 				6A1C471A1484B83750B34683 /* ChatView.swift in Sources */,
 				F71825B6A0F4DCCB026790AC /* ChatWindowController.swift in Sources */,
 				396F086C0CF63D9C88BD8EBF /* Color+Hex.swift in Sources */,
+				F267AD56D488BFEEAFF718EC /* ConnectorsView.swift in Sources */,
 				B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */,
 				CB29A29CEB8BCFF86588FA31 /* ContextWebView.swift in Sources */,
 				77225D3D643253F097D2DEDB /* DirectFirestoreClient.swift in Sources */,
@@ -425,6 +432,7 @@
 				E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */,
 				06AE543DAA319B00BE8C1835 /* GoogleSpeech.swift in Sources */,
 				7FE425BB03C9EE26996B9A0D /* HotkeyMonitor.swift in Sources */,
+				6178BCD6D9F4E079CCA8FD93 /* HotkeyPickerView.swift in Sources */,
 				BDCE41B20B1175357C14EB7A /* HowToView.swift in Sources */,
 				AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */,
 				E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */,

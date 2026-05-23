@@ -71,7 +71,7 @@ list.
 The included `Dockerfile` is Cloud-Run-ready. From the repo root:
 
 ```bash
-PROJECT_ID=ithuriel-prod-001 REGION=us-central1 \
+PROJECT_ID=synthesis-hack26svl-121 REGION=us-central1 \
 gcloud builds submit services/mcp \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/ithuriel/mcp:latest"
 

@@ -55,6 +55,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         VoiceController.shared.configure(container: container, agentLoop: loop)
         SpotlightCoordinator.shared.installSummonHotkey()
 
+        // Seed the hotkey binding from saved prefs (defaults to ⌃Space).
+        Task { @MainActor in
+            if let prefs = try? await UserPrefs.load(in: container) {
+                HotkeyMonitor.shared.updateBinding(
+                    keyCode: prefs.hotkeyKeyCode,
+                    modifiers: prefs.hotkeyModifiers
+                )
+            }
+        }
+
         // Apple-Intelligence-style screen-edge glow while voice hotkey is held.
         let prev = HotkeyMonitor.shared.onVoiceStart
         HotkeyMonitor.shared.onVoiceStart = {

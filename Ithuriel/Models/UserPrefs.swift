@@ -41,6 +41,19 @@ final class UserPrefs {
     /// TTS speaking rate, 0.25–4.0; 1.0 is normal.
     var ttsRate: Double
 
+    /// Global hotkey: virtual key code (e.g. 49 = Space) and packed modifier
+    /// mask (cmd=1, shift=2, opt=4, ctrl=8). Default: ⌃Space (control + space).
+    /// Users change this in Settings → Hotkey.
+    var hotkeyKeyCode: Int
+    var hotkeyModifiers: Int
+
+    /// Onboarding completion: once true, the first-run flow stops appearing.
+    var onboardingComplete: Bool
+
+    /// Agent transcript verbosity: 0 = summary only, 1 = answer + tool count,
+    /// 2 = every tool call.
+    var transcriptVerbosity: Int
+
     init(id: String = "default",
          redactKeys: Bool = true,
          localOnly: Bool = false,
@@ -61,7 +74,11 @@ final class UserPrefs {
          googleCloudAPIKey: String = "",
          spokenResponsesEnabled: Bool = true,
          ttsVoice: String = "en-US-Neural2-F",
-         ttsRate: Double = 1.0) {
+         ttsRate: Double = 1.0,
+         hotkeyKeyCode: Int = 49,        // kVK_Space
+         hotkeyModifiers: Int = 8,       // control
+         onboardingComplete: Bool = false,
+         transcriptVerbosity: Int = 1) {
         self.id = id
         self.redactKeys = redactKeys
         self.localOnly = localOnly
@@ -83,6 +100,10 @@ final class UserPrefs {
         self.spokenResponsesEnabled = spokenResponsesEnabled
         self.ttsVoice = ttsVoice
         self.ttsRate = ttsRate
+        self.hotkeyKeyCode = hotkeyKeyCode
+        self.hotkeyModifiers = hotkeyModifiers
+        self.onboardingComplete = onboardingComplete
+        self.transcriptVerbosity = transcriptVerbosity
     }
 
     var excludePaths: [String] {

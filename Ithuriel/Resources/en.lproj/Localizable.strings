@@ -56,6 +56,17 @@
 /* Workspace picker */
 "settings.agent.workspacePick" = "Choose…";
 
+/* Hotkey */
+"settings.tab.hotkey"      = "Hotkey";
+"settings.hotkey.summon"   = "Summon shortcut";
+"settings.hotkey.help"     = "Tap to summon Ithuriel. Hold the same chord to talk. Click the box and press any key combination; Esc to cancel.";
+"settings.hotkey.listening" = "Press a chord…";
+"settings.hotkey.click"    = "Click to record";
+"settings.hotkey.verbosity"= "Show agent steps";
+"settings.hotkey.verbosity.summary" = "Just the answer";
+"settings.hotkey.verbosity.normal"  = "Answer + tool count";
+"settings.hotkey.verbosity.verbose" = "Every tool call";
+
 /* How To */
 "settings.tab.howto"     = "How To";
 "howto.title"            = "How to use Ithuriel";
