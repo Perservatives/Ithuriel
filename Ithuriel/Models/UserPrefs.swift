@@ -11,6 +11,7 @@ final class UserPrefs {
     var targetToolsRaw: String
     var apiBaseURL: String
     var apiToken: String
+    var firebaseWebAPIKey: String
 
     // Agent (primary feature)
     var agentEnabled: Bool
@@ -28,6 +29,7 @@ final class UserPrefs {
          targetToolsRaw: String = "claude-code,cursor,chatgpt,claude-desktop",
          apiBaseURL: String = "https://api.ithuriel.dev",
          apiToken: String = "",
+         firebaseWebAPIKey: String = "",
          agentEnabled: Bool = true,
          geminiApiKey: String = "",
          geminiModel: String = "gemini-2.0-flash-exp",
@@ -42,6 +44,7 @@ final class UserPrefs {
         self.targetToolsRaw = targetToolsRaw
         self.apiBaseURL = apiBaseURL
         self.apiToken = apiToken
+        self.firebaseWebAPIKey = firebaseWebAPIKey
         self.agentEnabled = agentEnabled
         self.geminiApiKey = geminiApiKey
         self.geminiModel = geminiModel
@@ -62,22 +65,22 @@ final class UserPrefs {
 
     static func defaults() -> UserPrefs { UserPrefs() }
 
-    @MainActor
-    static func load(in container: ModelContainer) throws -> UserPrefs {
-        let context = container.mainContext
-        let descriptor = FetchDescriptor<UserPrefs>()
-        if let existing = try context.fetch(descriptor).first {
-            // Lazily backfill the active workspace if empty.
-            if existing.activeWorkspace.isEmpty,
-               let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
-                existing.activeWorkspace = path
-                try? context.save()
+    static func load(in container: ModelContainer) async throws -> UserPrefs {
+        try await MainActor.run {
+            let context = container.mainContext
+            let descriptor = FetchDescriptor<UserPrefs>()
+            if let existing = try context.fetch(descriptor).first {
+                if existing.activeWorkspace.isEmpty,
+                   let path = WorkspaceMonitor.mostRecentEditorWorkspace() {
+                    existing.activeWorkspace = path
+                    try? context.save()
+                }
+                return existing
             }
-            return existing
+            let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
+            context.insert(prefs)
+            try context.save()
+            return prefs
         }
-        let prefs = UserPrefs(activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? "")
-        context.insert(prefs)
-        try context.save()
-        return prefs
     }
 }

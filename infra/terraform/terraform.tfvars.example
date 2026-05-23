@@ -1,0 +1,7 @@
+project_id          = "ithuriel-prod-001"
+region              = "us-central1"
+api_image           = "us-central1-docker.pkg.dev/ithuriel-prod-001/ithuriel/api:latest"
+oauth_client_id     = "REPLACE.apps.googleusercontent.com"
+oauth_client_secret = "REPLACE"
+# gemini_api_key    = ""   # optional — leave blank for bring-your-own-key only
+allowed_origins     = ["https://ithuriel.dev", "http://localhost:5173"]

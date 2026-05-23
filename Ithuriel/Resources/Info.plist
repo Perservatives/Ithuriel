@@ -28,5 +28,16 @@
     <string>Ithuriel uses Apple Events only when you explicitly hand off context to an AI tool.</string>
     <key>NSAccessibilityUsageDescription</key>
     <string>Ithuriel needs Accessibility access to detect when you switch to an AI tool and to optionally paste context for you. Without it, capture still works and clipboard injection remains available.</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>dev.ithuriel.agent</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>ithuriel</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

@@ -53,9 +53,14 @@
 "settings.targets"             = "Context-bridge targets";
 "settings.targets.field"       = "Tool list";
 "settings.targets.help"        = "AI tools that Ithuriel can format context for when you hand off (claude-code, cursor, chatgpt, claude-desktop, copilot-chat, gemini).";
-"settings.api"                 = "Ithuriel cloud (optional)";
-"settings.api.baseURL"         = "Base URL";
-"settings.api.token"           = "Bearer token";
+"settings.api"                 = "Ithuriel cloud";
+"settings.api.baseURL"         = "Cloud Run base URL";
+"settings.api.token"           = "Static bearer (dev only)";
+"settings.api.firebaseWebKey"  = "Firebase web API key";
+"settings.api.signIn"          = "Sign in with Google";
+"settings.api.signOut"         = "Sign out";
+"settings.api.signedIn"        = "Signed in";
+"settings.api.help"            = "Sign in to sync snapshots and agent runs to Firestore. Without sign-in the agent still works locally with your Gemini key.";
 
 /* Injection notifications */
 "inject.ready.title"           = "Context ready";

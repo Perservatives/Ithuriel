@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // All access via signed URLs minted by the Cloud Run API.
+    // Direct client access is denied.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

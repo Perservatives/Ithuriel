@@ -9,14 +9,27 @@ enum IthurielAPIError: Error {
 
 final class IthurielClient {
     private let baseURL: URL
-    private let token: String?
+    private let staticToken: String?
     private let session: URLSession
     private let maxAttempts = 4
 
     init(prefs: UserPrefs, session: URLSession = .shared) {
         self.baseURL = URL(string: prefs.apiBaseURL) ?? URL(string: "https://api.ithuriel.dev")!
-        self.token = prefs.apiToken.isEmpty ? nil : prefs.apiToken
+        // Fallback static bearer for dev/test. Production uses Firebase ID token via AuthService.
+        self.staticToken = prefs.apiToken.isEmpty ? nil : prefs.apiToken
         self.session = session
+        AuthService.shared.apiBaseURL = prefs.apiBaseURL
+        AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
+    }
+
+    func postAgentRun(_ run: AgentRunRecord) async throws {
+        let url = baseURL.appendingPathComponent("/v1/agent/run")
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try await attachAuth(&req)
+        req.httpBody = try JSONEncoder.ithuriel.encode(run)
+        _ = try await sendWithRetry(req)
     }
 
     func postSnapshot(_ snapshot: ContextSnapshot) async throws {
@@ -24,7 +37,7 @@ final class IthurielClient {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        try attachAuth(&req)
+        try await attachAuth(&req)
         req.httpBody = try JSONEncoder.ithuriel.encode(snapshot)
         _ = try await sendWithRetry(req)
     }
@@ -35,7 +48,7 @@ final class IthurielClient {
         components?.queryItems = [URLQueryItem(name: "format", value: tool.rawValue)]
         guard let url = components?.url else { throw IthurielAPIError.transport(URLError(.badURL)) }
         var req = URLRequest(url: url)
-        try attachAuth(&req)
+        try await attachAuth(&req)
         let data = try await sendWithRetry(req)
         do {
             return try JSONDecoder.ithuriel.decode(ContextSnapshot.self, from: data)
@@ -45,7 +58,7 @@ final class IthurielClient {
     }
 
     func openStream(onMessage: @escaping (ContextSnapshot) -> Void) throws -> URLSessionWebSocketTask {
-        guard let token = token else { throw IthurielAPIError.notAuthenticated }
+        guard let token = staticToken else { throw IthurielAPIError.notAuthenticated }
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/context/stream"),
                                        resolvingAgainstBaseURL: false)
         if components?.scheme == "https" { components?.scheme = "wss" }
@@ -62,8 +75,13 @@ final class IthurielClient {
 
     // MARK: - Internals
 
-    private func attachAuth(_ req: inout URLRequest) throws {
-        guard let token = token else { throw IthurielAPIError.notAuthenticated }
+    private func attachAuth(_ req: inout URLRequest) async throws {
+        if AuthService.shared.isSignedIn {
+            let token = try await AuthService.shared.refreshIfNeeded()
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            return
+        }
+        guard let token = staticToken else { throw IthurielAPIError.notAuthenticated }
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 

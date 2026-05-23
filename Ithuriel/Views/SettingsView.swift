@@ -103,7 +103,25 @@ struct SettingsView: View {
             }
             Section(NSLocalizedString("settings.api", comment: "")) {
                 TextField(NSLocalizedString("settings.api.baseURL", comment: ""), text: binding(\.apiBaseURL))
+                SecureField(NSLocalizedString("settings.api.firebaseWebKey", comment: ""), text: binding(\.firebaseWebAPIKey))
                 SecureField(NSLocalizedString("settings.api.token", comment: ""), text: binding(\.apiToken))
+                HStack {
+                    if AuthService.shared.isSignedIn {
+                        Label(NSLocalizedString("settings.api.signedIn", comment: ""), systemImage: "checkmark.seal")
+                            .foregroundStyle(.green)
+                        Spacer()
+                        Button(NSLocalizedString("settings.api.signOut", comment: "")) { AuthService.shared.signOut() }
+                    } else {
+                        Button(NSLocalizedString("settings.api.signIn", comment: "")) {
+                            AuthService.shared.apiBaseURL = prefs.apiBaseURL
+                            AuthService.shared.firebaseWebAPIKey = prefs.firebaseWebAPIKey
+                            AuthService.shared.beginGoogleSignIn()
+                        }
+                        .disabled(prefs.firebaseWebAPIKey.isEmpty)
+                    }
+                }
+                Text(NSLocalizedString("settings.api.help", comment: ""))
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }

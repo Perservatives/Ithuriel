@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarManager?.install()
 
         KillSwitch.shared.install()
+        URLSchemeHandler.shared.install()
         requestAccessibilityIfNeeded()
 
         let monitor = WorkspaceMonitor(container: modelContainer)
@@ -98,7 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func runPeriodicCapture(reason: CaptureReason) async {
         guard let container = modelContainer else { return }
-        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
 
         let workspacePath = WorkspaceMonitor.mostRecentEditorWorkspace() ?? FileManager.default.homeDirectoryForCurrentUser.path
         let git = await GitCapture.capture(at: workspacePath)

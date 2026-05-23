@@ -27,10 +27,31 @@ final class AgentLoop: ObservableObject {
         defer { isRunning = false }
 
         guard let container = container else { return }
-        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
         guard !prefs.geminiApiKey.isEmpty else {
             lastError = NSLocalizedString("agent.err.noKey", comment: "")
             return
+        }
+
+        let runId = UUID()
+        let startedAt = Date()
+        let apiClient = IthurielClient(prefs: prefs)
+        let cloudSyncEnabled = !prefs.localOnly && AuthService.shared.isSignedIn
+        if cloudSyncEnabled {
+            try? await apiClient.postAgentRun(.init(
+                id: runId, task: userTask, status: .running,
+                startedAt: startedAt, finishedAt: nil,
+                transcript: [], error: nil, snapshotId: nil
+            ))
+        }
+
+        func uploadFinalState(_ status: AgentRunRecord.Status) async {
+            guard cloudSyncEnabled else { return }
+            try? await apiClient.postAgentRun(.init(
+                id: runId, task: userTask, status: status,
+                startedAt: startedAt, finishedAt: Date(),
+                transcript: transcript, error: lastError, snapshotId: nil
+            ))
         }
 
         let client = GeminiClient(apiKey: prefs.geminiApiKey)
@@ -46,6 +67,7 @@ final class AgentLoop: ObservableObject {
         for step in 1...maxSteps {
             if AgentController.shared.killed {
                 log("■ killed by user")
+                await uploadFinalState(.killed)
                 return
             }
             let modelTurn: GeminiClient.Content
@@ -54,6 +76,7 @@ final class AgentLoop: ObservableObject {
             } catch {
                 lastError = "\(error)"
                 log("✗ gemini error: \(error)")
+                await uploadFinalState(.failed)
                 return
             }
             convo.append(modelTurn)
@@ -86,9 +109,13 @@ final class AgentLoop: ObservableObject {
                 functionResponses.append(resp)
             }
 
-            if sawDone { return }
+            if sawDone {
+                await uploadFinalState(.completed)
+                return
+            }
             if functionResponses.isEmpty {
                 log("(no tool calls — ending loop)")
+                await uploadFinalState(.completed)
                 return
             }
             convo.append(.init(role: "function", parts: functionResponses))
@@ -96,6 +123,7 @@ final class AgentLoop: ObservableObject {
         }
 
         log("◌ step budget exhausted")
+        await uploadFinalState(.failed)
     }
 
     func stop() {

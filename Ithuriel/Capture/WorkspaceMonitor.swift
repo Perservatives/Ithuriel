@@ -83,14 +83,18 @@ final class WorkspaceMonitor {
 
     private func injectContext(for tool: AITool) async {
         guard let container = container else { return }
-        let prefs = (try? UserPrefs.load(in: container)) ?? UserPrefs.defaults()
+        let prefs = (try? await UserPrefs.load(in: container)) ?? UserPrefs.defaults()
 
         let snapshot: ContextSnapshot?
         if prefs.localOnly || kIthurielDebug {
             snapshot = await CachedSnapshot.latest(in: container)
         } else {
             let client = IthurielClient(prefs: prefs)
-            snapshot = (try? await client.fetchCurrent(format: tool)) ?? (await CachedSnapshot.latest(in: container))
+            if let fetched = try? await client.fetchCurrent(format: tool) {
+                snapshot = fetched
+            } else {
+                snapshot = await CachedSnapshot.latest(in: container)
+            }
         }
 
         guard let snap = snapshot else {

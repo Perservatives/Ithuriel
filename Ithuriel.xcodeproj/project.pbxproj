@@ -1,0 +1,491 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3BB6461F7E4FBB67EABFD789 /* KillSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F7F899D222D5F05BB333DD /* KillSwitch.swift */; };
+		431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */; };
+		570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */; };
+		5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */; };
+		6288D7616BB488699A9C0430 /* AgentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D95B4207C0A344197E2FF8 /* AgentController.swift */; };
+		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
+		98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */; };
+		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
+		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
+		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
+		A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */; };
+		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
+		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
+		B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */; };
+		BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B429B1D7864246CC84E65365 /* Redactor.swift */; };
+		C271D9DEF081B17832502493 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 213FC4849EF6E0119C1C147D /* Localizable.strings */; };
+		D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */; };
+		D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */; };
+		D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7605591CD999D43F7A2A8EDB /* GeminiClient.swift */; };
+		D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F5ED6887679899168B411A /* TerminalCapture.swift */; };
+		E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */; };
+		E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516597D218E7C22D12578E08 /* IthurielApp.swift */; };
+		E9F04B3AEADA318B6B2D2A17 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896FE25EBB3002E071FDB502 /* AuthService.swift */; };
+		FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1F917DEA75F51337BC698C /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		03D95B4207C0A344197E2FF8 /* AgentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentController.swift; sourceTree = "<group>"; };
+		03F7F899D222D5F05BB333DD /* KillSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KillSwitch.swift; sourceTree = "<group>"; };
+		095CFAD5BC1ECC4B766B1FCA /* Ithuriel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ithuriel.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceMonitor.swift; sourceTree = "<group>"; };
+		2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielClient.swift; sourceTree = "<group>"; };
+		2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshot.swift; sourceTree = "<group>"; };
+		4427B751EB29646F6406CC73 /* AppDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetector.swift; sourceTree = "<group>"; };
+		49D3581883E9C02A57988A5E /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		516597D218E7C22D12578E08 /* IthurielApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielApp.swift; sourceTree = "<group>"; };
+		58F5ED6887679899168B411A /* TerminalCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalCapture.swift; sourceTree = "<group>"; };
+		6C1F917DEA75F51337BC698C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6D1D911182FB411A12A15707 /* UserPrefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPrefs.swift; sourceTree = "<group>"; };
+		74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapture.swift; sourceTree = "<group>"; };
+		74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCapture.swift; sourceTree = "<group>"; };
+		7605591CD999D43F7A2A8EDB /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
+		896FE25EBB3002E071FDB502 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
+		9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentRunRecord.swift; sourceTree = "<group>"; };
+		A857297377C0AB44CC122EB5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B429B1D7864246CC84E65365 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
+		CE83920959D844A29A8407BB /* InjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionEngine.swift; sourceTree = "<group>"; };
+		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
+		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
+		E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		036364E1732DB97FB797FE10 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				095CFAD5BC1ECC4B766B1FCA /* Ithuriel.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0DED38DF75FF369F8516A398 /* Injection */ = {
+			isa = PBXGroup;
+			children = (
+				4427B751EB29646F6406CC73 /* AppDetector.swift */,
+				CE83920959D844A29A8407BB /* InjectionEngine.swift */,
+			);
+			path = Injection;
+			sourceTree = "<group>";
+		};
+		337C54953DBE5B994E28B5FC /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */,
+				2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */,
+				6D1D911182FB411A12A15707 /* UserPrefs.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		4AB0BF95FF2F60CBFD1B18A3 = {
+			isa = PBXGroup;
+			children = (
+				F97D5B80ABDF4D6C60C4B031 /* Ithuriel */,
+				036364E1732DB97FB797FE10 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4AD3687E7698FF253AE2FE84 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6C1F917DEA75F51337BC698C /* SettingsView.swift */,
+				E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		70613DDC5B1F17267DE2FF5F /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */,
+				74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */,
+				58F5ED6887679899168B411A /* TerminalCapture.swift */,
+				0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
+		9B910E967291B0D57BD6783B /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				896FE25EBB3002E071FDB502 /* AuthService.swift */,
+				49D3581883E9C02A57988A5E /* Keychain.swift */,
+				F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		BBD50167FBA53D9AD5E01A21 /* Privacy */ = {
+			isa = PBXGroup;
+			children = (
+				B429B1D7864246CC84E65365 /* Redactor.swift */,
+			);
+			path = Privacy;
+			sourceTree = "<group>";
+		};
+		C19CFC7FE32FF09C9C80BB2D /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				213FC4849EF6E0119C1C147D /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		D7595E5C04849BFF3D6D1982 /* Agent */ = {
+			isa = PBXGroup;
+			children = (
+				D30E10DA1986A407F779FB78 /* AgentLoop.swift */,
+				7605591CD999D43F7A2A8EDB /* GeminiClient.swift */,
+				03F7F899D222D5F05BB333DD /* KillSwitch.swift */,
+				74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */,
+			);
+			path = Agent;
+			sourceTree = "<group>";
+		};
+		E317EF5674AE7A542E3ED59F /* AgentControl */ = {
+			isa = PBXGroup;
+			children = (
+				03D95B4207C0A344197E2FF8 /* AgentController.swift */,
+			);
+			path = AgentControl;
+			sourceTree = "<group>";
+		};
+		F48D9945266F8918669074E7 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		F97D5B80ABDF4D6C60C4B031 /* Ithuriel */ = {
+			isa = PBXGroup;
+			children = (
+				516597D218E7C22D12578E08 /* IthurielApp.swift */,
+				966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */,
+				D7595E5C04849BFF3D6D1982 /* Agent */,
+				E317EF5674AE7A542E3ED59F /* AgentControl */,
+				F48D9945266F8918669074E7 /* API */,
+				9B910E967291B0D57BD6783B /* Auth */,
+				70613DDC5B1F17267DE2FF5F /* Capture */,
+				0DED38DF75FF369F8516A398 /* Injection */,
+				337C54953DBE5B994E28B5FC /* Models */,
+				BBD50167FBA53D9AD5E01A21 /* Privacy */,
+				C19CFC7FE32FF09C9C80BB2D /* Resources */,
+				4AD3687E7698FF253AE2FE84 /* Views */,
+			);
+			path = Ithuriel;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7F52065F8D1F03F90B1A2A11 /* Ithuriel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD894E0BCA8A5E6593D3779B /* Build configuration list for PBXNativeTarget "Ithuriel" */;
+			buildPhases = (
+				1E63A4B8F3C8C8078873CD6F /* Sources */,
+				F0B4B9F2DB5BBF78B4D7D91F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Ithuriel;
+			packageProductDependencies = (
+			);
+			productName = Ithuriel;
+			productReference = 095CFAD5BC1ECC4B766B1FCA /* Ithuriel.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CC3E13CA6AEE6201D189589D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					7F52065F8D1F03F90B1A2A11 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = BC41F5ADA1B41394EA429F4D /* Build configuration list for PBXProject "Ithuriel" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 4AB0BF95FF2F60CBFD1B18A3;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7F52065F8D1F03F90B1A2A11 /* Ithuriel */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F0B4B9F2DB5BBF78B4D7D91F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C271D9DEF081B17832502493 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1E63A4B8F3C8C8078873CD6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6288D7616BB488699A9C0430 /* AgentController.swift in Sources */,
+				8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */,
+				570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */,
+				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,
+				E9F04B3AEADA318B6B2D2A17 /* AuthService.swift in Sources */,
+				B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */,
+				431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */,
+				D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */,
+				E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */,
+				AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */,
+				E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */,
+				9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */,
+				9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */,
+				3BB6461F7E4FBB67EABFD789 /* KillSwitch.swift in Sources */,
+				D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */,
+				BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */,
+				D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */,
+				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
+				A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */,
+				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
+				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,
+				9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */,
+				5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		213FC4849EF6E0119C1C147D /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A857297377C0AB44CC122EB5 /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1E45FAA7B3784BCF2D3794CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		505FC53233FE1F84BEDB7854 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Ithuriel/Resources/Ithuriel.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Ithuriel/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.ithuriel.agent;
+				PRODUCT_NAME = Ithuriel;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		55F83A02224099AAB1518C27 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Ithuriel/Resources/Ithuriel.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Ithuriel/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.ithuriel.agent;
+				PRODUCT_NAME = Ithuriel;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		8356789062C51D7C713F44CB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BC41F5ADA1B41394EA429F4D /* Build configuration list for PBXProject "Ithuriel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E45FAA7B3784BCF2D3794CD /* Debug */,
+				8356789062C51D7C713F44CB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD894E0BCA8A5E6593D3779B /* Build configuration list for PBXNativeTarget "Ithuriel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				505FC53233FE1F84BEDB7854 /* Debug */,
+				55F83A02224099AAB1518C27 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CC3E13CA6AEE6201D189589D /* Project object */;
+}
