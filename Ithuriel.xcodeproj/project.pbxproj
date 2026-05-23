@@ -36,7 +36,7 @@
 		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
 		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
-		B1ROUTER001APPROUTER01 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ROUTER002APPROUTER02 /* AppRouter.swift */; };
+		A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */; };
 		A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */; };
 		A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4427B751EB29646F6406CC73 /* AppDetector.swift */; };
 		AD5E4DD4683664E7683BC63C /* InjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE83920959D844A29A8407BB /* InjectionEngine.swift */; };
@@ -81,6 +81,9 @@
 		4427B751EB29646F6406CC73 /* AppDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetector.swift; sourceTree = "<group>"; };
 		46A558D5AC0692A4E0401F03 /* HotkeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyMonitor.swift; sourceTree = "<group>"; };
 		49D3581883E9C02A57988A5E /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		B1CHROME002APPCHROMEBAR /* AppChromeBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeBar.swift; sourceTree = "<group>"; };
+		B1LAYOUT002UILAYOUT02 /* UILayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UILayout.swift; sourceTree = "<group>"; };
+		B1ROUTER002APPROUTER02 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		516597D218E7C22D12578E08 /* IthurielApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielApp.swift; sourceTree = "<group>"; };
 		5579BBE16D251774BB910528 /* ContextWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextWebView.swift; sourceTree = "<group>"; };
 		55B951B012E95739BF6F355D /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
@@ -111,7 +114,7 @@
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
 		DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
-		B1ROUTER002APPROUTER02 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
 		EAAF5B9943A1B66D6FF4FB3C /* VoiceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceController.swift; sourceTree = "<group>"; };
 		EB347B68858B7CB3E1D8B5EF /* LaunchBlobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchBlobsView.swift; sourceTree = "<group>"; };
 		F50F4661A7AA396F9B346E75 /* MicRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicRecorder.swift; sourceTree = "<group>"; };
@@ -149,6 +152,7 @@
 		312BF67C24D7F4D2C7937B68 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				B1CHROME002APPCHROMEBAR /* AppChromeBar.swift */,
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
 				798888136F3708A12FED1754 /* ChatView.swift */,
 				2D44D95499CACE7017FC62EF /* ChatWindowController.swift */,
@@ -193,6 +197,7 @@
 			children = (
 				204BCCE55881BB7B32DFDA95 /* PermissionsSettingsSection.swift */,
 				6C1F917DEA75F51337BC698C /* SettingsView.swift */,
+				E9CB8DAC769BDD4CFFE9B57F /* StatusBarView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -415,7 +420,7 @@
 				29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */,
 				A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */,
 				50349A6F36C24EDB38724B12 /* SpotlightView.swift in Sources */,
-				B1ROUTER001APPROUTER01 /* AppRouter.swift in Sources */,
+				A24F529C0F4F162B59002832 /* StatusBarView.swift in Sources */,
 				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
 				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,
 				9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */,
