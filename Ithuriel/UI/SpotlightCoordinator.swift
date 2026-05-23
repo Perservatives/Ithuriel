@@ -19,6 +19,7 @@ final class SpotlightCoordinator {
     private var launchBackdropWindow: NSWindow?
 
     private var spotlightIsOpen = false
+    private var outsideClickMonitor: Any?
 
     func configure(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
@@ -113,11 +114,18 @@ final class SpotlightCoordinator {
             spotlightWindow?.animator().alphaValue = 1
         }
         spotlightIsOpen = true
+
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] _ in
+            Task { @MainActor in self?.dismiss() }
+        }
     }
 
     /// Hides Spotlight/launch UI immediately so menu-bar popovers are not covered.
     func dismissImmediately() {
         spotlightIsOpen = false
+        removeOutsideClickMonitor()
         launchWindow?.orderOut(nil)
         launchWindow = nil
         spotlightWindow?.orderOut(nil)
@@ -127,6 +135,7 @@ final class SpotlightCoordinator {
     func dismiss() {
         guard spotlightIsOpen, let spot = spotlightWindow else { return }
         spotlightIsOpen = false
+        removeOutsideClickMonitor()
         SoundPlayer.shared.play(.dismiss, volume: 0.3)
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.14
@@ -143,6 +152,13 @@ final class SpotlightCoordinator {
     /// Toggle visibility — used by the menu bar.
     func toggle() {
         if spotlightIsOpen { dismiss() } else { summon() }
+    }
+
+    private func removeOutsideClickMonitor() {
+        if let monitor = outsideClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            outsideClickMonitor = nil
+        }
     }
 
     // MARK: - Hotkeys
