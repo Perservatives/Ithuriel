@@ -11,6 +11,7 @@ import { injectRoutes } from "./routes/inject.js";
 import { agentRunRoutes } from "./routes/agentRun.js";
 import { streamRoutes } from "./routes/stream.js";
 import { teamRoutes } from "./routes/team.js";
+import { searchRoutes } from "./routes/search.js";
 import { authBridgeRoutes } from "./routes/authBridge.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -39,6 +40,7 @@ async function main() {
   await app.register(agentRunRoutes,  { prefix: "/v1" });
   await app.register(streamRoutes,    { prefix: "/v1" });
   await app.register(teamRoutes,      { prefix: "/v1" });
+  await app.register(searchRoutes,    { prefix: "/v1" });
 
   await app.listen({ host: "0.0.0.0", port: PORT });
   app.log.info(`ithuriel-api listening on :${PORT}`);
