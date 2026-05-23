@@ -18,8 +18,10 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
 
     private var status: CaptureStatus = .capturing
     private var accessibilityGranted: Bool = false
-    private weak var container: ModelContainer?
-    private weak var agentLoop: AgentLoop?
+    private var container: ModelContainer?
+    private var agentLoop: AgentLoop?
+    /// Retained separately — NSPopover alone can drop the hosting controller.
+    private var popoverHost: NSHostingController<StatusBarView>?
 
     init(container: ModelContainer?, agentLoop: AgentLoop?) {
         self.container = container
@@ -52,22 +54,11 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         popover.animates = true
         popover.contentSize = NSSize(width: 380, height: 480)
         popover.delegate = self
-
-        if let container = container, let loop = agentLoop {
-            let root = StatusBarView(
-                agent: loop,
-                onOpenSettings: { [weak self] in self?.showSettings() },
-                onQuit: { NSApp.terminate(nil) }
-            )
-            .modelContainer(container)
-            let host = NSHostingController(rootView: root)
-            host.sizingOptions = [.preferredContentSize]
-            popover.contentViewController = host
-        } else {
-            Log.error("MenuBarManager: missing container or agentLoop — popover has no content")
-        }
-
         self.popover = popover
+
+        MainActor.assumeIsolated {
+            ensurePopoverContent()
+        }
     }
 
     deinit {
@@ -136,10 +127,11 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
         // Full-screen Spotlight dimmer sits above normal popovers — hide it first.
         MainActor.assumeIsolated {
             SpotlightCoordinator.shared.dismissImmediately()
+            ensurePopoverContent()
         }
 
         guard popover.contentViewController != nil else {
-            Log.error("MenuBarManager: popover has no contentViewController")
+            Log.error("MenuBarManager: popover has no contentViewController (container=\(container != nil), agentLoop=\(agentLoop != nil))")
             return
         }
 
@@ -233,5 +225,27 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
             NSEvent.removeMonitor(monitor)
             outsideClickMonitor = nil
         }
+    }
+
+    @MainActor
+    private func ensurePopoverContent() {
+        guard let popover else { return }
+        if popoverHost != nil, popover.contentViewController != nil { return }
+        guard let container, let agentLoop else {
+            Log.error("MenuBarManager: cannot build popover (container=\(container != nil), agentLoop=\(agentLoop != nil))")
+            return
+        }
+
+        let root = StatusBarView(
+            agent: agentLoop,
+            onOpenSettings: { [weak self] in self?.showSettings() },
+            onQuit: { NSApp.terminate(nil) }
+        )
+        .modelContainer(container)
+
+        let host = NSHostingController(rootView: root)
+        host.sizingOptions = [.preferredContentSize]
+        popoverHost = host
+        popover.contentViewController = host
     }
 }

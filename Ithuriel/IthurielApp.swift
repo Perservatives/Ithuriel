@@ -44,7 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         agentLoop = AgentLoop(container: modelContainer)
         menuBarManager = MenuBarManager(container: modelContainer, agentLoop: agentLoop)
-        menuBarManager?.install()
+        MainActor.assumeIsolated {
+            menuBarManager?.install()
+        }
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
