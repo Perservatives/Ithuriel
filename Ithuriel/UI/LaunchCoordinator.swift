@@ -33,27 +33,36 @@ final class LaunchCoordinator {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView:
             LaunchSplashView(onComplete: { [weak self] in
-                self?.dismissLaunch()
+                self?.dismiss()
             })
         )
         window.orderFrontRegardless()
         launchWindow = window
+
+        // Hard timeout: dismiss after 10 s even if the animation never fires onComplete.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            self?.dismiss()
+        }
     }
 
-    private func dismissLaunch() {
+    /// Dismiss the splash immediately (idempotent — safe to call multiple times).
+    func dismiss() {
         guard let window = launchWindow else { return }
+        launchWindow = nil          // nil out first so repeat calls are no-ops
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.32
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
             window.animator().alphaValue = 0
-        }, completionHandler: { [weak self] in
+        }, completionHandler: {
             Task { @MainActor in
-                self?.launchWindow?.orderOut(nil)
-                self?.launchWindow?.alphaValue = 1
-                self?.launchWindow = nil
+                window.orderOut(nil)
+                window.alphaValue = 1
             }
         })
     }
+
+    private func dismissLaunch() { dismiss() }
 }
 
 /// Borderless overlay window that never steals key focus.

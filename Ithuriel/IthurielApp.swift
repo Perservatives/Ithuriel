@@ -103,6 +103,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // window so the animation isn't covered.
                 try? await Task.sleep(nanoseconds: 1_900_000_000)
 
+                LaunchCoordinator.shared.dismiss()
+
                 if needsOnboarding {
                     OnboardingCoordinator.shared.onFinish = {
                         Task { @MainActor in
