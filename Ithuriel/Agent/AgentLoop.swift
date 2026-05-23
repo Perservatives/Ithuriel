@@ -46,7 +46,25 @@ final class AgentLoop: ObservableObject {
             ))
         }
 
+        let containerRef = container
+        let workspacePath = prefs.activeWorkspace
+        let modelName = prefs.geminiModel
+        await SavedAgentRun.persist(
+            id: runId, task: userTask, status: .running,
+            startedAt: startedAt, finishedAt: nil,
+            transcript: [], errorText: nil,
+            workspacePath: workspacePath, modelName: modelName,
+            in: containerRef
+        )
+
         func uploadFinalState(_ status: AgentRunRecord.Status) async {
+            await SavedAgentRun.persist(
+                id: runId, task: userTask, status: status,
+                startedAt: startedAt, finishedAt: Date(),
+                transcript: transcript, errorText: lastError,
+                workspacePath: workspacePath, modelName: modelName,
+                in: containerRef
+            )
             guard cloudSyncEnabled else { return }
             try? await apiClient.postAgentRun(.init(
                 id: runId, task: userTask, status: status,

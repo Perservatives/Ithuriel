@@ -7,19 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		183431CEFA7E4D97C53952BD /* LaunchBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */; };
 		29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEBCABAF164410E96E13023 /* SoundPlayer.swift */; };
 		3BB6461F7E4FBB67EABFD789 /* KillSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F7F899D222D5F05BB333DD /* KillSwitch.swift */; };
 		431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7A7CCCA05D8FA32ACCFF72 /* FileWatcher.swift */; };
 		486AF1900FDA6A9633F566DA /* enter.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1892B9DF8E09632A6C7AC14F /* enter.mp3 */; };
 		50349A6F36C24EDB38724B12 /* SpotlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A850458E38A42D3EC0AC36E /* SpotlightView.swift */; };
 		570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */; };
-		57A1B2C3D4E5F6789012345A /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A1B2C3D4E5F6789012345B /* Persistence.swift */; };
+		59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B951B012E95739BF6F355D /* LiquidGlass.swift */; };
 		5EF8A633E3739EACF8A7AB57 /* LaunchOrb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */; };
 		5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */; };
 		6288D7616BB488699A9C0430 /* AgentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D95B4207C0A344197E2FF8 /* AgentController.swift */; };
+		6A1C471A1484B83750B34683 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798888136F3708A12FED1754 /* ChatView.swift */; };
 		7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7110B9703A844A2A9959E461 /* AsteriskBurst.swift */; };
 		8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30E10DA1986A407F779FB78 /* AgentLoop.swift */; };
 		98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */; };
+		9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5C15C17AE947AC0627405D /* Persistence.swift */; };
 		9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D3581883E9C02A57988A5E /* Keychain.swift */; };
 		9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */; };
 		9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1D911182FB411A12A15707 /* UserPrefs.swift */; };
@@ -31,9 +34,11 @@
 		B8BAF90709D1E2A59B4173B4 /* ff.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A83CA26F2BAB365699021951 /* ff.mp3 */; };
 		BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B429B1D7864246CC84E65365 /* Redactor.swift */; };
 		C271D9DEF081B17832502493 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 213FC4849EF6E0119C1C147D /* Localizable.strings */; };
+		CB29A29CEB8BCFF86588FA31 /* ContextWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5579BBE16D251774BB910528 /* ContextWebView.swift */; };
 		D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */; };
 		D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */; };
 		D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7605591CD999D43F7A2A8EDB /* GeminiClient.swift */; };
+		D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */; };
 		D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F5ED6887679899168B411A /* TerminalCapture.swift */; };
 		E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */; };
 		E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516597D218E7C22D12578E08 /* IthurielApp.swift */; };
@@ -41,6 +46,7 @@
 		F4E7879AA8C9815E2F84B2DD /* agent-done.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 00D600D3F50336DBD3ADB46A /* agent-done.mp3 */; };
 		F5390D45F895BA4FCA73E957 /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14408B6A22B80B8942E8FC62 /* Motion.swift */; };
 		F659D4D08DAA44F4DA843FC1 /* eshop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A53B4709739097B5B90B9F2A /* eshop.mp3 */; };
+		F71825B6A0F4DCCB026790AC /* ChatWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D44D95499CACE7017FC62EF /* ChatWindowController.swift */; };
 		FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1F917DEA75F51337BC698C /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,21 +58,26 @@
 		0B86EC4D31512E3212C6605C /* WorkspaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceMonitor.swift; sourceTree = "<group>"; };
 		14408B6A22B80B8942E8FC62 /* Motion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; };
 		1892B9DF8E09632A6C7AC14F /* enter.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = enter.mp3; sourceTree = "<group>"; };
+		1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedAgentRun.swift; sourceTree = "<group>"; };
 		2162B4839D2F7A24D56EA4F3 /* IthurielClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielClient.swift; sourceTree = "<group>"; };
 		2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshot.swift; sourceTree = "<group>"; };
+		2D44D95499CACE7017FC62EF /* ChatWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatWindowController.swift; sourceTree = "<group>"; };
 		3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchOrb.swift; sourceTree = "<group>"; };
 		4427B751EB29646F6406CC73 /* AppDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetector.swift; sourceTree = "<group>"; };
 		49D3581883E9C02A57988A5E /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		516597D218E7C22D12578E08 /* IthurielApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IthurielApp.swift; sourceTree = "<group>"; };
-		57A1B2C3D4E5F6789012345B /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		5579BBE16D251774BB910528 /* ContextWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextWebView.swift; sourceTree = "<group>"; };
+		55B951B012E95739BF6F355D /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		58F5ED6887679899168B411A /* TerminalCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalCapture.swift; sourceTree = "<group>"; };
 		5CEBCABAF164410E96E13023 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
 		6C1F917DEA75F51337BC698C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6D1D911182FB411A12A15707 /* UserPrefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPrefs.swift; sourceTree = "<group>"; };
 		7110B9703A844A2A9959E461 /* AsteriskBurst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsteriskBurst.swift; sourceTree = "<group>"; };
 		74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapture.swift; sourceTree = "<group>"; };
+		74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchBackdrop.swift; sourceTree = "<group>"; };
 		74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCapture.swift; sourceTree = "<group>"; };
 		7605591CD999D43F7A2A8EDB /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
+		798888136F3708A12FED1754 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		896FE25EBB3002E071FDB502 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		8A850458E38A42D3EC0AC36E /* SpotlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightView.swift; sourceTree = "<group>"; };
 		966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
@@ -75,6 +86,7 @@
 		A83CA26F2BAB365699021951 /* ff.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ff.mp3; sourceTree = "<group>"; };
 		A857297377C0AB44CC122EB5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B429B1D7864246CC84E65365 /* Redactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redactor.swift; sourceTree = "<group>"; };
+		BC5C15C17AE947AC0627405D /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		CE83920959D844A29A8407BB /* InjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InjectionEngine.swift; sourceTree = "<group>"; };
 		D30E10DA1986A407F779FB78 /* AgentLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLoop.swift; sourceTree = "<group>"; };
 		D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightCoordinator.swift; sourceTree = "<group>"; };
@@ -105,7 +117,12 @@
 			isa = PBXGroup;
 			children = (
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
+				798888136F3708A12FED1754 /* ChatView.swift */,
+				2D44D95499CACE7017FC62EF /* ChatWindowController.swift */,
+				5579BBE16D251774BB910528 /* ContextWebView.swift */,
+				74CD44DEDFC7E2C7AAE649F1 /* LaunchBackdrop.swift */,
 				3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */,
+				55B951B012E95739BF6F355D /* LiquidGlass.swift */,
 				14408B6A22B80B8942E8FC62 /* Motion.swift */,
 				5CEBCABAF164410E96E13023 /* SoundPlayer.swift */,
 				D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */,
@@ -119,7 +136,8 @@
 			children = (
 				9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */,
 				2A94C526A79A76B3B2E19BA7 /* ContextSnapshot.swift */,
-				57A1B2C3D4E5F6789012345B /* Persistence.swift */,
+				BC5C15C17AE947AC0627405D /* Persistence.swift */,
+				1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */,
 				6D1D911182FB411A12A15707 /* UserPrefs.swift */,
 			);
 			path = Models;
@@ -318,7 +336,10 @@
 				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,
 				7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */,
 				E9F04B3AEADA318B6B2D2A17 /* AuthService.swift in Sources */,
+				6A1C471A1484B83750B34683 /* ChatView.swift in Sources */,
+				F71825B6A0F4DCCB026790AC /* ChatWindowController.swift in Sources */,
 				B22DB30C0205989F22BCC49D /* ContextSnapshot.swift in Sources */,
+				CB29A29CEB8BCFF86588FA31 /* ContextWebView.swift in Sources */,
 				431D33E93EAB2E0D5463F2B0 /* FileWatcher.swift in Sources */,
 				D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */,
 				E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */,
@@ -327,10 +348,14 @@
 				9D718FBB11CFE75B34289AC2 /* IthurielClient.swift in Sources */,
 				9D4AE20CAC9E160F7BFED031 /* Keychain.swift in Sources */,
 				3BB6461F7E4FBB67EABFD789 /* KillSwitch.swift in Sources */,
+				183431CEFA7E4D97C53952BD /* LaunchBackdrop.swift in Sources */,
 				5EF8A633E3739EACF8A7AB57 /* LaunchOrb.swift in Sources */,
+				59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */,
 				D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */,
 				F5390D45F895BA4FCA73E957 /* Motion.swift in Sources */,
+				9C7EB764461F745FCFEA50D4 /* Persistence.swift in Sources */,
 				BC8742C2EBF128C647AB3CBB /* Redactor.swift in Sources */,
+				D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */,
 				D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */,
 				FA0ACE05EB5C7AE650F3895D /* SettingsView.swift in Sources */,
 				29608578BC11AD2752CC40FD /* SoundPlayer.swift in Sources */,
@@ -340,7 +365,6 @@
 				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
 				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,
 				9EFE39CA017033BEDE3733F1 /* UserPrefs.swift in Sources */,
-				57A1B2C3D4E5F6789012345A /* Persistence.swift in Sources */,
 				5FB2A16A6428C4D798D7EBA0 /* WorkspaceMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

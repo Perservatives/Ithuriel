@@ -151,6 +151,12 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
                                   action: #selector(menuSummon), keyEquivalent: " ")
         summon.target = self
         summon.keyEquivalentModifierMask = [.command, .shift]
+
+        let chatItem = menu.addItem(withTitle: "Open Chat…",
+                                    action: #selector(menuOpenChat), keyEquivalent: "n")
+        chatItem.target = self
+        chatItem.keyEquivalentModifierMask = [.command]
+
         menu.addItem(.separator())
         let muteItem = menu.addItem(withTitle: SoundPlayer.isMuted
                                     ? NSLocalizedString("menubar.menu.unmute", comment: "")
@@ -175,6 +181,10 @@ final class MenuBarManager: NSObject, NSPopoverDelegate {
 
     @objc private func menuToggleMute() { SoundPlayer.isMuted = !SoundPlayer.isMuted }
     @objc private func menuOpenSettings() { showSettings() }
+    @objc private func menuOpenChat() {
+        closePopover()
+        Task { @MainActor in ChatWindowController.shared.show(container: container, agent: agentLoop) }
+    }
     @objc private func menuQuit() { NSApp.terminate(nil) }
 
     // MARK: - NSPopoverDelegate

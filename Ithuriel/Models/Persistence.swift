@@ -4,7 +4,7 @@ import SwiftData
 /// Creates the app's SwiftData store with recovery when schema drift breaks
 /// an existing on-disk database (e.g. after adding a new @Model property).
 enum Persistence {
-    private static let schema = Schema([UserPrefs.self, CachedSnapshot.self])
+    private static let schema = Schema([UserPrefs.self, CachedSnapshot.self, SavedAgentRun.self])
 
     static func makeContainer() -> ModelContainer {
         let persistent = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

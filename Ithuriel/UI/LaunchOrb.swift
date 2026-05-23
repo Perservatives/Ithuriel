@@ -32,35 +32,39 @@ struct LaunchOrbView: View {
             ring(scale: ring1Scale, opacity: ring1Opacity, lineWidth: 1.5)
             ring(scale: ring2Scale, opacity: ring2Opacity, lineWidth: 1)
 
-            // Outer halo
+            // Outer halo — bigger, more dramatic
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.accentColor.opacity(0.35), .clear],
+                        colors: [Color.accentColor.opacity(0.55),
+                                 Color.accentColor.opacity(0.15),
+                                 .clear],
                         center: .center,
-                        startRadius: 2,
-                        endRadius: 140
+                        startRadius: 4,
+                        endRadius: 320
                     )
                 )
+                .frame(width: 640, height: 640)
+                .opacity(coreOpacity)
+                .blur(radius: 28)
+
+            // The mark itself — much bigger
+            AsteriskBurst(rotation: rotation, petalScale: petalScale, glowRadius: 60)
                 .frame(width: 280, height: 280)
                 .opacity(coreOpacity)
-                .blur(radius: 14)
-
-            // The mark itself
-            AsteriskBurst(rotation: rotation, petalScale: petalScale, glowRadius: 28)
-                .frame(width: 130, height: 130)
-                .opacity(coreOpacity)
                 .scaleEffect(coreScale)
+                .shadow(color: .accentColor.opacity(0.6), radius: 30, y: 0)
 
             // Caption
             Text("ITHURIEL")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .tracking(8)
-                .foregroundStyle(.primary.opacity(0.85))
-                .offset(y: 110)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .tracking(14)
+                .foregroundStyle(.primary.opacity(0.92))
+                .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
+                .offset(y: 220)
                 .opacity(captionOpacity)
         }
-        .frame(width: 320, height: 320)
+        .frame(width: 700, height: 700)
         .task { await runSequence() }
     }
 
@@ -74,7 +78,7 @@ struct LaunchOrbView: View {
                 ),
                 lineWidth: lineWidth
             )
-            .frame(width: 240, height: 240)
+            .frame(width: 520, height: 520)
             .scaleEffect(scale)
             .opacity(opacity)
     }

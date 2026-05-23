@@ -17,6 +17,7 @@ final class SpotlightCoordinator {
     private var dimmerWindow: NSWindow?
     private var spotlightWindow: NSWindow?
     private var launchWindow: NSWindow?
+    private var launchBackdropWindow: NSWindow?
 
     private var summonHotKeyRef: EventHotKeyRef?
     private var spotlightIsOpen = false
@@ -28,11 +29,37 @@ final class SpotlightCoordinator {
 
     // MARK: - Public entry points
 
-    /// Called on app launch. Plays the orb sequence, then auto-summons.
+    /// Called on app launch. Full-screen black backdrop fades in, the orb
+    /// plays its sequence, then both fade out into the Spotlight prompt.
     func playLaunchThenSummon() {
         guard launchWindow == nil else { return }
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        let size = NSSize(width: 360, height: 360)
+
+        // Full-screen backdrop — everything else on screen fades behind it.
+        let backdrop = TransparentWindow(
+            contentRect: screen.frame,
+            styleMask: [.borderless],
+            backing: .buffered, defer: false
+        )
+        backdrop.isOpaque = false
+        backdrop.backgroundColor = .clear
+        backdrop.hasShadow = false
+        backdrop.level = .screenSaver - 1
+        backdrop.ignoresMouseEvents = true
+        backdrop.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+        backdrop.contentView = NSHostingView(rootView: LaunchBackdropView())
+        backdrop.alphaValue = 0
+        backdrop.orderFrontRegardless()
+        launchBackdropWindow = backdrop
+
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.32
+            ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
+            backdrop.animator().alphaValue = 1
+        }
+
+        // Bigger orb window — covers a generous swath of the screen.
+        let size = NSSize(width: 720, height: 720)
         let frame = NSRect(
             x: screen.frame.midX - size.width / 2,
             y: screen.frame.midY - size.height / 2,
@@ -46,7 +73,7 @@ final class SpotlightCoordinator {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.level = .floating
+        window.level = .screenSaver
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView:
@@ -142,6 +169,18 @@ final class SpotlightCoordinator {
     // MARK: - Internals
 
     private func dismissLaunch() {
+        if let backdrop = launchBackdropWindow {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.40
+                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
+                backdrop.animator().alphaValue = 0
+            }, completionHandler: { [weak self] in
+                Task { @MainActor in
+                    self?.launchBackdropWindow?.orderOut(nil)
+                    self?.launchBackdropWindow = nil
+                }
+            })
+        }
         launchWindow?.orderOut(nil)
         launchWindow = nil
     }
