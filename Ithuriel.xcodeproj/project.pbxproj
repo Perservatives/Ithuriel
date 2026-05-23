@@ -65,6 +65,7 @@
 		D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7605591CD999D43F7A2A8EDB /* GeminiClient.swift */; };
 		D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */; };
 		D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F5ED6887679899168B411A /* TerminalCapture.swift */; };
+		E3EE2289551C2133F4B479C5 /* ThinkingSpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637C0A46248697B73FF0F272 /* ThinkingSpinner.swift */; };
 		E5564585037A8ACAD2420E2B /* GitCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DDA90FEEFA0BBCEF053ACF /* GitCapture.swift */; };
 		E772905ED016CCA710DAC228 /* IthurielApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516597D218E7C22D12578E08 /* IthurielApp.swift */; };
 		E83C6C2109A9E73D701CDA47 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1F72DB31AFD0F593D171EF /* OnboardingView.swift */; };
@@ -110,6 +111,7 @@
 		58F5ED6887679899168B411A /* TerminalCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalCapture.swift; sourceTree = "<group>"; };
 		5CEBCABAF164410E96E13023 /* SoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
 		62F0DAD4ED5681A6BF676DE9 /* AgentTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTranscript.swift; sourceTree = "<group>"; };
+		637C0A46248697B73FF0F272 /* ThinkingSpinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingSpinner.swift; sourceTree = "<group>"; };
 		6C1F917DEA75F51337BC698C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6D1D911182FB411A12A15707 /* UserPrefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPrefs.swift; sourceTree = "<group>"; };
 		6F625171A29738F53AC7328F /* HotkeyPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyPickerView.swift; sourceTree = "<group>"; };
@@ -218,6 +220,7 @@
 				5CEBCABAF164410E96E13023 /* SoundPlayer.swift */,
 				D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */,
 				8A850458E38A42D3EC0AC36E /* SpotlightView.swift */,
+				637C0A46248697B73FF0F272 /* ThinkingSpinner.swift */,
 				DEF405A92594796F12FBC14E /* TranscriptChip.swift */,
 				EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */,
 			);
@@ -498,6 +501,7 @@
 				A2B1D919BDF0E42E495A0144 /* SpotlightCoordinator.swift in Sources */,
 				50349A6F36C24EDB38724B12 /* SpotlightView.swift in Sources */,
 				D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */,
+				E3EE2289551C2133F4B479C5 /* ThinkingSpinner.swift in Sources */,
 				CA98075B3DEEAE4006C6DF81 /* TranscriptChip.swift in Sources */,
 				0A5836A5A1F3DA8300E3D733 /* UILayout.swift in Sources */,
 				98F80AC02738D49704B857B9 /* URLSchemeHandler.swift in Sources */,

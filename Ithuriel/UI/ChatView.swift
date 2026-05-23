@@ -59,6 +59,22 @@ struct ChatView: View {
         .background(VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow))
         .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 520, minHeight: 420)
+        .background(
+            // Invisible hot-buttons binding keyboard shortcuts at the
+            // window-root level. SwiftUI dispatches the shortcut as long as
+            // the chat window is key, regardless of subview focus.
+            Group {
+                Button("New", action: newConversation)
+                    .keyboardShortcut("n", modifiers: .command)
+                    .hidden().frame(width: 0, height: 0)
+                Button("Temp", action: temporaryConversation)
+                    .keyboardShortcut("n", modifiers: [.command, .shift])
+                    .hidden().frame(width: 0, height: 0)
+                Button("Stop", action: stopAgentIfRunning)
+                    .keyboardShortcut(.escape, modifiers: [])
+                    .hidden().frame(width: 0, height: 0)
+            }
+        )
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willEnterFullScreenNotification)) { _ in
             isFullScreen = true
         }
@@ -258,8 +274,21 @@ struct ChatView: View {
         if let header {
             UserMessageRow(text: header, index: 0)
         }
-        ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
-            messageRow(for: line, index: idx)
+        if prefs?.transcriptVerbosity ?? 1 == 0 {
+            // Summary-only — render the final assistant line(s) and the
+            // inline thinking spinner while the loop is running.
+            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
+                let role = ChatBubble.agentForLine(line)
+                if role == .assistant || role == .user || role == .error {
+                    messageRow(for: line, index: idx)
+                }
+            }
+            ThinkingSpinner(agent: agent).padding(.leading, 4)
+        } else {
+            ForEach(Array(transcript.enumerated()), id: \.offset) { idx, line in
+                messageRow(for: line, index: idx)
+            }
+            ThinkingSpinner(agent: agent).padding(.leading, 4)
         }
     }
 
@@ -422,6 +451,21 @@ struct ChatView: View {
         selectedRunID = nil
         prompt = ""
         inputFocused = true
+    }
+
+    /// Same canvas as `newConversation` but explicitly skips persistence on
+    /// the next run — matches ChatGPT's "Temporary chat" affordance. The
+    /// AgentLoop honours `UserPrefs.localOnly` per-run; we flip a one-shot
+    /// flag on UserDefaults that the loop reads at the start of each run.
+    private func temporaryConversation() {
+        UserDefaults.standard.set(true, forKey: "Ithuriel.NextRunTemporary")
+        selectedRunID = nil
+        prompt = ""
+        inputFocused = true
+    }
+
+    private func stopAgentIfRunning() {
+        if agent.isRunning { agent.stop() }
     }
 
     private func runAgent() {

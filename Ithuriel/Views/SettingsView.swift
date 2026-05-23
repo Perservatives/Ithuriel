@@ -111,10 +111,10 @@ struct SettingsView: View {
                 Image(systemName: item.symbol)
                     .font(.system(size: 13, weight: .medium))
                     .frame(width: 18)
-                    .foregroundStyle(section == item ? .white : .primary.opacity(0.78))
+                    .foregroundStyle(section == item ? Color.accentColor : .primary.opacity(0.78))
                 Text(item.title)
-                    .font(.system(size: 13))
-                    .foregroundStyle(section == item ? .white : .primary)
+                    .font(.system(size: 13, weight: section == item ? .medium : .regular))
+                    .foregroundStyle(.primary)
                 Spacer()
                 if item == .permissions, permissions.needsRequired {
                     Circle().fill(Color.orange).frame(width: 6, height: 6)
@@ -122,8 +122,8 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(section == item ? Color.accentColor : Color.clear)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(section == item ? Color.accentColor.opacity(0.16) : Color.clear)
             )
         }
         .buttonStyle(.plain)

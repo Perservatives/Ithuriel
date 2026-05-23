@@ -69,6 +69,13 @@
 "chip.thinking"    = "Thinking…";
 "chip.usedTools"   = "Used %d tools";
 
+/* Inline thinking spinner — label mutates in-place as time passes. */
+"thinking.0"       = "Thinking…";
+"thinking.1"       = "Still thinking…";
+"thinking.2"       = "Thinking more…";
+"thinking.3"       = "Almost done thinking…";
+"thinking.4"       = "Working on it…";
+
 /* Onboarding */
 "onboarding.welcome.title"     = "Welcome to Ithuriel";
 "onboarding.welcome.body"      = "Your context-aware computer-use agent. A few quick basics before you start.";

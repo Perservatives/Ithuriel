@@ -181,7 +181,7 @@ struct SpotlightView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5)
+                .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
         )
         // Single light shadow — the heavy two-layer drop shadow was reading
         // as a halo on screen. Keeping it subtle so the pill feels weightless.
