@@ -1,0 +1,88 @@
+services:
+  firestore:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: >
+      gcloud beta emulators firestore start
+      --host-port=0.0.0.0:8080
+      --project=ithuriel-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - FIRESTORE_PROJECT_ID=ithuriel-dev
+
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: >
+      gcloud beta emulators pubsub start
+      --host-port=0.0.0.0:8085
+      --project=ithuriel-dev
+    ports:
+      - "8085:8085"
+
+  pubsub-init:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+    depends_on:
+      - pubsub
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub:8085
+      GOOGLE_CLOUD_PROJECT: ithuriel-dev
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        sleep 3
+        gcloud config set project ithuriel-dev
+        gcloud config set auth/disable_credentials true
+        gcloud config set api_endpoint_overrides/pubsub http://pubsub:8085/
+        gcloud pubsub topics create ithuriel-snapshots --project=ithuriel-dev || true
+        gcloud pubsub topics create ithuriel-processed --project=ithuriel-dev || true
+        echo "Pub/Sub topics ready"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:8080"
+    environment:
+      PORT: "8080"
+      GOOGLE_CLOUD_PROJECT: ithuriel-dev
+      FIRESTORE_EMULATOR_HOST: firestore:8080
+      PUBSUB_EMULATOR_HOST: pubsub:8085
+      FIREBASE_AUTH_EMULATOR_HOST: ${FIREBASE_AUTH_EMULATOR_HOST:-}
+      GCS_SNAPSHOTS_BUCKET: ithuriel-dev-snapshots
+      PUBSUB_SNAPSHOTS_TOPIC: ithuriel-snapshots
+      FIREBASE_PROJECT_ID: ithuriel-dev
+      LOG_LEVEL: debug
+      NODE_ENV: development
+    depends_on:
+      - firestore
+      - pubsub
+      - pubsub-init
+    volumes:
+      - ./api/src:/app/src:ro
+
+  api-dev:
+    image: node:20-slim
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - "3001:8080"
+    environment:
+      PORT: "8080"
+      GOOGLE_CLOUD_PROJECT: ithuriel-dev
+      FIRESTORE_EMULATOR_HOST: firestore:8080
+      PUBSUB_EMULATOR_HOST: pubsub:8085
+      GCS_SNAPSHOTS_BUCKET: ithuriel-dev-snapshots
+      PUBSUB_SNAPSHOTS_TOPIC: ithuriel-snapshots
+      FIREBASE_PROJECT_ID: ithuriel-dev
+      LOG_LEVEL: debug
+      NODE_ENV: development
+    depends_on:
+      - firestore
+      - pubsub
+      - pubsub-init
+    volumes:
+      - ./api:/app
+    profiles:
+      - dev

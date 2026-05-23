@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+__pycache__/
+*.pyc
+.venv/
+processor.zip
+.DS_Store
