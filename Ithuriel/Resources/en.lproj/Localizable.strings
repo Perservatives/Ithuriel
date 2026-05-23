@@ -1,10 +1,8 @@
-/* Menu bar */
-"menubar.icon.a11y"    = "Ithuriel status";
-"menubar.menu.summon"  = "Summon Ithuriel";
-"menubar.menu.mute"    = "Mute sounds";
-"menubar.menu.unmute"  = "Unmute sounds";
-"menubar.menu.settings"= "Settings…";
-"menubar.menu.quit"    = "Quit Ithuriel";
+/* App chrome (chat + spotlight toolbars) */
+"chrome.summon"        = "Summon";
+"chrome.openChat"      = "Open Chat";
+"chrome.mute"          = "Mute sounds";
+"chrome.unmute"        = "Unmute sounds";
 
 /* Spotlight (center-screen prompt) */
 "spotlight.headline.idle"      = "What can I help you with today?";
@@ -76,7 +74,7 @@
 "howto.voice.title"      = "Hold ⌃Space to talk";
 "howto.voice.body"       = "Keep Control-Space held to speak. A 'Listening…' pill appears at the top of the screen. Release to send the transcribed message to the agent.";
 "howto.chat.title"       = "Open the full chat window";
-"howto.chat.body"        = "Left-click the menu bar icon, or pick 'Open Chat…' from its menu. You get full conversation history, the composer, and the Context Web inspector.";
+"howto.chat.body"        = "The chat window opens at launch. Use Open Chat in Spotlight or the toolbar at the bottom of the window. You get conversation history, the composer, and the Context Web inspector.";
 "howto.kill.title"       = "Kill switch — ⌃⌥⌘.";
 "howto.kill.body"        = "Press Control-Option-Command-Period at any time to stop the agent mid-step. Use it freely; the agent expects this.";
 "howto.privacy.title"    = "Sandbox + secret scrubber";

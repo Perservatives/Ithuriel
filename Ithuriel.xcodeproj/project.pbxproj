@@ -56,7 +56,7 @@
 		CD6F7F71367B04A8F2EE3062 /* AgentSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92021DBC0B300E353647494B /* AgentSpeaker.swift */; };
 		CDF2969D2885D49B6965CFDC /* AgentControlBorderOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */; };
 		D0C7891A616611BFAB3B470B /* ScreenCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B07AA66411BAC8E55D2E12 /* ScreenCapture.swift */; };
-		D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */; };
+		F9A4B23C5D6E7890123456B7 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F3A12B4C5D6789012345A6 /* SettingsWindowController.swift */; };
 		D5C80F99F2F9760EC50E8ADD /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7605591CD999D43F7A2A8EDB /* GeminiClient.swift */; };
 		D730631EF80DDE18DA68EE24 /* SavedAgentRun.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC48CB87E9887E0B8355C2B /* SavedAgentRun.swift */; };
 		D827B5DBFBA89E10885C49E2 /* TerminalCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F5ED6887679899168B411A /* TerminalCapture.swift */; };
@@ -114,7 +114,7 @@
 		8A850458E38A42D3EC0AC36E /* SpotlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightView.swift; sourceTree = "<group>"; };
 		8BB2028565B930F9D21DB217 /* AccessibilityTrust.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityTrust.swift; sourceTree = "<group>"; };
 		92021DBC0B300E353647494B /* AgentSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSpeaker.swift; sourceTree = "<group>"; };
-		966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
+		E8F3A12B4C5D6789012345A6 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentRunRecord.swift; sourceTree = "<group>"; };
 		9D069FD433FB93CF0A1C66F4 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		A53B4709739097B5B90B9F2A /* eshop.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = eshop.mp3; sourceTree = "<group>"; };
@@ -188,6 +188,7 @@
 				55B951B012E95739BF6F355D /* LiquidGlass.swift */,
 				14408B6A22B80B8942E8FC62 /* Motion.swift */,
 				5CEBCABAF164410E96E13023 /* SoundPlayer.swift */,
+				E8F3A12B4C5D6789012345A6 /* SettingsWindowController.swift */,
 				D6CA51D12EC02A6689DA2DD3 /* SpotlightCoordinator.swift */,
 				8A850458E38A42D3EC0AC36E /* SpotlightView.swift */,
 				EA70AFBD008C3F2AAAD3F4DA /* UILayout.swift */,
@@ -302,7 +303,6 @@
 			children = (
 				9D069FD433FB93CF0A1C66F4 /* AppRouter.swift */,
 				516597D218E7C22D12578E08 /* IthurielApp.swift */,
-				966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */,
 				D7595E5C04849BFF3D6D1982 /* Agent */,
 				E317EF5674AE7A542E3ED59F /* AgentControl */,
 				F48D9945266F8918669074E7 /* API */,
@@ -443,7 +443,7 @@
 				349BC74CF7EC0967C6ABF46F /* LaunchBlobsView.swift in Sources */,
 				5EF8A633E3739EACF8A7AB57 /* LaunchOrb.swift in Sources */,
 				59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */,
-				D44A7296D30208A351C740AA /* MenuBarManager.swift in Sources */,
+				F9A4B23C5D6E7890123456B7 /* SettingsWindowController.swift in Sources */,
 				69DA4103FF8B524F99DD5A3B /* MicRecorder.swift in Sources */,
 				F5390D45F895BA4FCA73E957 /* Motion.swift in Sources */,
 				F101DBE84B21CD8128C0990E /* PermissionsManager.swift in Sources */,

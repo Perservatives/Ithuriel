@@ -1,25 +1,24 @@
 import AppKit
 import SwiftData
 
-/// Central navigation for windows and shared actions (replaces the menu-bar popover).
+/// Central navigation for windows and shared actions.
 @MainActor
 final class AppRouter {
     static let shared = AppRouter()
 
-    weak var menuBarManager: MenuBarManager?
     private(set) weak var container: ModelContainer?
     private(set) weak var agentLoop: AgentLoop?
 
     private init() {}
 
-    func wire(menuBarManager: MenuBarManager, container: ModelContainer, agentLoop: AgentLoop) {
-        self.menuBarManager = menuBarManager
+    func wire(container: ModelContainer, agentLoop: AgentLoop) {
         self.container = container
         self.agentLoop = agentLoop
     }
 
     func openSettings() {
-        menuBarManager?.showSettings()
+        guard let container else { return }
+        SettingsWindowController.shared.show(container: container)
     }
 
     func openChat() {

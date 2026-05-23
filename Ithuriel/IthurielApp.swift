@@ -26,7 +26,6 @@ struct IthurielApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var menuBarManager: MenuBarManager?
     private var workspaceMonitor: WorkspaceMonitor?
     private var fileWatcher: FileWatcher?
     private var captureTimer: Timer?
@@ -41,12 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let loop = AgentLoop(container: container)
         agentLoop = loop
-        let menuBar = MenuBarManager(container: container)
-        menuBarManager = menuBar
-        AppRouter.shared.wire(menuBarManager: menuBar, container: container, agentLoop: loop)
-        MainActor.assumeIsolated {
-            menuBarManager?.install()
-        }
+        AppRouter.shared.wire(container: container, agentLoop: loop)
 
         KillSwitch.shared.install()
         URLSchemeHandler.shared.install()
@@ -81,13 +75,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Done/Failed/Stopped banner + animated menu bar respond to bus events.
-        AgentStatusBus.shared.subscribe { [weak self] event in
+        // Done/Failed/Stopped banner responds to bus events.
+        AgentStatusBus.shared.subscribe { event in
             Task { @MainActor in
                 switch event {
-                case .started:
-                    self?.menuBarManager?.setStatus(.capturing)
-                case .said:
+                case .started, .said:
                     // Live narration — surfaced inside SpotlightView via the
                     // bus's @Published lastSpoken. No banner or status flip.
                     break
@@ -147,10 +139,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshPermissionState() {
         Task { @MainActor in
             await PermissionsManager.shared.refresh()
-            menuBarManager?.setAccessibilityState(
-                granted: PermissionsManager.shared.accessibilityGranted
-            )
         }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard let container = modelContainer, let loop = agentLoop else { return true }
+        if !flag {
+            ChatWindowController.shared.show(container: container, agent: loop)
+        }
+        return true
     }
 
     private func handleFileChanges(_ changed: [String]) {

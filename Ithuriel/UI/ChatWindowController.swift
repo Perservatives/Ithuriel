@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import SwiftData
 
-/// Owns the standalone chat window. Lazy — opened from the menu bar context
-/// menu, ⌥Space tap, ⌘N when any Ithuriel window is key, or on first launch.
+/// Owns the standalone chat window — primary app surface. Opened on launch,
+/// from AppChromeBar, Spotlight, or when the user clicks the Dock icon.
 @MainActor
 final class ChatWindowController {
     static let shared = ChatWindowController()

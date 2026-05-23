@@ -1,9 +1,8 @@
 import Foundation
 import SwiftUI
 
-/// Lightweight observer hub so AgentLoop can notify the menu bar + banner +
-/// any other UI when a run starts/finishes — without holding references to
-/// AppKit windows directly.
+/// Lightweight observer hub so AgentLoop can notify banners and other UI when
+/// a run starts/finishes — without holding references to AppKit windows directly.
 ///
 /// `ObservableObject` so SwiftUI views can drive their headline copy off the
 /// agent's most recent plain-English narration (`lastSpoken`).

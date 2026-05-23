@@ -43,7 +43,7 @@ struct SpotlightView: View {
                         removal: .opacity
                     ))
             }
-            AppChromeBar(compact: true)
+            AppChromeBar(placement: .spotlight, compact: true)
                 .padding(.horizontal, UILayout.spacingXS)
         }
         .padding(UILayout.spacingM)
@@ -113,7 +113,7 @@ struct SpotlightView: View {
 
             HStack(spacing: 10) {
                 Button(action: openFullChat) {
-                    Text(NSLocalizedString("spotlight.openChat", comment: ""))
+                    Text(NSLocalizedString("chrome.openChat", comment: ""))
                         .font(.callout.weight(.medium))
                         .foregroundStyle(.secondary)
                 }

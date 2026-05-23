@@ -22,6 +22,7 @@ struct ChatView: View {
     @State private var searchQuery: String = ""
     @State private var isFullScreen: Bool = false
     @FocusState private var inputFocused: Bool
+    @ObservedObject private var permissions = PermissionsManager.shared
 
     private var prefs: UserPrefs? { prefsList.first }
     private var keyMissing: Bool { (prefs?.geminiApiKey ?? "").isEmpty }
@@ -63,6 +64,10 @@ struct ChatView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willExitFullScreenNotification)) { _ in
             isFullScreen = false
+        }
+        .task { await PermissionsManager.shared.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await PermissionsManager.shared.refresh() }
         }
     }
 
@@ -217,6 +222,11 @@ struct ChatView: View {
 
     private var conversation: some View {
         VStack(spacing: 0) {
+            if permissions.hasRefreshed && permissions.needsRequired {
+                PermissionsBanner()
+                    .padding(.horizontal, 20)
+                    .padding(.top, 48)
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 22) {
@@ -237,6 +247,9 @@ struct ChatView: View {
                 }
             }
             composer.padding(20)
+            AppChromeBar(placement: .chat)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 14)
         }
     }
 

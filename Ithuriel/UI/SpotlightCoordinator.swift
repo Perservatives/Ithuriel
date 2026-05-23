@@ -3,9 +3,8 @@ import SwiftUI
 import SwiftData
 import Carbon.HIToolbox
 
-/// Owns the launch-orb window, the full-screen backdrop dimmer, and the
-/// floating Spotlight prompt window. Registers ⌘⇧Space as the global summon
-/// hotkey. The menu bar still exists, but this is the headline UX.
+/// Owns the launch-orb window and the floating Spotlight prompt. Registers the
+/// user-configured global summon hotkey (default ⌃Space).
 @MainActor
 final class SpotlightCoordinator {
     static let shared = SpotlightCoordinator()
@@ -102,7 +101,7 @@ final class SpotlightCoordinator {
         }
     }
 
-    /// Hides Spotlight/launch UI immediately so menu-bar popovers are not covered.
+    /// Hides Spotlight/launch UI immediately (e.g. before showing Settings).
     func dismissImmediately() {
         spotlightIsOpen = false
         removeOutsideClickMonitor()
@@ -129,7 +128,7 @@ final class SpotlightCoordinator {
         })
     }
 
-    /// Toggle visibility — used by the menu bar.
+    /// Toggle visibility — used by the global hotkey and AppChromeBar.
     func toggle() {
         if spotlightIsOpen { dismiss() } else { summon() }
     }
