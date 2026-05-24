@@ -148,7 +148,7 @@
 "settings.agent.enabled"       = "Agent control enabled";
 "settings.agent.brain"         = "Gemini";
 "settings.agent.geminiKey"     = "Gemini API key";
-"settings.agent.geminiModel"   = "Model (e.g. gemini-2.5-flash)";
+"settings.agent.geminiModel"   = "Model (e.g. gemini-3.5-flash)";
 "settings.agent.geminiHelp"    = "Get a key at aistudio.google.com. Stored locally in SwiftData; never uploaded.";
 "settings.agent.workspace"     = "Workspace sandbox";
 "settings.agent.workspacePath" = "Workspace path";

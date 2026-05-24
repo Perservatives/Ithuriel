@@ -30,6 +30,7 @@
 		486AF1900FDA6A9633F566DA /* enter.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1892B9DF8E09632A6C7AC14F /* enter.mp3 */; };
 		4AC3837394F405C8063AB853 /* NotchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808F0FD7E6ECE5718B4009A2 /* NotchDetector.swift */; };
 		4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82F492D381182E0EE2A44BA /* AppChromeBar.swift */; };
+		APPFG0000000000000000001 /* AppForeground.swift in Sources */ = {isa = PBXBuildFile; fileRef = APPFG0000000000000000002 /* AppForeground.swift */; };
 		570CC50826C4531AA41CB8D7 /* AgentRunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798E0E3784C6EA4C77A040 /* AgentRunRecord.swift */; };
 		59D4D1B52862A61B669C7190 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B951B012E95739BF6F355D /* LiquidGlass.swift */; };
 		5EF8A633E3739EACF8A7AB57 /* LaunchOrb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3684AD1E7C27E9AF7D7694AE /* LaunchOrb.swift */; };
@@ -41,6 +42,7 @@
 		6A1C471A1484B83750B34683 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798888136F3708A12FED1754 /* ChatView.swift */; };
 		6BCF97A573F34542C6C3E33E /* AgentTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62F0DAD4ED5681A6BF676DE9 /* AgentTranscript.swift */; };
 		730CDD59A3C26E52C6330BAD /* AccessibilityTrust.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB2028565B930F9D21DB217 /* AccessibilityTrust.swift */; };
+		H4CK4TH0N0001CONFIG00001 /* HackathonConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = H4CK4TH0N0001CONFIG00002 /* HackathonConfig.swift */; };
 		77225D3D643253F097D2DEDB /* DirectFirestoreClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75228747667389CA05EBB789 /* DirectFirestoreClient.swift */; };
 		7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7110B9703A844A2A9959E461 /* AsteriskBurst.swift */; };
 		7FE425BB03C9EE26996B9A0D /* HotkeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A558D5AC0692A4E0401F03 /* HotkeyMonitor.swift */; };
@@ -155,6 +157,7 @@
 		87214B17B39813C77E861A0E /* HowToView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToView.swift; sourceTree = "<group>"; };
 		896FE25EBB3002E071FDB502 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		8BB2028565B930F9D21DB217 /* AccessibilityTrust.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityTrust.swift; sourceTree = "<group>"; };
+		H4CK4TH0N0001CONFIG00002 /* HackathonConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackathonConfig.swift; sourceTree = "<group>"; };
 		8C4646639498CCBB584AEDE6 /* NotchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchView.swift; sourceTree = "<group>"; };
 		92021DBC0B300E353647494B /* AgentSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSpeaker.swift; sourceTree = "<group>"; };
 		966AB7F69AC40F51B5F6BAF4 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
@@ -188,6 +191,7 @@
 		F50F4661A7AA396F9B346E75 /* MicRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicRecorder.swift; sourceTree = "<group>"; };
 		F6234A70A69EA2C1F8DC069A /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
 		F82F492D381182E0EE2A44BA /* AppChromeBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeBar.swift; sourceTree = "<group>"; };
+		APPFG0000000000000000002 /* AppForeground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppForeground.swift; sourceTree = "<group>"; };
 		FAF6C3DBC0537D463BEFB6EA /* GeminiEmbed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiEmbed.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -243,6 +247,7 @@
 				C442A95E36CBEE9A1A4256FC /* AgentControlBorderOverlay.swift */,
 				EA63356B176A586DBB19722B /* AgentStatusBus.swift */,
 				F82F492D381182E0EE2A44BA /* AppChromeBar.swift */,
+				APPFG0000000000000000002 /* AppForeground.swift */,
 				7110B9703A844A2A9959E461 /* AsteriskBurst.swift */,
 				0CE4B291DC22F1BAB3138481 /* BrandMark.swift */,
 				5208EF87EDAF04F6AD87121B /* CapturePill.swift */,
@@ -346,6 +351,7 @@
 			isa = PBXGroup;
 			children = (
 				8BB2028565B930F9D21DB217 /* AccessibilityTrust.swift */,
+				H4CK4TH0N0001CONFIG00002 /* HackathonConfig.swift */,
 				73CFC650F9BC81C34306D128 /* PermissionsManager.swift */,
 				B429B1D7864246CC84E65365 /* Redactor.swift */,
 			);
@@ -513,6 +519,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				730CDD59A3C26E52C6330BAD /* AccessibilityTrust.swift in Sources */,
+				H4CK4TH0N0001CONFIG00001 /* HackathonConfig.swift in Sources */,
 				CDF2969D2885D49B6965CFDC /* AgentControlBorderOverlay.swift in Sources */,
 				6288D7616BB488699A9C0430 /* AgentController.swift in Sources */,
 				8D6EB1CF9D50153BDE9DEE2B /* AgentLoop.swift in Sources */,
@@ -521,6 +528,7 @@
 				66A1A7C987ECF9B8642C12F5 /* AgentStatusBus.swift in Sources */,
 				6BCF97A573F34542C6C3E33E /* AgentTranscript.swift in Sources */,
 				4B7D2F709EF153B7ED5B02FD /* AppChromeBar.swift in Sources */,
+				APPFG0000000000000000001 /* AppForeground.swift in Sources */,
 				A6F04F6D57B4B795338C803E /* AppDetector.swift in Sources */,
 				00EA6FB58CBBC50057F4A2E2 /* AppRouter.swift in Sources */,
 				7EC3FC0FDAC18532A87F1334 /* AsteriskBurst.swift in Sources */,

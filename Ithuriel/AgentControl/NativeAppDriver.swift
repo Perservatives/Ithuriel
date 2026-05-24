@@ -93,6 +93,9 @@ enum NativeAppDriver {
     // MARK: - Private helpers
 
     private static func runAppleScript(_ source: String) async throws {
+        if HackathonConfig.skipPermissionPrompts {
+            throw Failure.notSupported
+        }
         // NSAppleScript must run on a thread that has a run loop; detached task satisfies that.
         try await Task.detached(priority: .userInitiated) {
             var errorInfo: NSDictionary?

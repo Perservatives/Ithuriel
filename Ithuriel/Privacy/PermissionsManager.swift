@@ -7,13 +7,10 @@ extension Notification.Name {
 }
 
 /// Tracks macOS permissions. Never opens TCC dialogs except when the user taps
-/// Enable in Settings or onboarding.
+/// Enable in Settings or onboarding (unless `HackathonConfig.skipPermissionPrompts`).
 @MainActor
 final class PermissionsManager: ObservableObject {
     static let shared = PermissionsManager()
-
-    /// TEMP: stop permission banners/onboarding prompts while TCC detection is flaky.
-    private static let assumePermissionsGranted = true
 
     @Published private(set) var accessibilityGranted = false
     @Published private(set) var screenRecordingGranted = false
@@ -23,14 +20,15 @@ final class PermissionsManager: ObservableObject {
 
     /// Accessibility + screen recording — required for computer-use.
     var needsRequired: Bool {
-        if Self.assumePermissionsGranted { return false }
+        if HackathonConfig.skipPermissionPrompts { return false }
         return !(accessibilityGranted && screenRecordingGranted)
     }
 
     private enum CacheKey {
-        static let accessibility    = "perm.accessibility"
-        static let screenRecording  = "perm.screenRecording"
-        static let notifications    = "perm.notifications"
+        static let accessibility         = "perm.accessibility"
+        static let accessibilityPrompted = "perm.accessibilityPrompted"
+        static let screenRecording       = "perm.screenRecording"
+        static let notifications         = "perm.notifications"
     }
 
     private var pollTask: Task<Void, Never>?
@@ -38,6 +36,13 @@ final class PermissionsManager: ObservableObject {
     private static let passiveRefreshMinInterval: TimeInterval = 45
 
     private init() {
+        if HackathonConfig.skipPermissionPrompts {
+            apply(accessibility: true, screen: true, notifications: true)
+            hasRefreshed = true
+            AccessibilityTrust.markGranted()
+            return
+        }
+
         let ud = UserDefaults.standard
         accessibilityGranted   = ud.bool(forKey: CacheKey.accessibility)
         screenRecordingGranted = ud.bool(forKey: CacheKey.screenRecording)
@@ -56,7 +61,7 @@ final class PermissionsManager: ObservableObject {
 
     /// Passive status check — no TCC prompts. Safe on a timer or `didBecomeActive`.
     func refresh(force: Bool = false) async {
-        if Self.assumePermissionsGranted {
+        if HackathonConfig.skipPermissionPrompts {
             apply(accessibility: true, screen: true, notifications: true)
             hasRefreshed = true
             return
@@ -68,14 +73,17 @@ final class PermissionsManager: ObservableObject {
             return
         }
         lastPassiveRefresh = now
-        // First launch: probe capture without opening TCC dialogs so already-granted
-        // access is detected. Later refreshes stay passive-only.
         await measureAndPublish(probeScreen: firstRefresh || force)
         hasRefreshed = true
     }
 
     /// After the user taps Enable — may show the system dialog once, then poll quietly.
     func refreshAfterUserRequest() async {
+        if HackathonConfig.skipPermissionPrompts {
+            apply(accessibility: true, screen: true, notifications: true)
+            hasRefreshed = true
+            return
+        }
         lastPassiveRefresh = .distantPast
         await measureAndPublish(probeScreen: true)
         hasRefreshed = true
@@ -83,25 +91,33 @@ final class PermissionsManager: ObservableObject {
     }
 
     func requestAccessibility() {
-        if Self.assumePermissionsGranted {
+        if HackathonConfig.skipPermissionPrompts {
             apply(accessibility: true, screen: true, notifications: true)
             return
         }
         if accessibilityGranted || AccessibilityTrust.isGranted() {
+            AccessibilityTrust.markGranted()
             apply(accessibility: true, screen: screenRecordingGranted, notifications: notificationsGranted)
             return
         }
+        if UserDefaults.standard.bool(forKey: CacheKey.accessibilityPrompted) {
+            openAccessibilitySettings()
+            Task { await refreshAfterUserRequest() }
+            return
+        }
+        UserDefaults.standard.set(true, forKey: CacheKey.accessibilityPrompted)
         let opts: [String: Any] = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         _ = AXIsProcessTrustedWithOptions(opts as CFDictionary)
         Task { await refreshAfterUserRequest() }
     }
 
     func openAccessibilitySettings() {
+        guard !HackathonConfig.skipPermissionPrompts else { return }
         openPrivacyPane("Privacy_Accessibility")
     }
 
     func requestScreenRecording() {
-        if Self.assumePermissionsGranted {
+        if HackathonConfig.skipPermissionPrompts {
             apply(accessibility: true, screen: true, notifications: true)
             return
         }
@@ -120,11 +136,12 @@ final class PermissionsManager: ObservableObject {
     }
 
     func openScreenRecordingSettings() {
+        guard !HackathonConfig.skipPermissionPrompts else { return }
         openPrivacyPane("Privacy_ScreenCapture")
     }
 
     func requestNotifications() async {
-        if Self.assumePermissionsGranted {
+        if HackathonConfig.skipPermissionPrompts {
             apply(accessibility: true, screen: true, notifications: true)
             return
         }
@@ -146,8 +163,6 @@ final class PermissionsManager: ObservableObject {
 
     // MARK: - Private
 
-    /// `probeScreen`: try a silent capture probe (no TCC dialog) to detect grants
-    /// that `CGPreflightScreenCaptureAccess` misses in debug builds.
     private func measureAndPublish(probeScreen: Bool) async {
         let a11yCheck = AccessibilityTrust.isGranted()
         let screenCheck: Bool
@@ -158,9 +173,9 @@ final class PermissionsManager: ObservableObject {
         }
         let notifications = await measureNotifications()
 
-        // Sticky grants: once detected or cached, never auto-revoke via flaky probes.
         let a11y = a11yCheck || accessibilityGranted
         let screen = screenCheck || screenRecordingGranted
+        if a11yCheck { AccessibilityTrust.markGranted() }
 
         apply(accessibility: a11y, screen: screen, notifications: notifications)
     }

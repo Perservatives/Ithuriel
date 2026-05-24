@@ -146,18 +146,17 @@ final class UserPrefs {
                 existing.activeWorkspace = path
                 try? context.save()
             }
-            // Seed Gemini key from the user's macOS Keychain if Settings hasn't
-            // been filled in yet. Run once: `security add-generic-password
-            // -s dev.ithuriel.agent -a gemini.apiKey -w <KEY>`.
-            if existing.geminiApiKey.isEmpty,
-               let seed = Keychain.get("gemini.apiKey"), !seed.isEmpty {
-                existing.geminiApiKey = seed
-                try? context.save()
-            }
-            if existing.openAIAPIKey.isEmpty,
-               let seed = Keychain.get("openai.apiKey"), !seed.isEmpty {
-                existing.openAIAPIKey = seed
-                try? context.save()
+            if !HackathonConfig.skipPermissionPrompts {
+                if existing.geminiApiKey.isEmpty,
+                   let seed = Keychain.get("gemini.apiKey", mode: .silent), !seed.isEmpty {
+                    existing.geminiApiKey = seed
+                    try? context.save()
+                }
+                if existing.openAIAPIKey.isEmpty,
+                   let seed = Keychain.get("openai.apiKey", mode: .silent), !seed.isEmpty {
+                    existing.openAIAPIKey = seed
+                    try? context.save()
+                }
             }
             // One-time migration: ⌃Space is reserved by macOS for "Show next
             // input source" and silently swallows our hotkey. Flip existing
@@ -171,9 +170,22 @@ final class UserPrefs {
                 existing.geminiModel = normalizedModel
                 try? context.save()
             }
+            if existing.geminiModel.isEmpty {
+                existing.geminiModel = GeminiModels.defaultModel
+                try? context.save()
+            }
+            let migratedDefaultKey = "prefs.migratedGemini35Default"
+            if !UserDefaults.standard.bool(forKey: migratedDefaultKey),
+               existing.geminiModel == "gemini-2.5-flash" {
+                existing.geminiModel = GeminiModels.defaultModel
+                try? context.save()
+                UserDefaults.standard.set(true, forKey: migratedDefaultKey)
+            }
             return existing
         }
-        let seededKey = Keychain.get("gemini.apiKey") ?? ""
+        let seededKey = HackathonConfig.skipPermissionPrompts
+            ? ""
+            : (Keychain.get("gemini.apiKey", mode: .silent) ?? "")
         let prefs = UserPrefs(
             geminiApiKey: seededKey,
             activeWorkspace: WorkspaceMonitor.mostRecentEditorWorkspace() ?? ""

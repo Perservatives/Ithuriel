@@ -9,7 +9,8 @@ final class MicRecorder: @unchecked Sendable {
     private(set) var isRecording = false
 
     func requestPermission() async -> Bool {
-        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+        if HackathonConfig.skipPermissionPrompts { return true }
+        return await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
             AVAudioApplication.requestRecordPermission { granted in
                 cont.resume(returning: granted)
             }

@@ -27,15 +27,66 @@ final class AuthService {
     /// falls back to `GoogleService-Info.plist` (`resolvedWebAPIKey`).
     var firebaseWebAPIKey: String = ""
 
-    // MARK: - Token storage
+    // MARK: - Token storage (in-memory cache — Keychain is read once per launch)
 
     private let idTokenKey      = "firebase.idToken"
     private let refreshTokenKey = "firebase.refreshToken"
     private let idTokenExpiry   = "firebase.idToken.expiry"
     private let uidKey          = "firebase.uid"
+    private let googleAccessTokenKey       = "google.accessToken"
+    private let googleAccessTokenExpiryKey = "google.accessToken.expiry"
 
-    var idToken: String? { Keychain.get(idTokenKey) }
-    var refreshToken: String? { Keychain.get(refreshTokenKey) }
+    private var cachedIdToken: String?
+    private var cachedRefreshToken: String?
+    private var cachedIdTokenExpiry: String?
+    private var cachedUid: String?
+    private var cachedGoogleAccessToken: String?
+
+    var idToken: String? { cachedIdToken }
+    var refreshToken: String? { cachedRefreshToken }
+    var googleAccessToken: String? { cachedGoogleAccessToken }
+    var uid: String? { cachedUid }
+    var isSignedIn: Bool { cachedIdToken != nil }
+
+    /// Load tokens from Keychain without triggering the macOS auth sheet.
+    /// Call once at launch before any `isSignedIn` check.
+    func bootstrap(silent: Bool = true) {
+        if HackathonConfig.skipPermissionPrompts { return }
+        let mode: Keychain.AccessMode = silent ? .silent : .interactive
+        cachedIdToken = Keychain.get(idTokenKey, mode: mode)
+        cachedRefreshToken = Keychain.get(refreshTokenKey, mode: mode)
+        cachedIdTokenExpiry = Keychain.get(idTokenExpiry, mode: mode)
+        cachedUid = Keychain.get(uidKey, mode: mode)
+        cachedGoogleAccessToken = Keychain.get(googleAccessTokenKey, mode: mode)
+    }
+
+    /// Re-read Keychain interactively — use when the user taps Sign In.
+    func reloadFromKeychain() {
+        if HackathonConfig.skipPermissionPrompts { return }
+        bootstrap(silent: false)
+    }
+
+    private func persistFirebaseSession(idToken: String, refreshToken: String, uid: String?, expiresIn: String) throws {
+        let expiry = String(Int(Date().timeIntervalSince1970) + (Int(expiresIn) ?? 3600))
+        try Keychain.set(idToken, key: idTokenKey)
+        try Keychain.set(refreshToken, key: refreshTokenKey)
+        try Keychain.set(expiry, key: idTokenExpiry)
+        cachedIdToken = idToken
+        cachedRefreshToken = refreshToken
+        cachedIdTokenExpiry = expiry
+        if let uid, !uid.isEmpty {
+            try Keychain.set(uid, key: uidKey)
+            cachedUid = uid
+        }
+    }
+
+    private func persistGoogleAccessToken(_ access: String, expiresIn: Int) throws {
+        let expiry = String(Int(Date().timeIntervalSince1970) + expiresIn)
+        try Keychain.set(access, key: googleAccessTokenKey)
+        try Keychain.set(expiry, key: googleAccessTokenExpiryKey)
+        cachedGoogleAccessToken = access
+    }
+
     /// Cached human-facing identity for the signed-in user. Populated lazily
     /// via `accounts:lookup` after sign-in (and on demand from the UI). Stored
     /// in `UserDefaults` so window restoration doesn't show a stale "?".
@@ -47,17 +98,6 @@ final class AuthService {
         get { UserDefaults.standard.string(forKey: "firebase.email") }
         set { UserDefaults.standard.set(newValue, forKey: "firebase.email") }
     }
-    /// Google OAuth access token from the most recent sign-in. Used by
-    /// `SecretManagerClient` to talk to `secretmanager.googleapis.com`.
-    /// Stored in Keychain under `google.accessToken`; populated by
-    /// `exchangeCodeForGoogleIdToken` when the user signs in with the
-    /// `cloud-platform.read-only` scope.
-    var googleAccessToken: String? { Keychain.get(googleAccessTokenKey) }
-
-    private let googleAccessTokenKey       = "google.accessToken"
-    private let googleAccessTokenExpiryKey = "google.accessToken.expiry"
-    var uid: String? { Keychain.get(uidKey) }
-    var isSignedIn: Bool { idToken != nil }
 
     func signOut() {
         Keychain.remove(idTokenKey)
@@ -66,6 +106,11 @@ final class AuthService {
         Keychain.remove(uidKey)
         Keychain.remove(googleAccessTokenKey)
         Keychain.remove(googleAccessTokenExpiryKey)
+        cachedIdToken = nil
+        cachedRefreshToken = nil
+        cachedIdTokenExpiry = nil
+        cachedUid = nil
+        cachedGoogleAccessToken = nil
         UserDefaults.standard.removeObject(forKey: "firebase.displayName")
         UserDefaults.standard.removeObject(forKey: "firebase.email")
     }
@@ -214,9 +259,7 @@ final class AuthService {
         }
         let decoded = try JSONDecoder().decode(TokenResp.self, from: data)
         if let access = decoded.access_token, !access.isEmpty {
-            try Keychain.set(access, key: googleAccessTokenKey)
-            let expiry = Int(Date().timeIntervalSince1970) + (decoded.expires_in ?? 3600)
-            try Keychain.set(String(expiry), key: googleAccessTokenExpiryKey)
+            try persistGoogleAccessToken(access, expiresIn: decoded.expires_in ?? 3600)
         }
         return decoded.id_token
     }
@@ -238,12 +281,11 @@ final class AuthService {
             throw AuthError.exchangeFailed("signInWithIdp: \(String(data: data, encoding: .utf8) ?? "")")
         }
         let decoded = try JSONDecoder().decode(SignInResponse.self, from: data)
-        try Keychain.set(decoded.idToken, key: idTokenKey)
-        try Keychain.set(decoded.refreshToken, key: refreshTokenKey)
-        try Keychain.set(decoded.localId, key: uidKey)
-        try Keychain.set(
-            String(Int(Date().timeIntervalSince1970) + (Int(decoded.expiresIn) ?? 3600)),
-            key: idTokenExpiry
+        try persistFirebaseSession(
+            idToken: decoded.idToken,
+            refreshToken: decoded.refreshToken,
+            uid: decoded.localId,
+            expiresIn: decoded.expiresIn
         )
     }
 
@@ -266,17 +308,17 @@ final class AuthService {
             throw AuthError.exchangeFailed(String(data: data, encoding: .utf8) ?? "")
         }
         let refreshed = try JSONDecoder().decode(RefreshResponse.self, from: data)
-        try Keychain.set(refreshed.idToken, key: idTokenKey)
-        try Keychain.set(refreshed.refreshToken, key: refreshTokenKey)
-        try Keychain.set(
-            String(Int(Date().timeIntervalSince1970) + (Int(refreshed.expiresIn) ?? 3600)),
-            key: idTokenExpiry
+        try persistFirebaseSession(
+            idToken: refreshed.idToken,
+            refreshToken: refreshed.refreshToken,
+            uid: nil,
+            expiresIn: refreshed.expiresIn
         )
         return refreshed.idToken
     }
 
     private func isExpired() -> Bool {
-        guard let raw = Keychain.get(idTokenExpiry), let ts = Int(raw) else { return true }
+        guard let raw = cachedIdTokenExpiry, let ts = Int(raw) else { return true }
         return Date().timeIntervalSince1970 >= Double(ts) - 60
     }
 

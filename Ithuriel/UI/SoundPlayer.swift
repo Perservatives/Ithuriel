@@ -65,6 +65,7 @@ final class SoundPlayer {
             player.play()
             return
         }
+        if HackathonConfig.skipPermissionPrompts { return }
         if let name = sound.systemFallback,
            let ns = NSSound(named: NSSound.Name(name)) {
             ns.volume = volume

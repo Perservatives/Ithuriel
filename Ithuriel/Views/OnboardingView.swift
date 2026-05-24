@@ -268,7 +268,8 @@ struct OnboardingView: View {
         case .welcome:     step = .signIn
         case .signIn:      step = .hotkey
         case .hotkey:
-            if permissions.hasRefreshed && !permissions.needsRequired {
+            if HackathonConfig.skipPermissionPrompts
+                || (permissions.hasRefreshed && !permissions.needsRequired) {
                 complete()
             } else {
                 step = .permissions

@@ -47,9 +47,12 @@ final class LaunchCoordinator {
     }
 
     /// Dismiss the splash immediately (idempotent — safe to call multiple times).
-    func dismiss() {
-        guard let window = launchWindow else { return }
-        launchWindow = nil          // nil out first so repeat calls are no-ops
+    func dismiss(completion: (@MainActor () -> Void)? = nil) {
+        guard let window = launchWindow else {
+            completion?()
+            return
+        }
+        launchWindow = nil
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.32
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
@@ -58,8 +61,16 @@ final class LaunchCoordinator {
             Task { @MainActor in
                 window.orderOut(nil)
                 window.alphaValue = 1
+                completion?()
             }
         })
+    }
+
+    /// Await splash teardown before showing the main window (avoids screenSaver overlay blocking focus).
+    func dismissAndWait() async {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            dismiss { cont.resume() }
+        }
     }
 
     private func dismissLaunch() { dismiss() }

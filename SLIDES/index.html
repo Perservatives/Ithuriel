@@ -191,7 +191,7 @@
   </defs>
 </svg>
 
-<div class="ticker">SYNTHESIS HACKATHON · Ithuriel · 2026</div>
+<div class="ticker">Ithuriel · Synthesis Hackathon 2026</div>
 <div class="pageNo" id="pageNo">01 / 10</div>
 <div class="hud"><span class="glyph">←</span><span class="glyph">→</span> navigate</div>
 
@@ -204,71 +204,73 @@
         <use href="#burst"></use>
       </svg>
       <div class="title-stack">
-        <div class="meta">A macOS computer-use agent</div>
+        <div class="meta">Menu bar agent for macOS</div>
         <h1 class="title">Ithuriel</h1>
-        <div class="tagline">An agent that knows what you're already doing —<br/>so you stop explaining and start working.</div>
+        <div class="tagline">We got tired of re-explaining our project<br/>to every AI tool we open.</div>
       </div>
     </div>
   </section>
 
   <!-- 2 — Problem -->
   <section class="slide">
-    <div class="eyebrow">The cold-start tax</div>
-    <h2>Every AI tool starts blank.</h2>
+    <div class="eyebrow">The annoyance</div>
+    <h2>Every session starts from zero.</h2>
     <p class="lead">
-      Claude, ChatGPT, Cursor, Copilot — each one boots without memory of what you were
-      working on. So every prompt re-explains the project: <em>"the file I just edited"</em>,
-      <em>"the test that failed"</em>, <em>"the branch you read last time"</em>. 76% of developers
-      use ≥ 2 AI tools daily. The re-explanation tax is real.
+      If you bounce between Claude, ChatGPT, and Cursor in one day, you know the drill.
+      New chat, blank box. Paste the same context. Explain the bug again. Mention the
+      branch again. It isn't that the tools are bad — it's that they don't know what
+      you were just doing on your Mac.
     </p>
     <div class="cols" style="margin-top: 36px;">
       <div class="card">
-        <div class="card-title">Today</div>
-        <div class="card-body">A blank textarea. Type until you've poured the world back in. Repeat tomorrow.</div>
+        <div class="card-title">What we kept doing</div>
+        <div class="card-body">Copy file paths into the prompt. Re-run the same explanation. Lose ten minutes before the real work starts.</div>
       </div>
       <div class="card muted">
-        <div class="card-title">What we want</div>
-        <div class="card-body">A surface that already knows — your git branch, recent edits, open files, terminal history.</div>
+        <div class="card-title">What we wanted</div>
+        <div class="card-body">An agent that already sees the repo, the open editor, recent terminal commands — and just gets on with the task.</div>
       </div>
     </div>
   </section>
 
   <!-- 3 — What it is -->
   <section class="slide bg-violet">
-    <div class="eyebrow">What Ithuriel is</div>
-    <h2>One prompt, full execution.</h2>
+    <div class="eyebrow">What it does</div>
+    <h2>Type a task. It runs on your Mac.</h2>
     <p class="lead">
-      A macOS-native agent that lives in your menu bar, watches your workspace,
-      and uses Google Gemini to drive your keyboard, mouse, file system, and apps —
-      with the project's full context already loaded into every turn.
+      Ithuriel lives in the menu bar, watches your workspace, and uses Gemini to plan
+      and execute — keyboard, mouse, files, shell, apps. Context from your machine
+      is attached before each turn so you're not briefing it from scratch.
     </p>
     <div class="cols-3" style="margin-top: 36px;">
       <div class="card">
-        <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Summon</div>
-        <div class="card-body">Tap <span class="kbd">⌃ Space</span> anywhere to open the prompt. Movable, draggable, no shadow heroics.</div>
+        <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Open</div>
+        <div class="card-body">Tap <span class="kbd">⌥ Space</span> for a quick prompt over any app. Esc to dismiss.</div>
       </div>
       <div class="card">
         <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Talk</div>
-        <div class="card-body">Hold <span class="kbd">⌃ Space</span> to speak. Google Cloud STT in, agent run, TTS out — all on your key.</div>
+        <div class="card-body">Hold the same shortcut to speak. Whisper transcribes; the agent runs; optional TTS on the way out.</div>
       </div>
       <div class="card">
         <div class="card-title"><svg class="mark mark-sm" style="color: var(--accent)"><use href="#burst"></use></svg> Stop</div>
-        <div class="card-body">Global kill switch <span class="kbd">⌃ ⌥ ⌘ .</span> halts the agent mid-action. Use freely.</div>
+        <div class="card-body">Kill switch <span class="kbd">⌃ ⌥ ⌘ .</span> — stops the agent mid-step, globally.</div>
       </div>
     </div>
   </section>
 
-  <!-- 4 — The Spotlight -->
+  <!-- 4 — UI -->
   <section class="slide">
-    <div class="eyebrow">Headline surface</div>
-    <h2>A pill, on top of everything.</h2>
+    <div class="eyebrow">Two surfaces</div>
+    <h2>Quick popup, full chat when you need it.</h2>
     <div class="cols">
       <div>
-        <p class="lead">A floating prompt. Liquid glass. Eight-pointed mark on the left. Type a task, hit return. The agent runs.</p>
+        <p class="lead">Option-Space is the fast path — type, send, read the answer inline.
+        Open the full window for history, attachments, and longer runs. Settings is a
+        small gear in the corner; nothing hidden behind a mystery menu.</p>
         <div class="keys" style="margin-top: 18px;">
-          <div class="row"><span class="kbd">⌃ Space</span> summon / dismiss</div>
-          <div class="row"><span class="kbd">hold ⌃ Space</span> voice mode</div>
-          <div class="row"><span class="kbd">⎋</span> close</div>
+          <div class="row"><span class="kbd">⌥ Space</span> quick prompt</div>
+          <div class="row"><span class="kbd">hold ⌥ Space</span> voice</div>
+          <div class="row"><span class="kbd">⎋</span> close popup</div>
           <div class="row"><span class="kbd">⌃ ⌥ ⌘ .</span> kill agent</div>
         </div>
       </div>
@@ -277,174 +279,171 @@
           <div style="display:flex; align-items:center; gap:14px;">
             <svg class="mark" style="width:34px; height:34px; color: var(--accent)"><use href="#burst"></use></svg>
             <div>
-              <div style="font-family: var(--rounded); font-size: 18px; font-weight: 500;">What can I help you with today?</div>
-              <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px;">Ithuriel · synthesis-hack26svl-121</div>
+              <div style="font-family: var(--rounded); font-size: 18px; font-weight: 500;">Fix the failing test in test_alpha.py</div>
+              <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px;">Ithuriel · ~/Developer/my-app</div>
             </div>
             <div style="flex:1"></div>
-            <div style="background: linear-gradient(#FF7059, #F03E22); width: 36px; height: 32px; border-radius: 8px; display:grid; place-items:center; color:white;">↑</div>
+            <div style="background: #111; width: 36px; height: 32px; border-radius: 8px; display:grid; place-items:center; color:white;">↑</div>
           </div>
         </div>
-        <div style="font: 12px var(--mono); color: var(--ink-3); margin-top: 10px; text-align: right;">draggable · borderless · transparent</div>
+        <div style="font: 12px var(--mono); color: var(--ink-3); margin-top: 10px; text-align: right;">looks like software you've used before</div>
       </div>
     </div>
   </section>
 
-  <!-- 5 — Conversational, not transcript-y -->
+  <!-- 5 — Output -->
   <section class="slide">
-    <div class="eyebrow">Reads like a chat, not a log</div>
-    <h2>Tool calls collapse. Thinking mutates.</h2>
+    <div class="eyebrow">Output</div>
+    <h2>Chat first, debug log second.</h2>
     <p class="lead" style="margin-bottom: 28px;">
-      We borrowed the Claude Code &amp; ChatGPT desktop pattern: by default we hide
-      the per-tool spam behind a single chip. One line, "Used N tools — click to expand."
-      And the live thinking row mutates in place instead of stacking new "thinking…" lines.
+      When the agent runs shell commands and reads files, you don't have to watch every
+      step scroll by. By default we collapse tool use into one line — expand if you
+      want the play-by-play. The answer is what you care about.
     </p>
     <div class="cols">
       <div class="card">
-        <div class="card-title">Default view</div>
+        <div class="card-title">What you usually see</div>
         <div class="card-body" style="font-family: var(--mono);">
-          ▶ refactor the failing test<br/>
-          <span style="color: var(--accent)">● Used 6 tools  ▸</span><br/>
-          ✓ all 4 cases pass; rerun summary attached
+          you: fix the failing test<br/>
+          <span style="color: var(--accent)">● used 6 tools  ▸</span><br/>
+          Ithuriel: all four cases pass now
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Expanded view</div>
+        <div class="card-title">If you expand</div>
         <div class="card-body" style="font-family: var(--mono); color: var(--ink-3);">
-          → run_shell: pytest test_alpha.py<br/>
-          → read_file: test_alpha.py<br/>
-          → write_file: test_alpha.py<br/>
-          → run_shell: pytest test_alpha.py<br/>
-          → screenshot: scrutinize editor<br/>
-          → run_shell: git status<br/>
-          ✓ all 4 cases pass; rerun summary attached
+          run_shell: pytest test_alpha.py<br/>
+          read_file: test_alpha.py<br/>
+          write_file: test_alpha.py<br/>
+          run_shell: pytest test_alpha.py<br/>
+          screenshot<br/>
+          run_shell: git status<br/>
+          → all four cases pass now
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 6 — Context plumbing -->
+  <!-- 6 — Context -->
   <section class="slide">
-    <div class="eyebrow">Why the agent never starts cold</div>
-    <h2>Continuous context capture.</h2>
+    <div class="eyebrow">Context</div>
+    <h2>It watches the workspace, quietly.</h2>
     <div class="cols">
       <div>
-        <p class="lead">Five subsystems run quietly in the background. Every agent turn is seeded with a fresh ContextSnapshot.</p>
+        <p class="lead">Before each agent turn we bundle what's happening on your Mac into a
+        snapshot: recent file edits, active editor, git branch and diff, last few terminal
+        commands. Secrets get stripped before anything syncs off the machine.</p>
         <ul style="margin-top: 18px;">
-          <li><b>FSEventStream</b> — 5s-debounced file changes</li>
-          <li><b>NSWorkspace</b> — active editor + open tabs</li>
-          <li><b>GitCapture</b> — branch, recent commits, diff</li>
-          <li><b>TerminalCapture</b> — last 20 shell commands</li>
-          <li><b>Redactor</b> — scrubs API keys, .env, .ssh/</li>
+          <li>File changes (debounced)</li>
+          <li>Frontmost app and open files</li>
+          <li>Git state</li>
+          <li>Terminal history</li>
+          <li>Redactor for keys and sensitive paths</li>
         </ul>
       </div>
       <div>
         <div class="pipe">
-          <div class="box">FSEvents</div>
+          <div class="box">your Mac</div>
           <div class="arrow">→</div>
           <div class="box">Redactor</div>
           <div class="arrow">→</div>
           <div class="box accent">ContextSnapshot</div>
           <div class="arrow">→</div>
-          <div class="box">AgentLoop</div>
+          <div class="box">Gemini loop</div>
         </div>
         <div class="pipe" style="margin-top: 14px;">
-          <div class="box">Pub/Sub</div>
+          <div class="box">optional sync</div>
           <div class="arrow">→</div>
-          <div class="box">Cloud Function</div>
+          <div class="box">Firestore</div>
           <div class="arrow">→</div>
-          <div class="box accent">Vertex AI<br/>text-embedding-005</div>
+          <div class="box accent">vector search</div>
           <div class="arrow">→</div>
-          <div class="box">Firestore + GCS</div>
+          <div class="box">past runs</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 7 — Under the hood -->
+  <!-- 7 — Stack -->
   <section class="slide bg-violet">
-    <div class="eyebrow">Under the hood</div>
-    <h2>Pure Apple frameworks. Google Cloud backbone.</h2>
+    <div class="eyebrow">Stack</div>
+    <h2>Swift on the Mac. GCP if you sign in.</h2>
     <div class="cols-3">
       <div class="card">
-        <div class="card-title">Brain</div>
-        <div class="card-body">Gemini 3.5 Flash via the v1beta generateContent endpoint. Function-calling + screenshot vision feeds the loop until it calls <code>done()</code>.</div>
+        <div class="card-title">On device</div>
+        <div class="card-body">SwiftUI app, no npm in the agent core. Gemini for planning + tool calls. Screenshots when vision helps.</div>
       </div>
       <div class="card">
-        <div class="card-title">Action surface</div>
-        <div class="card-body">CGEvent (type, click, hotkeys), NSWorkspace (launch / focus / quit), filesystem (sandboxed to workspace), zsh, screen capture.</div>
+        <div class="card-title">Actions</div>
+        <div class="card-body">Type, click, hotkeys, launch/focus apps, read/write files in your workspace, run shell, capture screen.</div>
       </div>
       <div class="card">
-        <div class="card-title">Cloud</div>
-        <div class="card-body">Firebase Auth, Firestore (snapshots + agent runs), Cloud Storage (raw + embeddings), Cloud Run, Cloud Functions, Vertex AI Vector Search.</div>
+        <div class="card-title">Cloud (optional)</div>
+        <div class="card-body">Firebase auth, Firestore for runs and snapshots, embeddings for search across project history.</div>
       </div>
     </div>
     <div class="pipe" style="margin-top: 28px; justify-content: center;">
       <div class="box">SwiftUI</div>
-      <div class="box">FirebaseAuth + Firestore</div>
-      <div class="box">Vertex AI</div>
-      <div class="box">Cloud Speech</div>
-      <div class="box">Cloud TTS</div>
-      <div class="box accent">synthesis-hack26svl-121</div>
+      <div class="box">Gemini</div>
+      <div class="box">Whisper</div>
+      <div class="box">Firestore</div>
+      <div class="box accent">macOS 14+</div>
     </div>
   </section>
 
   <!-- 8 — Safety -->
   <section class="slide">
     <div class="eyebrow">Safety</div>
-    <h2>Permission-cheap, kill-switch-cheap.</h2>
+    <h2>Agents that type for you need guardrails.</h2>
     <div class="cols">
       <div>
         <div class="steps">
-          <div class="step"><div class="n">1</div><div><b>Sandboxed file ops.</b> read/write/delete pinned to the active workspace. Outside? Refused.</div></div>
-          <div class="step"><div class="n">2</div><div><b>Secrets scrubber.</b> <code>sk-</code>, <code>ghp_</code>, <code>AIza</code>, <code>xoxb-</code>, <code>api_key=…</code> stripped before anything leaves the Mac.</div></div>
-          <div class="step"><div class="n">3</div><div><b>Destructive prompts.</b> <code>write_file</code> / <code>delete_file</code> / <code>run_shell</code> / <code>quit_app</code> can require explicit confirmation.</div></div>
-          <div class="step"><div class="n">4</div><div><b>Lazy permissions.</b> Onboarding only asks for what isn't already granted — no nagging.</div></div>
-          <div class="step"><div class="n">5</div><div><b>Global kill switch.</b> <span class="kbd">⌃ ⌥ ⌘ .</span> stops the agent mid-step. Always available.</div></div>
+          <div class="step"><div class="n">1</div><div><b>Workspace sandbox.</b> File ops stay in the folder you picked unless you widen it on purpose.</div></div>
+          <div class="step"><div class="n">2</div><div><b>Secrets scrubbed.</b> API keys and <code>.env</code> paths don't get uploaded.</div></div>
+          <div class="step"><div class="n">3</div><div><b>Confirm destructive stuff</b> — writes, deletes, shell, quit app — if you turn that on in Settings.</div></div>
+          <div class="step"><div class="n">4</div><div><b>Permissions when needed,</b> not on every launch.</div></div>
+          <div class="step"><div class="n">5</div><div><b>Kill switch</b> <span class="kbd">⌃ ⌥ ⌘ .</span> always works.</div></div>
         </div>
       </div>
       <div class="card" style="background: #fff; padding: 24px;">
-        <div style="font-family: var(--rounded); font-size: 20px; font-weight: 600; margin-bottom: 12px;">Privacy that survives shipping</div>
+        <div style="font-family: var(--rounded); font-size: 20px; font-weight: 600; margin-bottom: 12px;">We're honest about risk</div>
         <p style="margin: 0;">
-          The agent is dangerous by design. So every off-Mac payload is funnelled through
-          the Redactor first; every destructive action is gated on user policy; every
-          sensitive path (<code>.env</code>, <code>.ssh/</code>, <code>secrets/</code>) is refused even inside the
-          sandbox.
-        </p>
-        <p style="margin: 14px 0 0; font: 12px var(--mono); color: var(--ink-3);">
-          Local-only mode short-circuits every network call. Promise it, mean it.
+          This is a computer-use agent. It can run commands and edit files. We sandbox
+          what we can, scrub what leaves the Mac, and give you a big red off button.
+          Local-only mode turns off cloud sync entirely if you want it.
         </p>
       </div>
     </div>
   </section>
 
-  <!-- 9 — Numbers -->
+  <!-- 9 — Scale -->
   <section class="slide">
-    <div class="eyebrow">By the numbers</div>
-    <h2>What's in the box.</h2>
+    <div class="eyebrow">Rough scale</div>
+    <h2>What we actually shipped.</h2>
     <div class="cols-3">
       <div class="card">
         <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">~70</div>
-        <div class="card-body">Swift source files. Zero third-party deps in the agent core; Firebase SDK only at the network boundary.</div>
+        <div class="card-body">Swift files in the app. Apple frameworks only in the agent path.</div>
       </div>
       <div class="card">
         <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">13</div>
-        <div class="card-body">Tool functions Gemini can call (type, click, screenshot, run_shell, write_file, focus_app, …).</div>
+        <div class="card-body">Tools the model can call — type, click, screenshot, shell, files, apps, done.</div>
       </div>
       <div class="card">
-        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">1.10s</div>
-        <div class="card-body">Launch animation. 8 shards converge with Material decelerate easing, 15ms radial stagger.</div>
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">⌥ Space</div>
+        <div class="card-body">One shortcut for quick prompt and voice. Rebindable in Settings.</div>
       </div>
       <div class="card">
-        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">768-dim</div>
-        <div class="card-body">Vertex AI text-embedding-005 vectors per snapshot. Cosine-ranked semantic search in production.</div>
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">768</div>
+        <div class="card-body">Embedding dims per snapshot when cloud search is on.</div>
       </div>
       <div class="card">
-        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">⌃ Space</div>
-        <div class="card-body">One global shortcut. Tap for prompt, hold for voice. Configurable in Settings; bind any chord.</div>
+        <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">0</div>
+        <div class="card-body">Third-party deps in the agent core. Firebase only at the network edge.</div>
       </div>
       <div class="card">
         <div style="font-family: var(--rounded); font-size: 52px; font-weight: 600;">macOS 14</div>
-        <div class="card-body">Pure Swift / SwiftUI. Hardened-runtime accessory app, LSUIElement, sandbox off by design.</div>
+        <div class="card-body">Target. Menu bar app. Built for a real dev machine, not a slide deck.</div>
       </div>
     </div>
   </section>
@@ -453,13 +452,16 @@
   <section class="slide bg-violet">
     <div class="close">
       <svg class="mark-lg" style="color: var(--accent)"><use href="#burst"></use></svg>
-      <h2>Your AI never starts cold again.</h2>
+      <h2>Try it on your repo.</h2>
       <p class="lead" style="max-width: 760px; text-align: center;">
-        Tap <span class="kbd">⌃ Space</span>. Tell it what you want. Get back to work.
+        <span class="kbd">⌥ Space</span> — give it something you'd ask an intern to do.
+        See if you skip the re-explaining step.
       </p>
       <div class="meta">github.com/Perservatives/Ithuriel</div>
     </div>
   </section>
+
+</div>
 
 </div>
 

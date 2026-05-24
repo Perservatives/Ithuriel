@@ -188,15 +188,15 @@ final class GeminiClient {
 
 enum GeminiModels {
     static let pickerOptions: [(id: String, label: String)] = [
+        ("gemini-3.5-flash", "Flash 3.5 · default"),
         ("gemini-2.5-flash", "Flash 2.5 · fast"),
         ("gemini-2.5-flash-lite", "Flash 2.5 · lite"),
         ("gemini-2.5-pro", "Pro 2.5"),
-        ("gemini-3.5-flash", "Flash 3.5"),
         ("gemini-3-flash-preview", "Flash 3 · preview"),
         ("gemini-3.1-pro-preview", "Pro 3.1 · preview"),
     ]
 
-    static let defaultModel = "gemini-2.5-flash"
+    static let defaultModel = "gemini-3.5-flash"
 
     private static let validIDs = Set(pickerOptions.map(\.id))
 

@@ -12,6 +12,7 @@ enum ScreenCapture {
 
     /// Non-intrusive — safe to call from periodic UI refresh. Never opens a TCC dialog.
     static func hasScreenRecordingAccessPassive() -> Bool {
+        if HackathonConfig.skipPermissionPrompts { return true }
         if CGPreflightScreenCaptureAccess() { return true }
         let ud = UserDefaults.standard
         if ud.bool(forKey: verifiedKey) { return true }
@@ -21,6 +22,7 @@ enum ScreenCapture {
 
     /// Full probe for Settings "Enable" and first-time verification. May trigger TCC once.
     static func hasScreenRecordingAccess() async -> Bool {
+        if HackathonConfig.skipPermissionPrompts { return true }
         if CGPreflightScreenCaptureAccess() { return true }
         if captureMainDisplayImage() != nil {
             markVerified()
@@ -40,7 +42,8 @@ enum ScreenCapture {
     }
 
     static func mainDisplayJPEGBase64(maxWidth: CGFloat = 1280, quality: Double = 0.7) -> String? {
-        guard hasScreenRecordingAccessNow() else { return nil }
+        if !HackathonConfig.skipPermissionPrompts,
+           !hasScreenRecordingAccessNow() { return nil }
         guard let cgImage = captureMainDisplayImage() else { return nil }
         markVerified()
 

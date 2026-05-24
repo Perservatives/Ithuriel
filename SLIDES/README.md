@@ -7,7 +7,7 @@ Self-contained hackathon deck for **Ithuriel**.
 - `index.html` — 10-slide presentation. Single file, no dependencies.
   Keyboard nav: `←` / `→` / `Space` / `PageUp` / `PageDown` / `Home` /
   `End`. Click the right half to advance, left half to go back.
-- `script.md` — 3-minute speaking script for 3 presenters.
+- `script.md` — 3-minute speaking script for 3 presenters. Plain language; read it like you're talking to the room, not pitching.
 
 ## To present
 

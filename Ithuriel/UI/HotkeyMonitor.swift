@@ -41,6 +41,8 @@ final class HotkeyMonitor {
 
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
+    private var showedAccessibilityBanner = false
+    private var permissionObserver: NSObjectProtocol?
 
     /// Update the active binding. Safe to call repeatedly; no-op if unchanged.
     func updateBinding(keyCode: Int, modifiers: Int) {
@@ -56,6 +58,30 @@ final class HotkeyMonitor {
 
     func install() {
         guard tap == nil else { return }
+        observePermissionChanges()
+        installEventTapOrFallback()
+    }
+
+    private func observePermissionChanges() {
+        guard permissionObserver == nil else { return }
+        permissionObserver = NotificationCenter.default.addObserver(
+            forName: .ithurielPermissionsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.tap == nil,
+                      PermissionsManager.shared.accessibilityGranted else { return }
+                self.installEventTapOrFallback()
+            }
+        }
+    }
+
+    private func installEventTapOrFallback() {
+        if HackathonConfig.skipPermissionPrompts {
+            installCarbonFallback()
+            return
+        }
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
                               | (1 << CGEventType.keyUp.rawValue)
                               | (1 << CGEventType.flagsChanged.rawValue)
@@ -74,12 +100,15 @@ final class HotkeyMonitor {
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
             // CGEventTap requires Accessibility. Without it we still get
-            // tap-to-summon via Carbon, but hold-to-talk is dead. Surface a
-            // notification banner so the user knows to grant access.
-            Log.info("HotkeyMonitor: CGEventTap denied — falling back to Carbon. Grant Accessibility for hold-to-talk.")
-            DoneBannerController.shared.showFailed(
-                summary: "Grant Accessibility in System Settings → Privacy → Accessibility so the shortcut works."
-            )
+            // tap-to-summon via Carbon, but hold-to-talk is dead.
+            Log.info("HotkeyMonitor: CGEventTap denied — falling back to Carbon.")
+            if !HackathonConfig.skipPermissionPrompts,
+               !showedAccessibilityBanner, !AccessibilityTrust.isGranted() {
+                showedAccessibilityBanner = true
+                DoneBannerController.shared.showFailed(
+                    summary: "Grant Accessibility in System Settings → Privacy → Accessibility so the shortcut works."
+                )
+            }
             installCarbonFallback()
             return
         }
@@ -88,6 +117,7 @@ final class HotkeyMonitor {
         self.source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
+        unregisterCarbon()
     }
 
     // MARK: - Handler

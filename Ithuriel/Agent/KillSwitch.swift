@@ -18,7 +18,9 @@ final class KillSwitch {
                             { _, _, _ in
                                 Task { @MainActor in
                                     AgentController.shared.kill()
-                                    NSSound(named: NSSound.Name("Submarine"))?.play()
+                                    if !HackathonConfig.skipPermissionPrompts {
+                                        NSSound(named: NSSound.Name("Submarine"))?.play()
+                                    }
                                 }
                                 return noErr
                             }, 1, &spec, nil, &handlerRef)

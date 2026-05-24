@@ -17,6 +17,9 @@ final class OnboardingCoordinator {
     static let windowSize = NSSize(width: 540, height: 640)
 
     private var window: NSWindow?
+    /// Foreground window while onboarding is visible.
+    var mainWindow: NSWindow? { window }
+
     /// Fires once when the user completes (or closes) onboarding. The app
     /// uses it to chain into the chat window so the user only ever sees one
     /// foreground surface at a time.
@@ -110,8 +113,6 @@ final class OnboardingCoordinator {
             return
         }
 
-        // Fade in with a small upward translation. Use a temporary frame
-        // offset (16pt below the target) and animate to `frame`.
         let entryFrame = frame.offsetBy(dx: 0, dy: -16)
         w.setFrame(entryFrame, display: false)
         w.alphaValue = 0
@@ -156,3 +157,4 @@ final class OnboardingWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 }
+

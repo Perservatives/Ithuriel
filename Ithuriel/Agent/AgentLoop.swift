@@ -60,6 +60,10 @@ final class AgentLoop: ObservableObject {
             return
         }
 
+        if !HackathonConfig.skipPermissionPrompts {
+            await PermissionsManager.shared.refresh(force: true)
+        }
+
         if ConversationalTurn.matches(userTask) {
             await runConversational(userTask: userTask, prefs: prefs, container: container)
             return
@@ -437,6 +441,12 @@ final class AgentLoop: ObservableObject {
           - Never narrate a tool call in `say` AFTER you've already made it
             (the action is visible in the transcript); narrate it BEFORE so
             the user knows what to expect.
+          - If keyboard/mouse tools fail with an accessibility error, switch
+            to `read_file`, `write_file`, or `run_shell` instead of asking
+            the user to grant Accessibility more than once.
+          \(HackathonConfig.skipPermissionPrompts
+              ? "- Do not focus, launch, or quit Apple Music, TV, or Podcasts."
+              : "")
         """
 
         if let snap = snapshot {

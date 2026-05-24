@@ -24,9 +24,10 @@ final class ChatWindowController {
         pendingContainer = container
         pendingAgent = agent
         if window == nil { build(container: container, agent: agent) }
-        NSApp.activate(ignoringOtherApps: true)
-        window?.makeKeyAndOrderFront(nil)
+        AppForeground.activate(bringing: window)
     }
+
+    var keyWindow: NSWindow? { window }
 
     func toggle() {
         if let window, window.isVisible {

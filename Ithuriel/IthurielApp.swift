@@ -36,6 +36,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
 
+        if !HackathonConfig.skipPermissionPrompts {
+            AuthService.shared.bootstrap(silent: true)
+        }
+
         // Initialize Firebase from the bundled GoogleService-Info.plist
         // BEFORE anything that might want to talk to the project (AuthService,
         // DirectFirestoreClient, IthurielClient fallbacks).
@@ -55,9 +59,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         InstantChatController.shared.configure(container: container, agent: loop)
         VoiceController.shared.configure(container: container, agentLoop: loop)
         AgentControlBorderOverlay.shared.configure(agentLoop: loop)
-        installGlobalHotkey()
 
-        // Seed the hotkey binding from saved prefs (defaults to ⌃Space).
+        // Seed hotkey binding, refresh permissions, then install the event tap
+        // so we don't prompt when Accessibility is already granted.
         Task { @MainActor in
             if let prefs = try? UserPrefs.load(in: container) {
                 HotkeyMonitor.shared.updateBinding(
@@ -65,21 +69,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     modifiers: prefs.hotkeyModifiers
                 )
             }
+            if !HackathonConfig.skipPermissionPrompts {
+                await PermissionsManager.shared.refresh(force: true)
+            }
+            self.installGlobalHotkey()
         }
 
-        // Pull remote prefs once on launch so settings sync across devices.
-        // Runs only when signed in; errors are logged and never surface to UI.
-        if AuthService.shared.isSignedIn {
-            Task { await PrefsSync.shared.pullRemote(container: container) }
-            // Cloud secrets: if the user has signed in, fill any empty API
-            // key slot in their local prefs from GCP Secret Manager.
-            Task { @MainActor in
-                if let prefs = try? UserPrefs.load(in: container) {
-                    await SecretManagerClient.shared.sync(into: prefs) {
-                        try? container.mainContext.save()
-                    }
-                }
-            }
+        if !HackathonConfig.skipPermissionPrompts {
+            scheduleDeferredCloudSync(container: container)
         }
 
         // Done/Failed/Stopped banner responds to bus events.
@@ -101,8 +98,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        refreshPermissionState()
-
         // Sequence: launch animation → onboarding (only on first run) →
         // chat window. The chat window is the primary surface, but we keep
         // it off-screen until onboarding completes so the user isn't seeing
@@ -122,7 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // window so the animation isn't covered.
                 try? await Task.sleep(nanoseconds: 1_900_000_000)
 
-                LaunchCoordinator.shared.dismiss()
+                await LaunchCoordinator.shared.dismissAndWait()
 
                 if needsOnboarding {
                     OnboardingCoordinator.shared.onFinish = {
@@ -131,8 +126,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         }
                     }
                     OnboardingCoordinator.shared.present(container: container)
+                    AppForeground.activate(bringing: OnboardingCoordinator.shared.mainWindow)
                 } else {
                     ChatWindowController.shared.show(container: container, agent: loop)
+                    AppForeground.activate(bringing: ChatWindowController.shared.keyWindow)
                 }
             }
         }
@@ -162,9 +159,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         workspaceMonitor?.stop()
     }
 
-    private func refreshPermissionState() {
+    /// Pull remote prefs + cloud secrets after the UI is visible.
+    @MainActor
+    private func scheduleDeferredCloudSync(container: ModelContainer) {
         Task { @MainActor in
-            await PermissionsManager.shared.refresh()
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard AuthService.shared.isSignedIn else { return }
+            await PrefsSync.shared.pullRemote(container: container)
+            if let prefs = try? UserPrefs.load(in: container) {
+                await SecretManagerClient.shared.sync(into: prefs) {
+                    try? container.mainContext.save()
+                }
+            }
         }
     }
 

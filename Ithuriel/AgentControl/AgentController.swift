@@ -37,6 +37,20 @@ final class AgentController {
     static let shared = AgentController()
     private init() {}
 
+    /// Media apps that pop their own permission sheets when automated — skip during hackathon.
+    private static let mediaBundleIDs: Set<String> = [
+        "com.apple.Music",
+        "com.apple.iTunes",
+        "com.apple.TV",
+        "com.apple.podcasts"
+    ]
+
+    private func rejectMediaAutomation(bundleId: String) throws {
+        if HackathonConfig.skipPermissionPrompts, Self.mediaBundleIDs.contains(bundleId) {
+            throw AgentControlError.targetNotFound("media app blocked in demo mode: \(bundleId)")
+        }
+    }
+
     /// Killed by the kill-switch hotkey or a stop button. AgentLoop checks
     /// this after every step.
     @MainActor private(set) var killed: Bool = false
@@ -111,14 +125,16 @@ final class AgentController {
     // MARK: - Apps
 
     func focus(bundleId: String) async throws {
+        try rejectMediaAutomation(bundleId: bundleId)
         if let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
-            app.activate(options: [.activateAllWindows])
+            app.activate(options: [.activateIgnoringOtherApps])
             return
         }
         try await launch(bundleId: bundleId)
     }
 
     func launch(bundleId: String) async throws {
+        try rejectMediaAutomation(bundleId: bundleId)
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
             throw AgentControlError.targetNotFound(bundleId)
         }
@@ -127,6 +143,7 @@ final class AgentController {
     }
 
     func quit(bundleId: String, prefs: UserPrefs) async throws {
+        try rejectMediaAutomation(bundleId: bundleId)
         try await confirmDestructive(
             title: NSLocalizedString("agent.confirm.quit.title", comment: ""),
             body: String(format: NSLocalizedString("agent.confirm.quit.body", comment: ""), bundleId),
@@ -224,7 +241,11 @@ final class AgentController {
     // MARK: - Helpers
 
     private func preflightNonDestructive() throws {
-        guard AppDetector.isAccessibilityTrusted else { throw AgentControlError.accessibilityDenied }
+        if HackathonConfig.skipPermissionPrompts { return }
+        guard AppDetector.isAccessibilityTrusted else {
+            throw AgentControlError.accessibilityDenied
+        }
+        AccessibilityTrust.markGranted()
     }
 
     private func sandbox(path: String, prefs: UserPrefs) throws -> URL {

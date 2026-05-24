@@ -155,7 +155,7 @@ struct SettingsView: View {
                     SecureField("AIza…", text: binding(\.geminiApiKey)).textFieldStyle(.roundedBorder)
                 }
                 labelledField(NSLocalizedString("settings.agent.geminiModel", comment: "")) {
-                    TextField("gemini-2.5-flash", text: binding(\.geminiModel)).textFieldStyle(.roundedBorder)
+                    TextField("gemini-3.5-flash", text: binding(\.geminiModel)).textFieldStyle(.roundedBorder)
                 }
                 Text(NSLocalizedString("settings.agent.geminiHelp", comment: ""))
                     .font(.caption).foregroundStyle(.secondary)
